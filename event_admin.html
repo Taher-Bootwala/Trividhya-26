@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Admin | Trividhya'26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-page {
+            min-height: 100vh;
+            background: #ffffff;
+            padding: 5rem 2rem;
+            position: relative;
+        }
+        .admin-page::before { display: none; }
+
+        /* Containers: White background with black border */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: #ffffff !important;
+            padding: 1.5rem 2rem;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+        .admin-title {
+            font-family: var(--font-heading) !important;
+            font-size: 1.4rem;
+            color: #000000 !important;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .admin-logout {
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            padding: 0.6rem 1.4rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-family: var(--font-body) !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .admin-logout:hover { background: #000000 !important; color: #ffffff !important; transform: translateY(-2px); }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            position: relative;
+        }
+
+        /* Stats & Info Panel */
+        .info-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .info-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .info-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-family: var(--font-heading) !important;
+            color: #000000 !important;
+        }
+        .stat-box {
+            background: #f8f9fa !important;
+            padding: 1rem;
+            border-radius: 14px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1.5px solid #000000 !important;
+            transition: transform 0.2s;
+            color: #000000 !important;
+        }
+        .stat-box:hover { transform: translateX(4px); }
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #000000 !important;
+            font-family: var(--font-heading);
+        }
+
+        /* Edit form */
+        .edit-section { margin-top: 2rem; border-top: 2px dashed #000000; padding-top: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.75rem; color: #333333 !important; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-body); font-weight: 600; }
+        .form-input { 
+            width: 100%; padding: 0.7rem; border-radius: 10px; 
+            background: #ffffff !important; border: 2px solid #000000 !important; 
+            color: #000000 !important; font-family: var(--font-body) !important; outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .form-input:focus { border-color: #000000; box-shadow: 0 0 0 3px rgba(0,0,0,0.1); }
+        
+        /* Table Panel */
+        .table-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            padding: 2rem;
+            overflow-x: auto;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .table-header h3 { font-family: var(--font-heading) !important; color: #000000 !important; }
+        .table-actions {
+            display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap;
+        }
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            font-family: var(--font-body) !important;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .filter-select option { background: #ffffff; color: #000000; }
+        
+        table { width: 100%; border-collapse: collapse; font-family: var(--font-body); color: #000000; }
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.12) !important;
+            font-size: 0.85rem;
+            color: #000000 !important;
+        }
+        th {
+            color: #000000 !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            font-family: var(--font-body);
+            border-bottom: 2px solid #000000 !important;
+        }
+        tbody tr { transition: background 0.2s; }
+        tbody tr:hover { background: rgba(0,0,0,0.04) !important; }
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.85rem;
+        }
+        th { color: #ffffff; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-size: 0.72rem; font-family: var(--font-body); }
+        tbody tr { transition: background 0.2s; }
+        tbody tr:hover { background: rgba(255,255,255,0.05); }
+
+        .badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 50px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            font-family: var(--font-body);
+        }
+        .badge.paid { background: rgba(46,213,115,0.2); color: #2ed573; border: 1px solid rgba(46,213,115,0.4); }
+        .badge.pending { background: rgba(255,165,2,0.15); color: #ffa502; border: 1px solid rgba(255,165,2,0.3); }
+        .badge.rejected { background: rgba(255,71,87,0.15); color: #ff4757; border: 1px solid rgba(255,71,87,0.3); }
+        .badge.cash { background: rgba(116,125,140,0.2); color: #ced6e0; border: 1px solid rgba(116,125,140,0.4); }
+        .badge.online { background: rgba(123,47,190,0.2); color: #a29bfe; border: 1px solid #6c5ce7; }
+        
+        .action-btn {
+            background: none; border: none; color: var(--muted); cursor: pointer; 
+            padding: 0.4rem; margin-right: 0.3rem; transition: all 0.3s; border-radius: 8px;
+        }
+        .action-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .action-btn.approve:hover { color: #2ed573; background: rgba(46,213,115,0.1); }
+        .action-btn.reject:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
+        .action-btn.delete:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
+        .action-btn.edit:hover { color: var(--accent); background: rgba(255,107,53,0.1); }
+
+        .member-list { font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; }
+
+        /* Edit Team Modal */
+        .edit-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 9999; display: flex;
+            align-items: center; justify-content: center;
+            padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .edit-modal-overlay.open { opacity: 1; pointer-events: all; }
+        .edit-modal-box {
+            background: var(--card); border-radius: 22px;
+            padding: 2rem; max-width: 500px; width: 100%;
+            border: 1px solid rgba(123,47,190,0.45);
+            transform: scale(0.9); transition: transform 0.3s;
+        }
+        .edit-modal-overlay.open .edit-modal-box { transform: scale(1); }
+
+        @media (max-width: 992px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position:fixed;top:1.5rem;right:1.5rem;z-index:99999;display:flex;flex-direction:column;gap:0.8rem;pointer-events:none;"></div>
+
+    <!-- Confirm Dialog -->
+    <div class="modal-overlay" id="confirmDialog">
+        <div class="confirm-box">
+            <div class="confirm-icon" id="confirmIcon">⚠️</div>
+            <h3 class="confirm-title" id="confirmTitle">Are you sure?</h3>
+            <p class="confirm-desc" id="confirmDesc"></p>
+            <div class="confirm-btns">
+                <button class="confirm-cancel" id="confirmCancel" onclick="closeConfirm(false)">Cancel</button>
+                <button class="confirm-ok" id="confirmOk" onclick="closeConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Team Modal -->
+    <div class="edit-modal-overlay" id="editTeamModal" onclick="if(event.target===this)closeEditModal()">
+        <div class="edit-modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h3 style="font-size:1.1rem;"><i class="fas fa-edit" style="color:var(--accent);margin-right:0.5rem;"></i>Edit Team Details</h3>
+                <button style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Group/Team Name</label>
+                <input type="text" id="editGroupName" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Leader Name</label>
+                <input type="text" id="editLeaderName" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Leader Email</label>
+                <input type="email" id="editLeaderEmail" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Leader Mobile</label>
+                <input type="text" id="editLeaderMobile" class="form-input">
+            </div>
+            <input type="hidden" id="editRegId">
+            <button class="btn-primary" style="width:100%;border-radius:10px;justify-content:center;padding:0.7rem;margin-top:0.5rem;" onclick="saveTeamEdit()">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </div>
+
+    <div class="admin-page">
+        <div class="admin-header">
+            <div class="admin-title">
+                <i class="fas fa-shield-alt"></i> 
+                <span>Event Admin Panel</span>
+            </div>
+            <a href="#" class="admin-logout" onclick="logoutAdmin()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Sidebar / Event Info -->
+            <div class="info-card" id="eventInfoPanel">
+                <div style="text-align: center; color: var(--muted); padding: 2rem;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>Loading event data...</div>
+            </div>
+
+            <!-- Main Table Area -->
+            <div class="table-card">
+                <!-- Navigation Tabs for Views -->
+                <div class="admin-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid #000000; padding-bottom: 0;">
+                    <button class="tab-btn active" id="tabActive" onclick="switchTab('active')">
+                        <i class="fas fa-list"></i> Active (<span id="countActive">0</span>)
+                    </button>
+                    <button class="tab-btn" id="tabCancelled" onclick="switchTab('cancelled')">
+                        <i class="fas fa-ban"></i> Cancelled (<span id="countCancelled">0</span>)
+                    </button>
+                    <button class="tab-btn" id="tabDeleted" onclick="switchTab('deleted')">
+                        <i class="fas fa-trash-alt"></i> Recently Deleted (<span id="countDeleted">0</span>)
+                    </button>
+                </div>
+
+                <div class="table-header">
+                    <h3 style="font-size: 1.2rem;" id="tableSectionTitle"><i class="fas fa-users" style="color:var(--accent);margin-right:0.5rem;"></i>Registrations (<span id="regCount">0</span>)</h3>
+                    <div class="table-actions">
+                        <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                            <option value="all">All Payment Status</option>
+                            <option value="paid">Paid Only</option>
+                            <option value="pending">Pending Only</option>
+                        </select>
+                        <input type="text" id="searchBox" class="form-input" placeholder="Search name/email..." style="width: 200px;" onkeyup="filterTable()">
+                        <button class="btn-primary" style="padding: 0.6rem 1.2rem; border-radius: 8px;" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
+                    </div>
+                </div>
+                
+                <!-- Bulk Actions Toolbar -->
+                <div id="bulkBar" style="display:none; background:#000000; color:#ffffff; padding:0.75rem 1.2rem; border-radius:14px; margin-bottom:1rem; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem;">
+                    <div>
+                        <i class="fas fa-check-square" style="margin-right:0.4rem;"></i>
+                        <strong id="bulkCount">0</strong> item(s) selected
+                    </div>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button class="btn-primary" id="bulkApproveBtn" style="padding:0.45rem 0.9rem; font-size:0.8rem; background:#ffffff !important; color:#000000 !important; border:2px solid #ffffff !important;" onclick="bulkApprove()">
+                            <i class="fas fa-check-circle"></i> Approve Selected
+                        </button>
+                        <button class="btn-primary" id="bulkRestoreBtn" style="padding:0.45rem 0.9rem; font-size:0.8rem; background:#ffffff !important; color:#000000 !important; border:2px solid #ffffff !important;" onclick="bulkRestore()">
+                            <i class="fas fa-undo"></i> Retrieve / Restore Selected
+                        </button>
+                        <button class="btn-primary" id="bulkDeleteBtn" style="padding:0.45rem 0.9rem; font-size:0.8rem; background:#ff4757 !important; color:#ffffff !important; border:2px solid #ff4757 !important;" onclick="bulkDelete()">
+                            <i class="fas fa-trash-alt"></i> Delete Selected
+                        </button>
+                    </div>
+                </div>
+
+                <table id="regTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAllCb" onclick="toggleSelectAll(this)" style="cursor:pointer; width:16px; height:16px;"></th>
+                            <th>Group / Team</th>
+                            <th>Leader Details</th>
+                            <th>Members</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="event_admin.js"></script>
+</body>
+</html>

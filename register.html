@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Trividhya'26</title>
+    <meta name="description" content="Register for events at Trividhya'26 — GEC Dahod's Grand Technical Festival.">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── Registration Page Styles ── */
+        .reg-page {
+            min-height: 100vh;
+            padding: 5rem 1rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #ffffff;
+            position: relative;
+        }
+        .reg-page::before { display: none; }
+
+        .reg-back {
+            position: fixed;
+            top: 1.2rem;
+            left: 1.5rem;
+            color: #000000 !important;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+            transition: all 0.3s ease;
+            background: #ffffff !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            border: 2px solid #000000 !important;
+            font-family: var(--font-body);
+        }
+        .reg-back:hover { color: #ffffff !important; background: #000000 !important; transform: translateY(-2px); }
+
+        .reg-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .reg-event-header {
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            color: #000000 !important;
+        }
+        .reg-event-logo {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border: 2px solid #000000;
+        }
+        .reg-event-logo-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 20px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: #f5f5f5;
+            color: #000000;
+            border: 2px solid #000000;
+        }
+        .reg-event-title {
+            font-family: var(--font-heading) !important;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: #000000 !important;
+            background: none;
+            -webkit-text-fill-color: #000000 !important;
+        }
+        .reg-event-desc {
+            color: #555555 !important;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            font-family: var(--font-body);
+        }
+        .reg-event-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .reg-meta-item {
+            background: #f8f9fa !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
+            border: 1.5px solid #000000 !important;
+            text-align: center;
+            color: #000000 !important;
+        }
+        .reg-meta-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666666 !important;
+            margin-bottom: 0.2rem;
+            font-family: var(--font-body);
+        }
+        .reg-meta-value {
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: var(--font-heading);
+            color: #000000 !important;
+        }
+
+        .reg-form-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            color: #000000 !important;
+        }
+        .reg-form-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-heading) !important;
+            color: #000000 !important;
+        }
+        .reg-form-title i { color: #000000 !important; }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #333333 !important;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-body);
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            border-radius: 12px;
+            color: #000000 !important;
+            font-family: var(--font-body) !important;
+            font-size: 0.92rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: #000000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+        .form-input::placeholder { color: #777777 !important; }
+
+        select.form-input {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+        select.form-input option {
+            background: #ffffff;
+            color: #000000;
+            padding: 0.5rem;
+        }
+
+        .form-error {
+            color: #ff4757;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            font-family: var(--font-body);
+        }
+
+        .otp-send-btn, .otp-verify-btn {
+            padding: 0.7rem 1.2rem;
+            border: 2px solid #000000 !important;
+            border-radius: 50px;
+            font-family: var(--font-body) !important;
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .otp-send-btn {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .otp-send-btn:hover { background: #000000 !important; color: #ffffff !important; }
+        .otp-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .otp-verify-btn {
+            background: #000000 !important;
+            color: #ffffff !important;
+        }
+        .otp-verify-btn:hover { background: #ffffff !important; color: #000000 !important; }
+        .otp-verify-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .member-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #000000;
+        }
+        .member-card {
+            background: #f8f9fa !important;
+            border: 1.5px solid #000000 !important;
+            border-radius: 16px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            position: relative;
+            animation: fadeUp 0.4s ease;
+            color: #000000 !important;
+        }
+        .member-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .member-card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #000000 !important;
+            font-family: var(--font-heading);
+        }
+        .member-remove-btn {
+            background: rgba(255,71,87,0.1);
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            border-radius: 8px;
+            padding: 0.35rem 0.7rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: var(--font-body);
+        }
+        .member-remove-btn:hover { background: #ff4757; color: #ffffff; }
+
+        .add-member-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: #ffffff;
+            border: 2px dashed #000000;
+            border-radius: 50px;
+            color: #000000;
+            font-family: var(--font-body) !important;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .add-member-btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+        .add-member-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .reg-submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #000000 !important;
+            border: 2px solid #000000 !important;
+            border-radius: 50px;
+            color: #ffffff !important;
+            font-family: var(--font-body) !important;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .reg-submit-btn:hover {
+            background: #ffffff !important;
+            color: #000000 !important;
+            border-color: #000000 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+        .reg-submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .reg-submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reg-loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--muted);
+        }
+        .reg-loading i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .reg-error-page {
+            text-align: center;
+            padding: 4rem;
+            color: var(--muted);
+        }
+        .reg-error-page i {
+            font-size: 3rem;
+            color: #ff4757;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .reg-page { padding: 4.5rem 0.75rem 2rem; }
+            .reg-form-card, .reg-event-header { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    <a href="index.html" class="reg-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="reg-page">
+        <div class="reg-container" id="regContainer">
+            <div class="reg-loading" id="regLoading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading event details...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase Config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="register.js"></script>
+</body>
+</html>

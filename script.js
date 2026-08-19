@@ -1,0 +1,597 @@
+/* ══════════════════════════════════════
+   TRIVIDHYA'26 — Dynamic Script (Supabase)
+   ══════════════════════════════════════ */
+
+let ALL_EVENTS = [];
+let ALL_GAMES = [];
+let ALL = [];
+
+/* ── Apply cached navbar title to loader SYNCHRONOUSLY (before animation starts) ── */
+(function applyCachedLoaderTitle() {
+    const cached = localStorage.getItem('siteNavbarTitle');
+    if (cached) {
+        const loaderH2 = document.querySelector('#loader h2');
+        if (loaderH2) {
+            loaderH2.innerHTML = cached.split('').map(ch => `<span>${ch}</span>`).join('');
+        }
+        const logoEl = document.getElementById('mainLogo');
+        if (logoEl) logoEl.textContent = cached;
+    }
+})();
+
+/* ── Load Site Settings from Supabase (async — updates everything except loader) ── */
+async function loadSiteSettings() {
+    try {
+        const settings = await getSiteSettings();
+        if (!settings) return;
+
+        // Cache navbar title for next page load's loader
+        if (settings.navbar_title) {
+            localStorage.setItem('siteNavbarTitle', settings.navbar_title);
+            const logoEl = document.getElementById('mainLogo');
+            if (logoEl) logoEl.textContent = settings.navbar_title;
+        }
+
+        // Update Hero Title (parse "TECH-FIESTA'26" -> "TECH<span>-FIESTA</span>'26" pattern)
+        if (settings.hero_title) {
+            const heroH1 = document.querySelector('.hero-content h1');
+            if (heroH1) {
+                const title = settings.hero_title;
+                const dashIdx = title.indexOf('-');
+                if (dashIdx !== -1) {
+                    const before = title.substring(0, dashIdx);
+                    const rest = title.substring(dashIdx);
+                    const match = rest.match(/^(-[A-Za-z]+)(.*)/);
+                    if (match) {
+                        heroH1.innerHTML = `${before}<span>${match[1]}</span>${match[2]}`;
+                    } else {
+                        heroH1.innerHTML = `${before}<span>${rest}</span>`;
+                    }
+                } else {
+                    heroH1.textContent = title;
+                }
+            }
+        }
+
+        // Update Event Dates & Venue
+        const heroDate = document.querySelector('.hero-date');
+        if (heroDate) {
+            const dates = settings.event_dates || 'March 23 & 25, 2026';
+            const venue = settings.event_venue || 'GEC Dahod';
+            heroDate.innerHTML = `
+                <i class="fas fa-calendar-alt"></i> ${dates}
+                &nbsp;&nbsp;
+                <i class="fas fa-map-marker-alt"></i> ${venue}
+            `;
+        }
+
+        // Also update the page title
+        if (settings.navbar_title) {
+            document.title = `${settings.navbar_title} | Tech Fiesta`;
+        }
+    } catch (err) {
+        console.error('Error loading site settings:', err);
+    }
+}
+
+// Load settings immediately
+loadSiteSettings();
+
+/* ── Load Events from Supabase ── */
+async function loadEvents() {
+    const events = await getAllEvents();
+    // Sort ALL events alphabetically
+    events.sort((a, b) => a.title.localeCompare(b.title));
+    ALL_EVENTS = events.filter(e => e.category === 'tech' || e.category === 'nontech');
+    ALL_GAMES = events.filter(e => e.category === 'game');
+    ALL = events;
+
+    // Populate event admin dropdown
+    populateEventDropdown(events);
+
+    return events;
+}
+
+function populateEventDropdown(events) {
+    const sel = document.getElementById('eaEventSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select an event —</option>';
+    // Already sorted alphabetically from loadEvents
+    events.forEach(ev => {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        opt.textContent = ev.title;
+        sel.appendChild(opt);
+    });
+}
+
+/* ── Helper: build logo HTML ── */
+function buildLogoHtml(ev) {
+    if (!ev.logo_url) return '<i class="fas fa-trophy" style="font-size:3rem;color:var(--accent);"></i>';
+    return `<img src="${ev.logo_url}" style="width:100px;height:100px;object-fit:cover;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.5);" alt="${ev.title}">`;
+}
+
+/* ── Helper: team text ── */
+function teamText(ev) {
+    if (ev.max_members <= 1) return 'Solo';
+    return ev.max_members + ' Members';
+}
+
+/* ── Helper: fee text ── */
+function feeText(ev) {
+    if (!ev.fee || ev.fee === 0) return 'Free';
+    return '₹' + ev.fee;
+}
+
+/* ── Hero Mouse Tracking ── */
+const hero = document.getElementById('home');
+if (hero && !/Mobi|Android/i.test(navigator.userAgent)) {
+    hero.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        hero.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        hero.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+    });
+}
+
+/* ── Card Mouse Tracking ── */
+if (!/Mobi|Android/i.test(navigator.userAgent)) {
+    document.addEventListener('mousemove', (e) => {
+        const cards = document.querySelectorAll('.event-card');
+        cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+            card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        });
+    });
+}
+
+/* ── Floating Particles ── */
+(function spawnParticles() {
+    const c = document.getElementById('particles');
+    const cols = ['#7B2FBE','#FF6B35','#FFD700','#E91E8C','#00BCD4'];
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    const particleCount = isMobile ? 0 : 10; // No particles on mobile for better performance
+    for (let i = 0; i < particleCount; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const s = Math.random() * 8 + 4;
+        Object.assign(p.style, {
+            width: s+'px', height: s+'px',
+            left: Math.random()*100+'%',
+            background: cols[Math.floor(Math.random()*cols.length)],
+            animationDuration: (Math.random()*15+10)+'s',
+            animationDelay: (Math.random()*10)+'s'
+        });
+        c.appendChild(p);
+    }
+})();
+
+/* ── Countdown ── */
+function tick() {
+    const target = new Date('2026-03-23T10:00:00');
+    const now    = new Date();
+    const diff   = target - now;
+    const pad    = n => String(Math.max(0, Math.floor(n))).padStart(2,'0');
+    if (diff <= 0) {
+        ['d','h','m','s'].forEach(k => document.getElementById('cd-'+k).textContent = '00');
+        return;
+    }
+
+    const updates = [
+        { id: 'cd-d', val: pad(diff / 86400000) },
+        { id: 'cd-h', val: pad((diff % 86400000) / 3600000) },
+        { id: 'cd-m', val: pad((diff % 3600000)  / 60000) },
+        { id: 'cd-s', val: pad((diff % 60000)    / 1000) }
+    ];
+
+    updates.forEach(({ id, val }) => {
+        const el = document.getElementById(id);
+        if (el.textContent !== val) {
+            el.textContent = val;
+            el.classList.remove('tick-vert');
+            void el.offsetWidth;
+            el.classList.add('tick-vert');
+        }
+    });
+}
+tick(); setInterval(tick, 1000);
+
+/* ── Skeleton ── */
+function showSkeletons(n) {
+    const g = document.getElementById('skelGrid');
+    g.innerHTML = Array(n).fill(`
+        <div class="sk-card">
+            <div class="skeleton sk-img"></div>
+            <div class="sk-body">
+                <div class="skeleton sk-title"></div>
+                <div class="skeleton sk-line"></div>
+                <div class="skeleton sk-line"></div>
+                <div class="skeleton sk-line-s"></div>
+                <div class="skeleton sk-btn"></div>
+            </div>
+        </div>`).join('');
+}
+
+/* ── Render Cards (Supabase format) ── */
+function renderCards(data, gridId) {
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    const g = document.getElementById(gridId);
+    g.innerHTML = data.map((ev, i) => `
+        <div class="event-card" ${isMobile ? '' : `data-aos="zoom-in" data-aos-delay="${Math.min(i*50, 400)}"`} data-cat="${ev.category}" data-type="${ev.type || ''}" onclick="openModal('${ev.id}')">
+            <div class="card-img">
+                <span style="position:relative;z-index:1;display:flex;justify-content:center;align-items:center;width:100%;height:100%;">${buildLogoHtml(ev)}</span>
+                <span class="card-badge" style="color:${ev.color};border-color:${ev.color}50;">${ev.badge}</span>
+            </div>
+            <div class="card-body">
+                <div class="card-title">${ev.title}</div>
+                <div class="card-meta">
+                    <span><i class="fas fa-users"></i>${teamText(ev)}</span>
+                    <span style="display:${ev.fee ? 'flex' : 'none'}"><i class="fas fa-ticket-alt"></i>Fee: ${feeText(ev)}</span>
+                </div>
+                <div class="card-btn" onclick="openModal('${ev.id}'); event.stopPropagation()">
+                    <i class="fas fa-info-circle"></i> Click here to know more
+                </div>
+            </div>
+        </div>`).join('');
+    
+    // Initialize Vanilla Tilt
+    if (typeof VanillaTilt !== 'undefined' && !isMobile) {
+        VanillaTilt.init(g.querySelectorAll(".event-card"), {
+            max: 15, speed: 400, glare: true, "max-glare": 0.2,
+        });
+    }
+    
+    observe();
+    if (typeof AOS !== 'undefined' && !isMobile) AOS.refresh();
+}
+
+/* ── Load with skeleton delay ── */
+showSkeletons(6);
+loadEvents().then(() => {
+    document.getElementById('skelGrid').style.display = 'none';
+    document.getElementById('evGrid').style.display   = 'grid';
+    renderCards(ALL_EVENTS, 'evGrid');
+    renderCards(ALL_GAMES,  'gmGrid');
+});
+
+/* ── Filter ── */
+let currentCat = 'all';
+let currentSubType = 'all';
+
+function filterEvent(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = cat;
+    currentSubType = 'all';
+
+    const subFilters = document.getElementById('subFilters');
+    subFilters.classList.add('show');
+    document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.sub-filter-btn').classList.add('active');
+
+    applyFilters();
+}
+
+function filterSubType(type, btn) {
+    document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSubType = type;
+    applyFilters();
+}
+
+function applyFilters() {
+    const searchVal = (document.getElementById('eventSearchInput')?.value || '').toLowerCase().trim();
+    document.querySelectorAll('#evGrid .event-card').forEach(c => {
+        const catMatch = (currentCat === 'all' || c.dataset.cat === currentCat);
+        const typeMatch = (currentSubType === 'all' || c.dataset.type === currentSubType);
+        const title = c.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+        const searchMatch = !searchVal || title.includes(searchVal);
+        c.style.display = (catMatch && typeMatch && searchMatch) ? '' : 'none';
+    });
+    if (typeof AOS !== 'undefined') AOS.refresh();
+}
+
+/* ── Modal ── */
+function openModal(id) {
+    const ev = ALL.find(e => e.id === id);
+    if (!ev) return;
+    document.getElementById('mEmoji').innerHTML  = buildLogoHtml(ev);
+    document.getElementById('mTitle').textContent  = ev.title;
+    document.getElementById('mDesc').textContent   = ev.description;
+    document.getElementById('mFee').textContent    = feeText(ev);
+    document.getElementById('mTeam').textContent   = teamText(ev);
+    document.getElementById('mLink').href          = `register.html?id=${ev.id}`;
+    document.getElementById('mLink').removeAttribute('target');
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function closeOnBg(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+/* ── Hamburger ── */
+function toggleMenu() {
+    document.getElementById('navLinks').classList.toggle('open');
+}
+document.querySelectorAll('.nav-links a').forEach(a =>
+    a.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open'))
+);
+
+/* ── Scroll Reveal ── */
+function observe() {
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    if (isMobile) return; // Disable scroll reveal on mobile for performance
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal:not(.in)').forEach(el => io.observe(el));
+}
+observe();
+
+/* ── Navbar shrink on scroll ── */
+window.addEventListener('scroll', () => {
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    if (!isMobile) {
+        document.getElementById('navbar').style.padding = window.scrollY > 50 ? '0.6rem 2rem' : '1rem 2rem';
+    }
+});
+
+/* ── Loader ── */
+window.addEventListener('load', () => {
+    const loader = document.getElementById('loader');
+    const progressBar = document.getElementById('progressBar');
+    const letters = Array.from(loader.querySelectorAll('h2 span'));
+    const progressThresholds = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 97, 100];
+
+    let progress = 0;
+    progressBar.style.width = '0%';
+
+    const interval = setInterval(() => {
+        progress = Math.min(100, progress + 1);
+        progressBar.style.width = progress + '%';
+
+        letters.forEach((letter, index) => {
+            if (progress >= progressThresholds[index]) {
+                letter.classList.add('visible');
+            }
+        });
+
+        if (progress >= 100) {
+            clearInterval(interval);
+
+            setTimeout(() => {
+                const loaderH2 = loader.querySelector('h2');
+                const navLogo = document.querySelector('.logo');
+                const rectHero = loaderH2.getBoundingClientRect();
+                const rectTarget = navLogo.getBoundingClientRect();
+                const scale = rectTarget.height / rectHero.height;
+                const translateX = rectTarget.left - rectHero.left;
+                const translateY = rectTarget.top - rectHero.top;
+
+                loaderH2.style.transformOrigin = 'top left';
+                loaderH2.style.transition = 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s 0.8s';
+                loaderH2.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                loaderH2.style.opacity = '0';
+
+                navLogo.classList.add('pop');
+                loader.classList.add('hidden');
+            }, 300);
+        }
+    }, 15);
+});
+
+/* ── Active Link Highlight ── */
+const sections = document.querySelectorAll('section, footer');
+const navLinksAnchors = document.querySelectorAll('.nav-links a');
+
+window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= (sectionTop - window.innerHeight / 3)) {
+            current = section.getAttribute('id');
+        }
+    });
+    navLinksAnchors.forEach(a => {
+        a.classList.remove('active');
+        if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+    });
+});
+
+AOS.init({ 
+    duration: 800, 
+    once: true,
+    disable: /Mobi|Android/i.test(navigator.userAgent) // Disable AOS on mobile for better performance
+});
+
+/* ══════════════════════════════════════
+   TOAST NOTIFICATION SYSTEM
+   ══════════════════════════════════════ */
+
+function showToast(message, type = 'info', duration = 3500) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('out');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+/* ══════════════════════════════════════
+   CUSTOM CONFIRM DIALOG
+   ══════════════════════════════════════ */
+
+let confirmResolver = null;
+
+function showConfirmDialog({ title = 'Are you sure?', desc = '', icon = '⚠️', okText = 'Confirm', danger = false }) {
+    return new Promise((resolve) => {
+        confirmResolver = resolve;
+        document.getElementById('confirmIcon').textContent = icon;
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmDesc').textContent = desc;
+        document.getElementById('confirmOk').textContent = okText;
+        const okBtn = document.getElementById('confirmOk');
+        okBtn.className = danger ? 'confirm-ok danger' : 'confirm-ok';
+        document.getElementById('confirmDialog').classList.add('open');
+    });
+}
+
+function closeConfirm(result) {
+    document.getElementById('confirmDialog').classList.remove('open');
+    if (confirmResolver) {
+        confirmResolver(result);
+        confirmResolver = null;
+    }
+}
+
+/* ══════════════════════════════════════
+   ADMIN LOGIN — Keyboard & URL Shortcuts
+   ══════════════════════════════════════ */
+
+// Auto-open login modal if URL contains ?login=admin or #admin
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginParam = (urlParams.get('login') || window.location.hash.replace('#', '')).toLowerCase();
+    if (loginParam === 'admin' || loginParam === 'superadmin') {
+        document.getElementById('mainAdminModal')?.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    } else if (loginParam === 'eventadmin') {
+        document.getElementById('eventAdminModal')?.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+});
+
+// Global Keyboard Shortcuts:
+// Press Ctrl + Shift + A (or Ctrl + Shift + S) -> Super Admin Login
+// Press Ctrl + Shift + E -> Event Admin Login
+window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 's')) {
+        e.preventDefault();
+        document.getElementById('mainAdminModal')?.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        document.getElementById('eventAdminModal')?.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+});
+
+/* ── Event Admin Login ── */
+async function loginEventAdmin() {
+    const eventId = document.getElementById('eaEventSelect').value;
+    const password = document.getElementById('eaPassword').value;
+    const errEl = document.getElementById('eaError');
+    const btn = document.querySelector('#eventAdminModal .admin-login-btn');
+
+    if (!eventId) {
+        errEl.textContent = 'Please select an event';
+        return;
+    }
+    if (!password) {
+        errEl.textContent = 'Please enter the password';
+        return;
+    }
+
+    // Show loading
+    btn.querySelector('.admin-btn-text').style.display = 'none';
+    btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+    btn.disabled = true;
+    errEl.textContent = '';
+
+    const valid = await verifyEventAdminPassword(eventId, password);
+
+    btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+    btn.querySelector('.admin-btn-loader').style.display = 'none';
+    btn.disabled = false;
+
+    if (valid) {
+        showToast('Login successful! Redirecting...', 'success');
+        sessionStorage.setItem('eventAdminId', eventId);
+        setTimeout(() => { window.location.href = 'event_admin.html?id=' + eventId; }, 500);
+    } else {
+        errEl.textContent = 'Invalid password!';
+        // Shake the card
+        const card = btn.closest('.admin-login-card');
+        card.style.animation = 'none';
+        void card.offsetWidth;
+        card.style.animation = 'shake 0.4s ease';
+        setTimeout(() => card.style.animation = '', 400);
+    }
+}
+
+/* ══════════════════════════════════════
+   MOBILE LOGIN HELPERS
+   ══════════════════════════════════════ */
+
+function toggleMobileLoginMenu(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropdown = document.getElementById('mobileLoginDropdown');
+    dropdown.classList.toggle('open');
+}
+
+function openEventAdminFromMobile(e) {
+    e.preventDefault();
+    document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('mobileLoginDropdown').classList.remove('open');
+    document.getElementById('eventAdminModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function openMainAdminFromMobile(e) {
+    e.preventDefault();
+    document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('mobileLoginDropdown').classList.remove('open');
+    document.getElementById('mainAdminModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+/* ── Main Admin Login ── */
+async function loginMainAdmin() {
+    const password = document.getElementById('maPassword').value;
+    const errEl = document.getElementById('maError');
+    const btn = document.querySelector('#mainAdminModal .admin-login-btn');
+
+    if (!password) {
+        errEl.textContent = 'Please enter the password';
+        return;
+    }
+
+    // Show loading
+    btn.querySelector('.admin-btn-text').style.display = 'none';
+    btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+    btn.disabled = true;
+    errEl.textContent = '';
+
+    const valid = await verifyMainAdminPassword(password);
+
+    btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+    btn.querySelector('.admin-btn-loader').style.display = 'none';
+    btn.disabled = false;
+
+    if (valid) {
+        showToast('Super Admin login successful!', 'success');
+        sessionStorage.setItem('mainAdmin', 'true');
+        setTimeout(() => { window.location.href = 'admin.html'; }, 500);
+    } else {
+        errEl.textContent = 'Invalid password!';
+        const card = btn.closest('.admin-login-card');
+        card.style.animation = 'none';
+        void card.offsetWidth;
+        card.style.animation = 'shake 0.4s ease';
+        setTimeout(() => card.style.animation = '', 400);
+    }
+}

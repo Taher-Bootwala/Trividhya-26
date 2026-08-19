@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment | Trividhya'26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .pay-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            background: #ffffff;
+            position: relative;
+        }
+        .pay-page::before { display: none; }
+
+        .pay-container {
+            position: relative;
+            z-index: 1;
+            max-width: 500px;
+            width: 100%;
+        }
+        .pay-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            color: #000000 !important;
+        }
+        .pay-event-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border: 2px solid #000000;
+        }
+        .pay-title {
+            font-family: var(--font-heading) !important;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            color: #000000 !important;
+            background: none;
+            -webkit-text-fill-color: #000000 !important;
+        }
+        .pay-subtitle {
+            color: #555555 !important;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            font-family: var(--font-body);
+        }
+        .pay-amount {
+            background: #f8f9fa !important;
+            padding: 1rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1.5px solid #000000 !important;
+            color: #000000 !important;
+        }
+        .pay-amount-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666666 !important;
+            margin-bottom: 0.3rem;
+            font-family: var(--font-body);
+        }
+        .pay-amount-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #000000 !important;
+            background: none;
+            -webkit-text-fill-color: #000000 !important;
+            font-family: var(--font-heading);
+        }
+        .pay-options {
+            display: grid;
+            gap: 1rem;
+        }
+        .pay-option-btn {
+            width: 100%;
+            padding: 1.1rem;
+            border-radius: 50px;
+            font-family: var(--font-body) !important;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.3s ease;
+            border: 2px solid #000000 !important;
+        }
+        .pay-online-btn {
+            background: #000000 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .pay-online-btn:hover {
+            background: #ffffff !important;
+            color: #000000 !important;
+            border-color: #000000 !important;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .pay-cash-btn {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .pay-cash-btn:hover {
+            background: #000000 !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+        }
+
+        /* Success / Message States */
+        .pay-result {
+            display: none;
+            text-align: center;
+            padding: 2rem 0;
+        }
+        .pay-result.show { display: block; }
+        .pay-result-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .pay-result-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-heading) !important;
+            color: #000000 !important;
+        }
+        .pay-result-desc {
+            color: #555555 !important;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            font-family: var(--font-body);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Confetti */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-100px) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .pay-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #000000 !important;
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.6rem 1.4rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: var(--font-body);
+            transition: all 0.3s ease;
+        }
+        .pay-back-btn:hover {
+            color: #ffffff !important;
+            background: #000000 !important;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+
+    <div class="pay-page">
+        <div class="pay-container">
+            <div class="pay-card" id="payCard">
+                <!-- Payment Choice (shown initially) -->
+                <div id="payChoiceSection">
+                    <div id="payLogoArea"></div>
+                    <h1 class="pay-title" id="payEventTitle">Choose Payment</h1>
+                    <p class="pay-subtitle" id="payGroupName"></p>
+                    <div class="pay-amount">
+                        <div class="pay-amount-label">Total Amount</div>
+                        <div class="pay-amount-value" id="payAmountValue">₹0</div>
+                    </div>
+                    <div class="pay-options">
+                        <button class="pay-option-btn pay-online-btn" onclick="showOnlinePaymentFlow()">
+                            <i class="fas fa-credit-card"></i> Pay Online
+                        </button>
+                        <button class="pay-option-btn pay-cash-btn" onclick="payCash()">
+                            <i class="fas fa-money-bill-wave"></i> Pay at Registration Desk
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Online Payment Flow -->
+                <div id="payOnlineSection" style="display:none;">
+                    <h2 class="pay-title">Scan QR to Pay</h2>
+                    <p class="pay-subtitle">Please pay <strong id="payOnlineAmount" style="color:#000000;">₹0</strong> and verify payment with the admin for confirmed registration.</p>
+                    
+                    <div style="background:#fff; padding:10px; border-radius:15px; display:inline-block; margin-bottom:1.5rem; border:2px solid #000000; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+                        <img id="paymentQrImg" src="" alt="Payment QR Code" style="width:200px; height:200px; object-fit:contain; display:block;">
+                        <div id="qrLoadingText" style="color:#000; padding:40px 0; display:none;"><i class="fas fa-spinner fa-spin"></i> Loading QR...</div>
+                    </div>
+
+                    <div style="text-align:left; margin-bottom:1.5rem;">
+                        <label style="display:block; font-size:0.8rem; color:#333333; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.4rem; font-weight:600; font-family:var(--font-body);">Transaction ID</label>
+                        <input type="text" id="transactionIdInput" placeholder="Enter 12-digit Transaction ID" maxlength="12" pattern="[0-9]{12}" style="width:100%; padding:0.85rem 1rem; background:#ffffff; border:2px solid #000000; border-radius:12px; color:#000000; font-family:var(--font-body) !important; outline:none; font-size:0.92rem;">
+                        <p id="txnErrorMsg" style="color:#ff4757; font-size:0.8rem; margin-top:0.4rem; display:none; font-family:var(--font-body);">Please enter a valid 12-digit transaction ID.</p>
+                    </div>
+
+                    <div class="pay-options">
+                        <button class="pay-option-btn pay-online-btn" id="submitOnlineBtn" onclick="submitOnlinePayment()">
+                            <i class="fas fa-check-circle"></i> Submit Payment Details
+                        </button>
+                        <button class="pay-option-btn pay-cash-btn" onclick="goBackToChoices()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Success Result -->
+                <div class="pay-result" id="paySuccess">
+                    <div class="pay-result-icon">✅</div>
+                    <h2 class="pay-result-title" style="color:#2ed573;">Registered Successfully!</h2>
+                    <p class="pay-result-desc">
+                        Your payment has been confirmed and your team is now registered.<br>
+                        <strong>See you at the event! 🎉</strong>
+                    </p>
+                    <a href="index.html" class="pay-back-btn">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+
+                <!-- Cash Result -->
+                <div class="pay-result" id="payCashResult">
+                    <div class="pay-result-icon">💵</div>
+                    <h2 class="pay-result-title" style="color:var(--gold);">Pay at the Desk</h2>
+                    <p class="pay-result-desc">
+                        Please <strong>pay the amount to the registration desk</strong> for your team confirmation.<br><br>
+                        Once the payment is received, the event admin will approve your registration. You'll be officially registered after approval.
+                    </p>
+                    <a href="index.html" class="pay-back-btn">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+
+                <!-- Error Result -->
+                <div class="pay-result" id="payError">
+                    <div class="pay-result-icon">❌</div>
+                    <h2 class="pay-result-title" style="color:#ff4757;">Registration Failed</h2>
+                    <p class="pay-result-desc" id="payErrorMsg">Something went wrong. Please try again.</p>
+                    <div style="display:flex; flex-direction:column; gap:0.8rem; align-items:center;">
+                        <button id="retryBtn" class="pay-option-btn pay-online-btn" style="display:none; max-width:200px;" onclick="retryPayment()">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                        <a href="index.html" class="pay-back-btn">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="payment.js"></script>
+</body>
+</html>

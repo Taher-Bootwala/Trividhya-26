@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Admin | Trividhya'26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-page {
+            min-height: 100vh;
+            background: #ffffff;
+            padding: 5rem 2rem;
+            position: relative;
+        }
+        .admin-page::before { display: none; }
+        
+        /* Containers: White background with black border */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: #ffffff !important;
+            padding: 1.5rem 2rem;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+        .admin-title {
+            font-family: var(--font-heading) !important;
+            font-size: 1.5rem;
+            color: #000000 !important;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .admin-logout {
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            padding: 0.6rem 1.4rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-family: var(--font-body) !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .admin-logout:hover { background: #000000 !important; color: #ffffff !important; transform: translateY(-2px); }
+
+        /* Tabs */
+        .admin-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #000000;
+            padding-bottom: 0;
+            overflow-x: auto;
+            position: relative;
+        }
+        .tab-btn {
+            background: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 50px 50px 0 0;
+            color: #000000;
+            font-family: var(--font-body) !important;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.7rem 1.4rem;
+            position: relative;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: #000000; background: rgba(0,0,0,0.05); }
+        .tab-btn.active { color: #ffffff; background: #000000; border-color: #000000; }
+        .tab-btn.active::after { display: none; }
+        
+        .tab-content { display: none; position: relative; }
+        .tab-content.active { display: block; animation: fadeUp 0.4s ease; }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            border-radius: 20px;
+            padding: 1.5rem;
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+        .stat-icon {
+            font-size: 1.8rem;
+            color: #000000 !important;
+            background: #f0f0f0 !important;
+            width: 60px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 16px;
+            flex-shrink: 0;
+            border: 2px solid #000000 !important;
+        }
+        .stat-info .stat-val { font-size: 1.8rem; font-weight: 800; color: #000000 !important; font-family: var(--font-heading); }
+        .stat-info .stat-lbl { font-size: 0.75rem; color: #555555 !important; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-body); }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Panel Cards & Events Table */
+        .admin-panel-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            padding: 2rem;
+            overflow-x: auto;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+        }
+        .panel-header h3 { font-family: var(--font-heading) !important; color: #000000 !important; }
+        
+        table { width: 100%; border-collapse: collapse; font-family: var(--font-body); color: #000000; }
+        th, td { text-align: left; padding: 1rem; border-bottom: 1px solid rgba(0,0,0,0.12) !important; font-size: 0.85rem; color: #000000 !important; }
+        th { color: #000000 !important; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; font-size: 0.75rem; font-family: var(--font-body); border-bottom: 2px solid #000000 !important; }
+        tbody tr { transition: background 0.2s; }
+        tbody tr:hover { background: rgba(0,0,0,0.04) !important; }
+
+        .action-btn { background: none; border: 1px solid #000000; color: #000000; cursor: pointer; padding: 0.4rem 0.7rem; margin-right: 0.3rem; transition: all 0.3s; border-radius: 8px; font-family: var(--font-body); }
+        .action-btn:hover { color: #ffffff; background: #000000; }
+        .action-btn.edit:hover { color: #ffffff; background: #000000; }
+        .action-btn.delete { border-color: #ff4757; color: #ff4757; }
+        .action-btn.delete:hover { color: #ffffff; background: #ff4757; }
+        .action-btn.pass:hover { color: #ffffff; background: #000000; }
+
+        /* Add Event Form */
+        .add-event-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-label { display: block; font-size: 0.8rem; color: #333333 !important; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-body); font-weight: 600; }
+        .form-input, .form-select { 
+            width: 100%; padding: 0.8rem; border-radius: 12px; 
+            background: #ffffff !important; border: 2px solid #000000 !important; 
+            color: #000000 !important; font-family: var(--font-body) !important; outline: none; transition: border 0.3s, box-shadow 0.3s;
+        }
+        .form-input:focus, .form-select:focus { border-color: #000000; box-shadow: 0 0 0 3px rgba(0,0,0,0.1); }
+
+        /* Loading overlay */
+        .admin-loading { display: flex; align-items: center; justify-content: center; padding: 4rem; color: #555555; font-family: var(--font-body); }
+        .admin-loading i { font-size: 2rem; animation: spin 1s linear infinite; margin-right: 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .add-event-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position:fixed;top:1.5rem;right:1.5rem;z-index:99999;display:flex;flex-direction:column;gap:0.8rem;pointer-events:none;"></div>
+
+    <!-- Confirm Dialog -->
+    <div class="modal-overlay" id="confirmDialog">
+        <div class="confirm-box">
+            <div class="confirm-icon" id="confirmIcon">⚠️</div>
+            <h3 class="confirm-title" id="confirmTitle">Are you sure?</h3>
+            <p class="confirm-desc" id="confirmDesc"></p>
+            <div class="confirm-btns">
+                <button class="confirm-cancel" id="confirmCancel" onclick="closeConfirm(false)">Cancel</button>
+                <button class="confirm-ok" id="confirmOk" onclick="closeConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-page">
+        <div class="admin-header">
+            <div class="admin-title">
+                <i class="fas fa-user-shield"></i> 
+                <span>Main Admin Panel</span>
+            </div>
+            <a href="#" class="admin-logout" onclick="logoutAdmin()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+
+        <!-- TABS -->
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-bar" style="margin-right:0.4rem;"></i>Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('events', this)"><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i>Events</button>
+            <button class="tab-btn" onclick="switchTab('add', this)"><i class="fas fa-plus-circle" style="margin-right:0.4rem;"></i>Add Event</button>
+            <button class="tab-btn" onclick="switchTab('game-details', this)"><i class="fas fa-gamepad" style="margin-right:0.4rem;"></i>Game Details</button>
+            <button class="tab-btn" onclick="switchTab('event-details', this)"><i class="fas fa-calendar-check" style="margin-right:0.4rem;"></i>Event Details</button>
+            <button class="tab-btn" onclick="switchTab('settings', this)"><i class="fas fa-cog" style="margin-right:0.4rem;"></i>Site Settings</button>
+        </div>
+
+        <!-- TAB: DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="stat-info"><div class="stat-val" id="stEvents">--</div><div class="stat-lbl">Total Events</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color:#2ed573;background:rgba(46,213,115,0.15);"><i class="fas fa-users"></i></div>
+                    <div class="stat-info"><div class="stat-val" id="stRegs">--</div><div class="stat-lbl">Total Teams</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color:var(--gold);background:rgba(255,215,0,0.15);"><i class="fas fa-rupee-sign"></i></div>
+                    <div class="stat-info"><div class="stat-val" id="stRev">--</div><div class="stat-lbl">Total Revenue</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color:#ffa502;background:rgba(255,165,2,0.15);"><i class="fas fa-clock"></i></div>
+                    <div class="stat-info"><div class="stat-val" id="stPending">--</div><div class="stat-lbl">Pending Cash</div></div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title"><i class="fas fa-chart-bar"></i> Registrations per Event</div>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="chartRegsPerEvent"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title"><i class="fas fa-chart-pie"></i> Revenue Distribution</div>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="chartRevenue"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="charts-grid" style="grid-template-columns: 1fr;">
+                <div class="chart-card">
+                    <div class="chart-title"><i class="fas fa-chart-line"></i> Registration Trends (Last 7 Days)</div>
+                    <div style="position: relative; height: 180px; width: 100%;">
+                        <canvas id="chartTrends"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: EVENTS -->
+        <div id="tab-events" class="tab-content">
+            <div class="admin-panel-card">
+                <div class="panel-header">
+                    <h3 style="font-size: 1.2rem;"><i class="fas fa-list" style="color:var(--accent);margin-right:0.5rem;"></i>Manage Events</h3>
+                    <input type="text" id="evSearchBox" class="form-input" placeholder="Search events..." style="width:250px;" onkeyup="filterEventsTable()">
+                </div>
+                <table id="eventsTable">
+                    <thead>
+                        <tr>
+                            <th>Logo</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Fee</th>
+                            <th>Team Size</th>
+                            <th>Visibility</th>
+                            <th>Manage</th>
+                        </tr>
+                    </thead>
+                    <tbody id="evTableBody">
+                        <tr><td colspan="7" class="admin-loading"><i class="fas fa-spinner"></i> Loading events...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: ADD EVENT -->
+        <div id="tab-add" class="tab-content">
+            <div class="admin-panel-card" style="max-width: 800px; margin: 0 auto;">
+                <h3 style="margin-bottom: 2rem; color: var(--accent);"><i class="fas fa-plus-circle"></i> Create New Event</h3>
+                
+                <div class="add-event-grid">
+                    <div class="form-group">
+                        <label class="form-label">Event Title *</label>
+                        <input type="text" id="addTitle" class="form-input" placeholder="e.g. Robo Wars">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select id="addCat" class="form-select">
+                            <option value="tech">Tech Event</option>
+                            <option value="nontech">Non-Tech Event</option>
+                            <option value="game">Game / ESports</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Event Type *</label>
+                        <select id="addType" class="form-select">
+                            <option value="individual">Individual (Solo)</option>
+                            <option value="group">Group / Team</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Members *</label>
+                        <input type="number" id="addMembers" class="form-input" value="1" min="1">
+                        <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">1 = Solo event</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fee (₹) *</label>
+                        <input type="number" id="addFee" class="form-input" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Theme Color</label>
+                        <input type="color" id="addColor" class="form-input" value="#7B2FBE" style="height:45px;padding:0.2rem;">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Event Logo (Image) *</label>
+                        <input type="file" id="addLogo" class="form-input" accept="image/*" style="padding:0.6rem;" onchange="previewLogo(this)">
+                        <div id="logoPreview" style="margin-top:0.8rem; display:none;">
+                            <img id="logoPreviewImg" style="width:80px; height:80px; object-fit:cover; border-radius:12px; border:2px solid rgba(123,47,190,0.4);">
+                        </div>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Description</label>
+                        <textarea id="addDesc" class="form-input" rows="4" placeholder="Event description..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Event Admin Password *</label>
+                        <input type="text" id="addPass" class="form-input" placeholder="e.g. robowars123">
+                        <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Used by event coordinators to login.</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn-primary" id="createEventBtn" style="width: 100%; border-radius: 12px; justify-content: center; padding: 1rem;" onclick="submitNewEvent()">
+                        <i class="fas fa-save"></i> Create Event
+                    </button>
+                    <p id="addError" style="color:#ff4757;display:none; text-align:center; margin-top:1rem; font-size:0.85rem;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: GAME DETAILS -->
+        <div id="tab-game-details" class="tab-content">
+            <div class="admin-panel-card">
+                <div class="panel-header">
+                    <h3 style="font-size: 1.2rem;"><i class="fas fa-gamepad" style="color:var(--accent);margin-right:0.5rem;"></i>Game Registration Details</h3>
+                </div>
+                <div id="gameDetailsContainer">
+                    <div class="admin-loading"><i class="fas fa-spinner"></i> Loading game details...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: EVENT DETAILS -->
+        <div id="tab-event-details" class="tab-content">
+            <div class="admin-panel-card">
+                <div class="panel-header">
+                    <h3 style="font-size: 1.2rem;"><i class="fas fa-calendar-check" style="color:var(--accent);margin-right:0.5rem;"></i>Event Registration Details</h3>
+                </div>
+                <div id="eventDetailsContainer">
+                    <div class="admin-loading"><i class="fas fa-spinner"></i> Loading event details...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: SITE SETTINGS -->
+        <div id="tab-settings" class="tab-content">
+            <div class="admin-panel-card" style="max-width: 700px; margin: 0 auto;">
+                <h3 style="margin-bottom: 2rem; color: var(--gold);"><i class="fas fa-cog"></i> Homepage Settings</h3>
+                <p style="color:var(--muted); font-size:0.85rem; margin-bottom:2rem;">Change the details displayed on the main homepage. Changes reflect instantly on reload.</p>
+                
+                <div class="add-event-grid">
+                    <div class="form-group">
+                        <label class="form-label">Navbar Title</label>
+                        <input type="text" id="setNavbarTitle" class="form-input" placeholder="e.g. TRIVIDHYA'26">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hero Title</label>
+                        <input type="text" id="setHeroTitle" class="form-input" placeholder="e.g. TECH-FIESTA'26">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Event Dates</label>
+                        <input type="text" id="setEventDates" class="form-input" placeholder="e.g. March 23 & 25, 2026">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Event Venue</label>
+                        <input type="text" id="setEventVenue" class="form-input" placeholder="e.g. GEC Dahod">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Online Payment QR Code</label>
+                        <input type="file" id="setQrUrl" class="form-input" accept="image/*" onchange="previewQrCode(this)">
+                        <div id="qrPreviewArea" style="margin-top:0.8rem; display:none;">
+                            <img id="qrPreviewImg" src="" style="width:120px; height:120px; object-fit:contain; border-radius:10px; background:#fff; padding:5px; border:2px solid var(--accent);">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <button class="btn-primary" id="saveSettingsBtn" style="width: 100%; border-radius: 12px; justify-content: center; padding: 1rem; background: linear-gradient(135deg, #FFD700, #FF6B35);" onclick="updateSiteSettings()">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                    <p id="settingsMsg" style="display:none; text-align:center; margin-top:1rem; font-size:0.85rem;"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
