@@ -245,19 +245,122 @@ function renderCards(data, gridId) {
     if (typeof AOS !== 'undefined' && !isMobile) AOS.refresh();
 }
 
+/* ── Pagination State ── */
+let currentCat = 'all';
+let currentSubType = 'all';
+let evPage = 1;
+let gmPage = 1;
+const PER_PAGE = 8;
+
+/* ── Filtered Events ── */
+function getFilteredEvents() {
+    const searchVal = (document.getElementById('eventSearchInput')?.value || '').toLowerCase().trim();
+    return ALL_EVENTS.filter(ev => {
+        const catMatch = (currentCat === 'all' || ev.category === currentCat);
+        const typeMatch = (currentSubType === 'all' || ev.type === currentSubType);
+        const title = (ev.title || '').toLowerCase();
+        const desc = (ev.description || '').toLowerCase();
+        const searchMatch = !searchVal || title.includes(searchVal) || desc.includes(searchVal);
+        return catMatch && typeMatch && searchMatch;
+    });
+}
+
+/* ── Render Events Section ── */
+function renderEventsSection() {
+    const filtered = getFilteredEvents();
+    const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
+    if (evPage > totalPages) evPage = 1;
+    if (evPage < 1) evPage = 1;
+
+    const startIdx = (evPage - 1) * PER_PAGE;
+    const pageData = filtered.slice(startIdx, startIdx + PER_PAGE);
+
+    renderCards(pageData, 'evGrid');
+    renderPaginationUI('evPagination', totalPages, evPage, (newPage) => {
+        evPage = newPage;
+        renderEventsSection();
+        const evSec = document.getElementById('events');
+        if (evSec) evSec.scrollIntoView({ behavior: 'smooth' });
+    });
+}
+
+/* ── Render Games Section ── */
+function renderGamesSection() {
+    const totalPages = Math.ceil(ALL_GAMES.length / PER_PAGE) || 1;
+    if (gmPage > totalPages) gmPage = 1;
+    if (gmPage < 1) gmPage = 1;
+
+    const startIdx = (gmPage - 1) * PER_PAGE;
+    const pageData = ALL_GAMES.slice(startIdx, startIdx + PER_PAGE);
+
+    renderCards(pageData, 'gmGrid');
+    renderPaginationUI('gmPagination', totalPages, gmPage, (newPage) => {
+        gmPage = newPage;
+        renderGamesSection();
+        const gmSec = document.getElementById('games');
+        if (gmSec) gmSec.scrollIntoView({ behavior: 'smooth' });
+    });
+}
+
+/* ── Render Pagination UI ── */
+function renderPaginationUI(containerId, totalPages, currentPage, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = `<div class="pagination-wrapper">`;
+    
+    const prevDisabled = currentPage === 1;
+    html += `<button class="page-btn prev-btn ${prevDisabled ? 'disabled' : ''}" ${prevDisabled ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i> Prev
+             </button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-num ${i === currentPage ? 'active' : ''}">${i}</button>`;
+    }
+
+    const nextDisabled = currentPage === totalPages;
+    html += `<button class="page-btn next-btn ${nextDisabled ? 'disabled' : ''}" ${nextDisabled ? 'disabled' : ''}>
+                Next <i class="fas fa-chevron-right"></i>
+             </button>`;
+
+    html += `</div>`;
+    container.innerHTML = html;
+
+    const prevBtn = container.querySelector('.prev-btn');
+    if (prevBtn && !prevDisabled) {
+        prevBtn.addEventListener('click', () => onPageChange(currentPage - 1));
+    }
+
+    const nextBtn = container.querySelector('.next-btn');
+    if (nextBtn && !nextDisabled) {
+        nextBtn.addEventListener('click', () => onPageChange(currentPage + 1));
+    }
+
+    container.querySelectorAll('.page-num').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const pageNum = parseInt(e.target.textContent, 10);
+            if (pageNum !== currentPage) {
+                onPageChange(pageNum);
+            }
+        });
+    });
+}
+
 /* ── Load with skeleton delay ── */
 showSkeletons(6);
 loadEvents().then(() => {
     document.getElementById('skelGrid').style.display = 'none';
     document.getElementById('evGrid').style.display   = 'grid';
-    renderCards(ALL_EVENTS, 'evGrid');
-    renderCards(ALL_GAMES,  'gmGrid');
+    renderEventsSection();
+    renderGamesSection();
 });
 
 /* ── Filter ── */
-let currentCat = 'all';
-let currentSubType = 'all';
-
 function filterEvent(cat, btn) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -267,28 +370,24 @@ function filterEvent(cat, btn) {
     const subFilters = document.getElementById('subFilters');
     subFilters.classList.add('show');
     document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.sub-filter-btn').classList.add('active');
+    const firstSubBtn = document.querySelector('.sub-filter-btn');
+    if (firstSubBtn) firstSubBtn.classList.add('active');
 
-    applyFilters();
+    evPage = 1;
+    renderEventsSection();
 }
 
 function filterSubType(type, btn) {
     document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentSubType = type;
-    applyFilters();
+    evPage = 1;
+    renderEventsSection();
 }
 
 function applyFilters() {
-    const searchVal = (document.getElementById('eventSearchInput')?.value || '').toLowerCase().trim();
-    document.querySelectorAll('#evGrid .event-card').forEach(c => {
-        const catMatch = (currentCat === 'all' || c.dataset.cat === currentCat);
-        const typeMatch = (currentSubType === 'all' || c.dataset.type === currentSubType);
-        const title = c.querySelector('.card-title')?.textContent?.toLowerCase() || '';
-        const searchMatch = !searchVal || title.includes(searchVal);
-        c.style.display = (catMatch && typeMatch && searchMatch) ? '' : 'none';
-    });
-    if (typeof AOS !== 'undefined') AOS.refresh();
+    evPage = 1;
+    renderEventsSection();
 }
 
 /* ── Modal ── */
@@ -472,6 +571,63 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('eventAdminModal')?.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
+
+    // Initialize Hamburger 3-Bar Navigation
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const navLinks = document.getElementById('navLinks');
+    const navbar = document.getElementById('navbar');
+
+    if (hamburgerBtn && navLinks) {
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hamburgerBtn.classList.toggle('active');
+            navLinks.classList.toggle('open');
+            if (navbar) navbar.classList.toggle('open');
+            const icon = hamburgerBtn.querySelector('i');
+            if (icon) {
+                if (navLinks.classList.contains('open')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-xmark');
+                } else {
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        });
+
+        // Close menu when clicking navigation links
+        document.querySelectorAll('#navLinks .nav-icon-link:not(.mobile-login-toggle)').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('open');
+                if (navbar) navbar.classList.remove('open');
+                hamburgerBtn.classList.remove('active');
+                const icon = hamburgerBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                }
+            });
+        });
+
+        // Close menu on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#navbar')) {
+                navLinks.classList.remove('open');
+                if (navbar) navbar.classList.remove('open');
+                hamburgerBtn.classList.remove('active');
+                const icon = hamburgerBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                }
+                const dropdown = document.getElementById('mobileLoginDropdown');
+                if (dropdown) {
+                    dropdown.classList.remove('open');
+                    dropdown.classList.remove('show');
+                }
+            }
+        });
+    }
 });
 
 // Global Keyboard Shortcuts:
@@ -541,12 +697,24 @@ function toggleMobileLoginMenu(e) {
     e.stopPropagation();
     const dropdown = document.getElementById('mobileLoginDropdown');
     dropdown.classList.toggle('open');
+    dropdown.classList.toggle('show');
 }
 
 function openEventAdminFromMobile(e) {
     e.preventDefault();
     document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('navbar')?.classList.remove('open');
     document.getElementById('mobileLoginDropdown').classList.remove('open');
+    document.getElementById('mobileLoginDropdown').classList.remove('show');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    if (hamburgerBtn) {
+        hamburgerBtn.classList.remove('active');
+        const icon = hamburgerBtn.querySelector('i');
+        if (icon) {
+            icon.classList.remove('fa-xmark');
+            icon.classList.add('fa-bars');
+        }
+    }
     document.getElementById('eventAdminModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
@@ -554,7 +722,18 @@ function openEventAdminFromMobile(e) {
 function openMainAdminFromMobile(e) {
     e.preventDefault();
     document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('navbar')?.classList.remove('open');
     document.getElementById('mobileLoginDropdown').classList.remove('open');
+    document.getElementById('mobileLoginDropdown').classList.remove('show');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    if (hamburgerBtn) {
+        hamburgerBtn.classList.remove('active');
+        const icon = hamburgerBtn.querySelector('i');
+        if (icon) {
+            icon.classList.remove('fa-xmark');
+            icon.classList.add('fa-bars');
+        }
+    }
     document.getElementById('mainAdminModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
