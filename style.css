@@ -1152,35 +1152,35 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         /* ───── NEW ENHANCEMENTS ───── */
         #loader {
-            position: fixed; inset: 0; background: var(--dark); z-index: 99999;
+            position: fixed; inset: 0; background: #ffffff; z-index: 99999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.5s, visibility 0.5s, background 0.8s;
         }
         #loader.hidden { opacity: 0; visibility: hidden; }
         #loader h2 {
-            font-family: 'Orbitron', monospace;
+            font-family: var(--font-heading), sans-serif !important;
             font-size: 2.5rem;
             margin-bottom: 1rem;
             letter-spacing: 0.05em;
             display: inline-block;
-            color: #ffffff;
+            color: #000000 !important;
             background: none;
-            -webkit-text-fill-color: #ffffff;
+            -webkit-text-fill-color: #000000 !important;
         }
         #loader h2 span {
             opacity: 0;
             display: inline-block;
             transition: opacity 0.2s ease-out;
-            color: inherit;
+            color: #000000 !important;
             background: none;
-            -webkit-text-fill-color: currentColor;
+            -webkit-text-fill-color: #000000 !important;
         }
         #loader h2 span.visible { opacity: 1; }
         @keyframes fadeInLetter { 0% { opacity: 0; } 100% { opacity: 1; } }
-        .loader-text { color: var(--muted); font-size: 1.2rem; font-weight: 500; letter-spacing: 2px; }
+        .loader-text { color: #555555; font-size: 1.2rem; font-weight: 500; letter-spacing: 2px; }
         
-        .progress-container { width: 250px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 1.5rem; overflow: hidden; position: relative; }
-        .progress-bar { width: 0%; height: 100%; background: var(--grad); transition: width 0.15s linear; border-radius: 10px; }
+        .progress-container { width: 250px; height: 6px; background: rgba(0,0,0,0.1); border-radius: 10px; margin-top: 1.5rem; overflow: hidden; position: relative; }
+        .progress-bar { width: 0%; height: 100%; background: #000000; transition: width 0.15s linear; border-radius: 10px; }
 
         .cyber-grid {
             position: fixed; inset: 0; z-index: -1; pointer-events: none;
