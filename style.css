@@ -288,13 +288,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         .hero-bg { display: none; }
 
-        .particles { position: absolute; inset: 0; overflow: hidden; }
-
-        .particle {
-            position: absolute; border-radius: 50%;
-            animation: floatUp linear infinite; opacity: 0;
-            background: rgba(0,0,0,0.08);
-        }
+        .particles, .particle { display: none !important; }
 
         @keyframes floatUp {
             0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
@@ -1636,6 +1630,10 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
                 height: 38px;
             }
         }
+
+        .confirm-box {
+            background: #ffffff;
+            border: 2px solid #000000;
             border-radius: 22px;
             padding: 2.5rem 2rem;
             max-width: 400px;

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Managers Portal | Trividhya'26</title>
+    <meta name="description" content="Event Managers, Coordinators, and Volunteers Portal for Trividhya'26 — GEC Dahod.">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .mgr-page {
+            min-height: 100vh;
+            padding: 5rem 1.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .mgr-back {
+            position: fixed;
+            top: 1.2rem;
+            left: 1.5rem;
+            color: #000000 !important;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+            transition: all 0.3s ease;
+            background: #ffffff !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            border: 2px solid #000000 !important;
+            font-family: var(--font-body);
+            font-weight: 600;
+        }
+        .mgr-back:hover { color: #ffffff !important; background: #000000 !important; transform: translateY(-2px); }
+
+        .mgr-container {
+            width: 100%;
+            max-width: 900px;
+            z-index: 1;
+        }
+
+        .mgr-header-card {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2rem;
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            color: #000000 !important;
+        }
+
+        .mgr-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(123, 47, 190, 0.08);
+            color: #7B2FBE;
+            border: 1.5px solid #7B2FBE;
+            padding: 0.35rem 1rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .mgr-title {
+            font-family: var(--font-heading) !important;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.6rem;
+            color: #000000 !important;
+        }
+
+        .mgr-sub {
+            color: #555555;
+            font-size: 0.92rem;
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Login Card */
+        .mgr-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            padding: 2.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2.5rem;
+            color: #000000 !important;
+        }
+
+        .mgr-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-heading) !important;
+            color: #000000 !important;
+            border-bottom: 2px dashed #eee;
+            padding-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.4rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #333333 !important;
+            margin-bottom: 0.45rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-body);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            border-radius: 12px;
+            color: #000000 !important;
+            font-family: var(--font-body) !important;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: #000000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        .pass-wrapper {
+            position: relative;
+        }
+        .pass-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        /* Selected Event Staff Preview Box */
+        .staff-preview-box {
+            background: #f8f9fa;
+            border: 1.5px solid #000000;
+            border-radius: 16px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .staff-preview-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .staff-preview-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1.5px solid #000;
+        }
+
+        .staff-preview-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #000;
+            font-family: var(--font-heading);
+        }
+
+        .staff-preview-info {
+            font-size: 0.83rem;
+            line-height: 1.6;
+        }
+
+        .mgr-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #000000 !important;
+            border: 2px solid #000000 !important;
+            border-radius: 50px;
+            color: #ffffff !important;
+            font-family: var(--font-body) !important;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .mgr-btn:hover {
+            background: #ffffff !important;
+            color: #000000 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+        .mgr-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .mgr-error {
+            color: #ff4757;
+            font-size: 0.85rem;
+            margin-top: 0.8rem;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+        }
+
+        /* Directory Section */
+        .directory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 1.2rem;
+            margin-top: 1.2rem;
+        }
+
+        .dir-card {
+            background: #f8f9fa;
+            border: 1.5px solid #000000;
+            border-radius: 16px;
+            padding: 1.2rem;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .dir-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border-color: #7B2FBE;
+        }
+
+        .dir-card-top {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+        .dir-card-logo {
+            width: 42px;
+            height: 42px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1.5px solid #000;
+        }
+        .dir-card-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #000;
+            line-height: 1.2;
+        }
+        .dir-card-cat {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7B2FBE;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .dir-staff-info {
+            font-size: 0.8rem;
+            color: #333;
+            margin-bottom: 1rem;
+            background: #ffffff;
+            padding: 0.8rem;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .dir-login-btn {
+            width: 100%;
+            padding: 0.5rem 0.8rem;
+            background: #ffffff;
+            border: 1.5px solid #000;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        .dir-login-btn:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="mgr-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="mgr-page">
+        <div class="mgr-container">
+            
+            <!-- Header Card -->
+            <div class="mgr-header-card">
+                <div class="mgr-badge"><i class="fas fa-user-shield"></i> Official Organizer Portal</div>
+                <h1 class="mgr-title">Event Managers & Staff Login</h1>
+                <p class="mgr-sub">Welcome Coordinators & Volunteers! Select your assigned event and enter your event password to access your event dashboard.</p>
+            </div>
+
+            <!-- Login Form Card -->
+            <div class="mgr-card">
+                <div class="mgr-card-title">
+                    <i class="fas fa-sign-in-alt" style="color:#7B2FBE;"></i> Manager Login
+                </div>
+
+                <form id="mgrLoginForm" onsubmit="handleManagerLogin(event)">
+                    <!-- Select Event -->
+                    <div class="form-group">
+                        <label class="form-label">1. Select Your Event *</label>
+                        <select id="mgrEventSelect" class="form-select" onchange="onEventSelected(this.value)" required>
+                            <option value="" disabled selected>-- Select an Event --</option>
+                        </select>
+                    </div>
+
+                    <!-- Selected Event Staff Preview -->
+                    <div class="staff-preview-box" id="staffPreviewBox">
+                        <div class="staff-preview-header">
+                            <img id="prevLogo" src="" class="staff-preview-logo" alt="Event Logo">
+                            <div>
+                                <div id="prevTitle" class="staff-preview-title">Event Name</div>
+                                <div id="prevBadge" style="font-size:0.75rem; color:#7B2FBE; font-weight:600; text-transform:uppercase;">Category</div>
+                            </div>
+                        </div>
+                        <div class="staff-preview-info">
+                            <div style="margin-bottom:0.4rem; font-weight:600;">
+                                <i class="fas fa-user-tie" style="margin-right:0.3rem;"></i>Coordinators:
+                                <span id="prevCoords" style="font-weight:400; color:#444;">—</span>
+                            </div>
+                            <div style="font-weight:600;">
+                                <i class="fas fa-hands-helping" style="margin-right:0.3rem;"></i>Volunteers:
+                                <span id="prevVolun" style="font-weight:400; color:#444;">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="form-group">
+                        <label class="form-label">2. Enter Event Password *</label>
+                        <div class="pass-wrapper">
+                            <input type="password" id="mgrPassword" class="form-input" placeholder="e.g. eventname123" required>
+                            <button type="button" class="pass-toggle" onclick="togglePassVisibility()">
+                                <i class="fas fa-eye" id="passIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p id="mgrError" class="mgr-error"></p>
+
+                    <button type="submit" class="mgr-btn" id="mgrLoginBtn">
+                        <i class="fas fa-sign-in-alt"></i> Login to Event Dashboard
+                    </button>
+                </form>
+            </div>
+
+            <!-- Directory Card -->
+            <div class="mgr-card" style="padding: 2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+                    <div>
+                        <h2 style="font-size:1.15rem; font-weight:700; font-family:var(--font-heading); color:#000;">
+                            <i class="fas fa-users-cog" style="color:#7B2FBE; margin-right:0.4rem;"></i> Event Coordinators & Volunteers Directory
+                        </h2>
+                        <p style="font-size:0.8rem; color:#666; margin-top:2px;">Quick reference guide for all events and assigned staff.</p>
+                    </div>
+                    <input type="text" id="dirSearchInput" class="form-input" placeholder="Search event or staff name..." style="width:250px; padding:0.6rem 0.9rem; font-size:0.85rem;" onkeyup="filterDirectory()">
+                </div>
+
+                <div class="directory-grid" id="directoryGrid">
+                    <div style="grid-column: 1 / -1; text-align:center; padding: 2rem; color:#666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:0.5rem;"></i>
+                        <p>Loading directory...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Supabase Config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        let allEventsData = [];
+
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.style.background = type === 'success' ? '#2ed573' : type === 'error' ? '#ff4757' : '#7B2FBE';
+            toast.style.color = '#ffffff';
+            toast.style.padding = '0.8rem 1.2rem';
+            toast.style.borderRadius = '12px';
+            toast.style.fontWeight = '600';
+            toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '0.6rem';
+            toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, duration);
+        }
+
+        async function initPage() {
+            try {
+                allEventsData = await getAllEvents();
+                populateEventSelect(allEventsData);
+                renderDirectory(allEventsData);
+
+                // Auto-select if event ID passed in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const presetId = urlParams.get('id');
+                if (presetId) {
+                    const sel = document.getElementById('mgrEventSelect');
+                    if (sel) {
+                        sel.value = presetId;
+                        onEventSelected(presetId);
+                    }
+                }
+            } catch (err) {
+                console.error('Init error:', err);
+            }
+        }
+
+        function populateEventSelect(events) {
+            const sel = document.getElementById('mgrEventSelect');
+            sel.innerHTML = '<option value="" disabled selected>-- Select an Event --</option>';
+
+            events.forEach(ev => {
+                const opt = document.createElement('option');
+                opt.value = ev.id;
+                opt.textContent = `${ev.title} (${ev.badge || ev.category})`;
+                sel.appendChild(opt);
+            });
+        }
+
+        function onEventSelected(eventId) {
+            const ev = allEventsData.find(e => e.id === eventId);
+            const previewBox = document.getElementById('staffPreviewBox');
+            if (!ev || !previewBox) return;
+
+            document.getElementById('prevLogo').src = ev.logo_url || 'https://via.placeholder.com/50';
+            document.getElementById('prevTitle').textContent = ev.title;
+            document.getElementById('prevBadge').textContent = ev.badge || ev.category;
+            document.getElementById('prevCoords').textContent = ev.coordinators || 'None assigned';
+            document.getElementById('prevVolun').textContent = ev.volunteers || 'None assigned';
+
+            previewBox.style.display = 'block';
+        }
+
+        function togglePassVisibility() {
+            const passInput = document.getElementById('mgrPassword');
+            const passIcon = document.getElementById('passIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                passIcon.className = 'fas fa-eye-slash';
+            } else {
+                passInput.type = 'password';
+                passIcon.className = 'fas fa-eye';
+            }
+        }
+
+        async function handleManagerLogin(e) {
+            e.preventDefault();
+
+            const eventId = document.getElementById('mgrEventSelect').value;
+            const password = document.getElementById('mgrPassword').value.trim();
+            const errEl = document.getElementById('mgrError');
+            const btn = document.getElementById('mgrLoginBtn');
+
+            errEl.style.display = 'none';
+
+            if (!eventId) {
+                errEl.textContent = 'Please select your event first.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (!password) {
+                errEl.textContent = 'Please enter the event password.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying password...';
+
+            const isValid = await verifyEventAdminPassword(eventId, password);
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login to Event Dashboard';
+
+            if (isValid) {
+                showToast('Login Successful! Opening dashboard...', 'success');
+                sessionStorage.setItem('eventAdminId', eventId);
+                setTimeout(() => {
+                    window.location.href = `event_admin.html?id=${eventId}`;
+                }, 400);
+            } else {
+                errEl.textContent = 'Incorrect password! Please check with your Main Admin.';
+                errEl.style.display = 'block';
+                showToast('Invalid password', 'error');
+            }
+        }
+
+        function renderDirectory(events) {
+            const grid = document.getElementById('directoryGrid');
+            if (!grid) return;
+
+            if (events.length === 0) {
+                grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#666;">No events found.</p>';
+                return;
+            }
+
+            grid.innerHTML = events.map(ev => {
+                const logo = ev.logo_url
+                    ? `<img src="${ev.logo_url}" class="dir-card-logo" alt="${ev.title}">`
+                    : `<div class="dir-card-logo" style="background:#7B2FBE; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">${ev.title.charAt(0)}</div>`;
+
+                return `
+                    <div class="dir-card">
+                        <div>
+                            <div class="dir-card-top">
+                                ${logo}
+                                <div>
+                                    <div class="dir-card-title">${ev.title}</div>
+                                    <div class="dir-card-cat">${ev.badge || ev.category}</div>
+                                </div>
+                            </div>
+                            <div class="dir-staff-info">
+                                <div style="margin-bottom:0.3rem;">
+                                    <strong><i class="fas fa-user-tie" style="margin-right:0.3rem;"></i>Coordinators:</strong><br>
+                                    <span style="color:#555;">${ev.coordinators || 'None'}</span>
+                                </div>
+                                <div>
+                                    <strong><i class="fas fa-hands-helping" style="margin-right:0.3rem;"></i>Volunteers:</strong><br>
+                                    <span style="color:#555;">${ev.volunteers || 'None'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="dir-login-btn" onclick="selectEventForLogin('${ev.id}')">
+                            <i class="fas fa-sign-in-alt"></i> Login as ${ev.title}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectEventForLogin(eventId) {
+            const sel = document.getElementById('mgrEventSelect');
+            if (sel) {
+                sel.value = eventId;
+                onEventSelected(eventId);
+                document.getElementById('mgrPassword').focus();
+                window.scrollTo({ top: 100, behavior: 'smooth' });
+            }
+        }
+
+        function filterDirectory() {
+            const search = document.getElementById('dirSearchInput').value.toLowerCase().trim();
+            const filtered = allEventsData.filter(ev => {
+                const titleMatch = ev.title.toLowerCase().includes(search);
+                const coordMatch = (ev.coordinators || '').toLowerCase().includes(search);
+                const volunMatch = (ev.volunteers || '').toLowerCase().includes(search);
+                return titleMatch || coordMatch || volunMatch;
+            });
+            renderDirectory(filtered);
+        }
+
+        window.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>

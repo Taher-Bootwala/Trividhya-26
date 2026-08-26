@@ -41,7 +41,7 @@ function closeConfirm(result) {
 async function initAdmin() {
     const sessionAdminId = sessionStorage.getItem('eventAdminId');
     if (!eventId || sessionAdminId !== eventId) {
-        window.location.href = 'index.html';
+        window.location.href = 'eventmanagers.html';
         return;
     }
 
@@ -714,7 +714,7 @@ function exportCSV() {
 
 function logoutAdmin() {
     sessionStorage.removeItem('eventAdminId');
-    window.location.href = 'index.html';
+    window.location.href = 'eventmanagers.html';
 }
 
 initAdmin();

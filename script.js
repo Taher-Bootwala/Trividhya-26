@@ -147,23 +147,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 
 /* ── Floating Particles ── */
 (function spawnParticles() {
-    const c = document.getElementById('particles');
-    const cols = ['#7B2FBE','#FF6B35','#FFD700','#E91E8C','#00BCD4'];
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-    const particleCount = isMobile ? 0 : 10; // No particles on mobile for better performance
-    for (let i = 0; i < particleCount; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        const s = Math.random() * 8 + 4;
-        Object.assign(p.style, {
-            width: s+'px', height: s+'px',
-            left: Math.random()*100+'%',
-            background: cols[Math.floor(Math.random()*cols.length)],
-            animationDuration: (Math.random()*15+10)+'s',
-            animationDelay: (Math.random()*10)+'s'
-        });
-        c.appendChild(p);
-    }
+    // Particles disabled
 })();
 
 /* ── Countdown ── */
