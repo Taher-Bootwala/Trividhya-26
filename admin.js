@@ -685,8 +685,8 @@ async function renderRegDetails(categories, containerId) {
                 <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(123,47,190,0.15); border-radius:14px; padding:1rem 1.2rem; margin-bottom:0.8rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
                         <div>
-                            <span style="font-weight:700; font-size:0.95rem;">${escapeHtml(r.group_name)}</span>
-                            <span style="color:var(--muted); font-size:0.78rem; margin-left:0.5rem;">by ${escapeHtml(r.leader_name)}</span>
+                            <span style="font-weight:700; font-size:0.95rem;">${r.group_name}</span>
+                            <span style="color:var(--muted); font-size:0.78rem; margin-left:0.5rem;">by ${r.leader_name}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:0.8rem;">
                             <span style="color:var(--muted); font-size:0.78rem;">₹${event.fee}</span>
@@ -696,8 +696,8 @@ async function renderRegDetails(categories, containerId) {
                     <div style="padding-left:0.5rem;">
                         <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
                             <i class="fas fa-crown" style="color:var(--gold); font-size:0.7rem;"></i>
-                            <span style="font-size:0.82rem; font-weight:600;">${escapeHtml(r.leader_name)}</span>
-                            <span style="color:var(--muted); font-size:0.75rem;">${escapeHtml(r.leader_mobile)}</span>
+                            <span style="font-size:0.82rem; font-weight:600;">${r.leader_name}</span>
+                            <span style="color:var(--muted); font-size:0.75rem;">${r.leader_mobile}</span>
                             <span style="color:var(--gold); font-size:0.68rem; font-weight:600;">LEADER</span>
                         </div>
                         ${membersHtml}

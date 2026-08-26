@@ -278,19 +278,4 @@ function compressImageFile(file, maxWidth = 500, maxHeight = 500, quality = 0.8)
         reader.onerror = () => resolve(file);
         reader.readAsDataURL(file);
     });
-// ═══════════════════════════════════════════════════
-//  SECURITY & SANITIZATION HELPER
-// ═══════════════════════════════════════════════════
-
-/**
- * HTML Escaper to prevent Cross-Site Scripting (XSS) when rendering user inputs into innerHTML
- */
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
 }

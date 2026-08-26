@@ -494,14 +494,7 @@
             const previewBox = document.getElementById('staffPreviewBox');
             if (!ev || !previewBox) return;
 
-            const prevLogo = document.getElementById('prevLogo');
-            if (ev.logo_url) {
-                prevLogo.src = ev.logo_url;
-                prevLogo.style.display = 'block';
-            } else {
-                prevLogo.style.display = 'none';
-            }
-
+            document.getElementById('prevLogo').src = ev.logo_url || 'https://via.placeholder.com/50';
             document.getElementById('prevTitle').textContent = ev.title;
             document.getElementById('prevBadge').textContent = ev.badge || ev.category;
             document.getElementById('prevCoords').textContent = ev.coordinators || 'None assigned';
@@ -576,8 +569,8 @@
 
             grid.innerHTML = events.map(ev => {
                 const logo = ev.logo_url
-                    ? `<img src="${ev.logo_url}" class="dir-card-logo" alt="${escapeHtml(ev.title)}">`
-                    : `<div class="dir-card-logo" style="background:#7B2FBE; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">${escapeHtml(ev.title.charAt(0))}</div>`;
+                    ? `<img src="${ev.logo_url}" class="dir-card-logo" alt="${ev.title}">`
+                    : `<div class="dir-card-logo" style="background:#7B2FBE; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">${ev.title.charAt(0)}</div>`;
 
                 return `
                     <div class="dir-card">
@@ -585,23 +578,23 @@
                             <div class="dir-card-top">
                                 ${logo}
                                 <div>
-                                    <div class="dir-card-title">${escapeHtml(ev.title)}</div>
-                                    <div class="dir-card-cat">${escapeHtml(ev.badge || ev.category)}</div>
+                                    <div class="dir-card-title">${ev.title}</div>
+                                    <div class="dir-card-cat">${ev.badge || ev.category}</div>
                                 </div>
                             </div>
                             <div class="dir-staff-info">
                                 <div style="margin-bottom:0.3rem;">
                                     <strong><i class="fas fa-user-tie" style="margin-right:0.3rem;"></i>Coordinators:</strong><br>
-                                    <span style="color:#555;">${escapeHtml(ev.coordinators || 'None')}</span>
+                                    <span style="color:#555;">${ev.coordinators || 'None'}</span>
                                 </div>
                                 <div>
                                     <strong><i class="fas fa-hands-helping" style="margin-right:0.3rem;"></i>Volunteers:</strong><br>
-                                    <span style="color:#555;">${escapeHtml(ev.volunteers || 'None')}</span>
+                                    <span style="color:#555;">${ev.volunteers || 'None'}</span>
                                 </div>
                             </div>
                         </div>
                         <button type="button" class="dir-login-btn" onclick="selectEventForLogin('${ev.id}')">
-                            <i class="fas fa-sign-in-alt"></i> Login as ${escapeHtml(ev.title)}
+                            <i class="fas fa-sign-in-alt"></i> Login as ${ev.title}
                         </button>
                     </div>
                 `;
