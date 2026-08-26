@@ -181,17 +181,13 @@ function switchTab(tabName) {
 }
 
 function updateStats() {
-    if (!currentEvent) return;
     const activeRegs = registrations.filter(r => r.payment_status !== 'deleted' && r.payment_status !== 'cancelled');
     const cancelledRegs = registrations.filter(r => r.payment_status === 'cancelled');
     const deletedRegs = registrations.filter(r => r.payment_status === 'deleted');
 
-    const countActiveEl = document.getElementById('countActive');
-    const countCancelledEl = document.getElementById('countCancelled');
-    const countDeletedEl = document.getElementById('countDeleted');
-    if (countActiveEl) countActiveEl.textContent = activeRegs.length;
-    if (countCancelledEl) countCancelledEl.textContent = cancelledRegs.length;
-    if (countDeletedEl) countDeletedEl.textContent = deletedRegs.length;
+    document.getElementById('countActive').textContent = activeRegs.length;
+    document.getElementById('countCancelled').textContent = cancelledRegs.length;
+    document.getElementById('countDeleted').textContent = deletedRegs.length;
     
     const countEl = document.getElementById('regCount');
     if (countEl) {
@@ -200,34 +196,20 @@ function updateStats() {
         else countEl.textContent = deletedRegs.length;
     }
     
-    const statTotalEl = document.getElementById('statTotal');
-    const statPaidEl = document.getElementById('statPaid');
-    const statPendingEl = document.getElementById('statPending');
-    const statRevEl = document.getElementById('statRev');
-
-    if (statTotalEl) statTotalEl.textContent = activeRegs.length;
+    document.getElementById('statTotal').textContent = activeRegs.length;
     
     const paidCount = activeRegs.filter(r => r.payment_status === 'paid').length;
     const pendingCount = activeRegs.filter(r => r.payment_status === 'pending' && r.payment_mode === 'cash').length;
     
-    if (statPaidEl) statPaidEl.textContent = paidCount;
-    if (statPendingEl) statPendingEl.textContent = pendingCount;
-    if (statRevEl) statRevEl.textContent = '₹' + (paidCount * (currentEvent.fee || 0));
-}
-
-function filterTable() {
-    renderTable();
+    document.getElementById('statPaid').textContent = paidCount;
+    document.getElementById('statPending').textContent = pendingCount;
+    document.getElementById('statRev').textContent = '₹' + (paidCount * currentEvent.fee);
 }
 
 function renderTable() {
     const tbody = document.getElementById('tableBody');
-    if (!tbody) return;
-
-    const searchBoxEl = document.getElementById('searchBox');
-    const statusFilterEl = document.getElementById('statusFilter');
-
-    const term = searchBoxEl ? searchBoxEl.value.toLowerCase().trim() : '';
-    const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
+    const term = document.getElementById('searchBox').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
     
     // Base view filter
     let list = registrations;

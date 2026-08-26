@@ -196,6 +196,24 @@ function showSkeletons(n) {
         </div>`).join('');
 }
 
+/* ── Event Card Helper Functions ── */
+function buildLogoHtml(ev) {
+    if (ev && ev.logo_url) {
+        return `<img src="${ev.logo_url}" alt="${escapeHtml(ev.title || 'Event')}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`;
+    }
+    return `<i class="fas fa-trophy" style="font-size:2.5rem;color:${(ev && ev.color) || '#7B2FBE'};"></i>`;
+}
+
+function feeText(ev) {
+    if (!ev || ev.fee === undefined || ev.fee === null) return 'Free';
+    return ev.fee > 0 ? '₹' + ev.fee : 'Free';
+}
+
+function teamText(ev) {
+    if (!ev) return 'Solo';
+    return ev.max_members > 1 ? ev.max_members + ' Members' : 'Solo';
+}
+
 /* ── Render Cards (Supabase format) ── */
 function renderCards(data, gridId) {
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -338,8 +356,18 @@ function renderPaginationUI(containerId, totalPages, currentPage, onPageChange) 
 /* ── Load with skeleton delay ── */
 showSkeletons(6);
 loadEvents().then(() => {
-    document.getElementById('skelGrid').style.display = 'none';
-    document.getElementById('evGrid').style.display   = 'grid';
+    const skel = document.getElementById('skelGrid');
+    const evG = document.getElementById('evGrid');
+    if (skel) skel.style.display = 'none';
+    if (evG) evG.style.display = 'grid';
+    renderEventsSection();
+    renderGamesSection();
+}).catch(err => {
+    console.error('Error loading events:', err);
+    const skel = document.getElementById('skelGrid');
+    const evG = document.getElementById('evGrid');
+    if (skel) skel.style.display = 'none';
+    if (evG) evG.style.display = 'grid';
     renderEventsSection();
     renderGamesSection();
 });
