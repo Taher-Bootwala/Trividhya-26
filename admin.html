@@ -232,6 +232,10 @@
                     <input type="number" id="editEvMembers" class="form-input" min="1">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Min Members *</label>
+                    <input type="number" id="editEvMinMembers" class="form-input" min="1" value="1">
+                </div>
+                <div class="form-group">
                     <label class="form-label">Fee (₹) *</label>
                     <input type="number" id="editEvFee" class="form-input" min="0">
                 </div>
@@ -395,7 +399,12 @@
                     <div class="form-group">
                         <label class="form-label">Max Members *</label>
                         <input type="number" id="addMembers" class="form-input" value="1" min="1">
-                        <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">1 = Solo event</div>
+                        <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Max team size (1 = Solo)</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Min Members *</label>
+                        <input type="number" id="addMinMembers" class="form-input" value="1" min="1">
+                        <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Min team size required</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Fee (₹) *</label>

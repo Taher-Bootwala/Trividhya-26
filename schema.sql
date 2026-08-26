@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS events (
   type TEXT NOT NULL CHECK (type IN ('individual','group')),
   fee INTEGER DEFAULT 0,
   max_members INTEGER DEFAULT 1,
+  min_members INTEGER DEFAULT 1,
   logo_url TEXT,
   color TEXT DEFAULT '#7B2FBE',
   badge TEXT DEFAULT 'Tech',

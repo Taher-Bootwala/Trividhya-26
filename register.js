@@ -162,8 +162,11 @@ function showDetailsSection() {
 function renderRegistrationForm(ev) {
     const container = document.getElementById('regContainer');
     const isGroup = ev.max_members > 1;
+    const minM = ev.min_members || 1;
     const feeStr = ev.fee > 0 ? '₹' + ev.fee : 'Free';
-    const teamStr = ev.max_members <= 1 ? 'Solo' : ev.max_members + ' Members';
+    const teamStr = ev.max_members <= 1 
+        ? 'Solo' 
+        : (minM > 1 && minM < ev.max_members ? `Min ${minM} - Max ${ev.max_members} Members` : ev.max_members + ' Members');
 
     const logoHtml = ev.logo_url
         ? `<img src="${ev.logo_url}" alt="${ev.title}" class="reg-event-logo">`
@@ -440,6 +443,20 @@ async function handleRegistration(e) {
             return;
         }
         membersData.push({ name, email, mobile, college, enrollment, semester });
+    }
+
+    // MINIMUM PARTICIPANTS FULFILLMENT CHECK (FOR GROUP EVENTS)
+    const isGroup = currentEvent.max_members > 1;
+    const minRequired = currentEvent.min_members || 1;
+    const totalTeamCount = 1 + membersData.length; // Team Leader + Team Members
+    
+    if (isGroup && totalTeamCount < minRequired) {
+        const needed = minRequired - totalTeamCount;
+        errEl.textContent = `This event requires a minimum of ${minRequired} team members (including Leader). Currently you have ${totalTeamCount}. Please add ${needed} more team member(s) to proceed.`;
+        errEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
+        return;
     }
 
     // FINAL DUPLICATE CHECK (MOBILE)

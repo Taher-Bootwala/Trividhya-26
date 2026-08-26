@@ -123,6 +123,13 @@ function renderEventInfo() {
                 <label class="form-label">Fee (₹)</label>
                 <input type="number" id="evFee" class="form-input" value="${currentEvent.fee}">
             </div>
+            ${(currentEvent.max_members > 1 || currentEvent.type === 'group') ? `
+            <div class="form-group">
+                <label class="form-label">Minimum Participants *</label>
+                <input type="number" id="evMinMembers" class="form-input" value="${currentEvent.min_members || 1}" min="1" max="${currentEvent.max_members || 100}">
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Min team members required for registration (including Leader).</div>
+            </div>
+            ` : ''}
             <div class="form-group">
                 <label class="form-label">Description</label>
                 <textarea id="evDesc" class="form-input" rows="4">${currentEvent.description || ''}</textarea>
@@ -662,9 +669,39 @@ async function saveEventInfo() {
         newLogoUrl = urlData.publicUrl;
     }
     
-    const { data, error } = await updateEvent(eventId, {
+    const minMembersEl = document.getElementById('evMinMembers');
+    let minMembers = minMembersEl ? parseInt(minMembersEl.value, 10) : 1;
+
+    if (minMembersEl) {
+        if (isNaN(minMembers) || minMembers < 1) {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            showToast('Minimum participants must be at least 1', 'error');
+            return;
+        }
+        if (currentEvent.max_members && minMembers > currentEvent.max_members) {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            showToast(`Minimum participants (${minMembers}) cannot exceed Max Team Size (${currentEvent.max_members})`, 'error');
+            return;
+        }
+    }
+
+    const updates = {
         title, fee, description: desc, logo_url: newLogoUrl, coordinators, volunteers
-    });
+    };
+    if (minMembersEl) {
+        updates.min_members = minMembers;
+    }
+    
+    let { data, error } = await updateEvent(eventId, updates);
+
+    // Fallback if min_members column does not exist yet in DB table
+    if (error && error.message && error.message.includes('min_members')) {
+        delete updates.min_members;
+        const res = await updateEvent(eventId, updates);
+        error = res.error;
+    }
     
     btn.innerHTML = oldHtml;
     btn.disabled = false;
@@ -680,6 +717,9 @@ async function saveEventInfo() {
     currentEvent.logo_url = newLogoUrl;
     currentEvent.coordinators = coordinators;
     currentEvent.volunteers = volunteers;
+    if (minMembersEl) {
+        currentEvent.min_members = minMembers;
+    }
     
     renderEventInfo();
     updateStats();

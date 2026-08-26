@@ -366,6 +366,7 @@ function openEditEventModal(id) {
     document.getElementById('editEvCat').value = ev.category || 'tech';
     document.getElementById('editEvType').value = ev.type || 'individual';
     document.getElementById('editEvMembers').value = ev.max_members || 1;
+    document.getElementById('editEvMinMembers').value = ev.min_members || 1;
     document.getElementById('editEvFee').value = ev.fee !== undefined ? ev.fee : 0;
     document.getElementById('editEvColor').value = ev.color || '#7B2FBE';
     document.getElementById('editEvCoordinators').value = ev.coordinators || '';
@@ -473,12 +474,13 @@ async function submitEventEdit() {
     if (cat === 'nontech') badge = 'Fun';
     if (cat === 'game') badge = 'Gaming';
 
+    const min = parseInt(document.getElementById('editEvMinMembers')?.value || '1', 10);
     const coordinators = document.getElementById('editEvCoordinators').value.trim();
     const volunteers = document.getElementById('editEvVolunteers').value.trim();
 
     const updates = {
         title, description: desc, category: cat, type, fee,
-        max_members: max, logo_url: logoUrl, color, badge,
+        max_members: max, min_members: min, logo_url: logoUrl, color, badge,
         coordinators, volunteers
     };
 
@@ -486,7 +488,14 @@ async function submitEventEdit() {
         updates.password = pass;
     }
 
-    const { data, error } = await updateEvent(id, updates);
+    let { data, error } = await updateEvent(id, updates);
+
+    // Fallback if min_members column does not exist yet in DB table
+    if (error && error.message && error.message.includes('min_members')) {
+        delete updates.min_members;
+        const res = await updateEvent(id, updates);
+        error = res.error;
+    }
 
     btn.innerHTML = oldHtml;
     btn.disabled = false;
@@ -588,17 +597,25 @@ async function submitNewEvent() {
     if (cat === 'nontech') badge = 'Fun';
     if (cat === 'game') badge = 'Gaming';
 
+    const min = parseInt(document.getElementById('addMinMembers')?.value || '1', 10);
     const coordinators = document.getElementById('addCoordinators').value.trim();
     const volunteers = document.getElementById('addVolunteers').value.trim();
 
     const newEvent = {
         title, description: desc, category: cat, type, fee,
-        max_members: max, logo_url: logoUrl, color, badge,
+        max_members: max, min_members: min, logo_url: logoUrl, color, badge,
         password: pass, is_active: true,
         coordinators, volunteers
     };
 
-    const { data, error } = await createEvent(newEvent);
+    let { data, error } = await createEvent(newEvent);
+
+    // Fallback if min_members column does not exist yet in DB table
+    if (error && error.message && error.message.includes('min_members')) {
+        delete newEvent.min_members;
+        const res = await createEvent(newEvent);
+        error = res.error;
+    }
 
     btn.innerHTML = '<i class="fas fa-save"></i> Create Event';
     btn.disabled = false;
