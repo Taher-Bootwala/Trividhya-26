@@ -399,6 +399,10 @@ function openModal(id) {
     document.getElementById('mDesc').textContent   = ev.description;
     document.getElementById('mFee').textContent    = feeText(ev);
     document.getElementById('mTeam').textContent   = teamText(ev);
+    const coordEl = document.getElementById('mCoords');
+    const volunEl = document.getElementById('mVolunteers');
+    if (coordEl) coordEl.textContent = ev.coordinators || 'TBA';
+    if (volunEl) volunEl.textContent = ev.volunteers || 'TBA';
     document.getElementById('mLink').href          = `register.html?id=${ev.id}`;
     document.getElementById('mLink').removeAttribute('target');
     document.getElementById('modalOverlay').classList.add('open');

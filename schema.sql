@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS events (
   color TEXT DEFAULT '#7B2FBE',
   badge TEXT DEFAULT 'Tech',
   password TEXT,
+  coordinators TEXT,
+  volunteers TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

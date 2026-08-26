@@ -285,16 +285,23 @@ function renderEventsTable() {
             ? `<span style="color:#2ed573;"><i class="fas fa-eye"></i> Active</span>` 
             : `<span style="color:#ff4757;"><i class="fas fa-eye-slash"></i> Hidden</span>`;
 
+        const coordText = ev.coordinators ? `<div style="font-size:0.72rem;color:#555;font-weight:normal;margin-top:2px;"><i class="fas fa-user-tie" style="margin-right:3px;"></i>Coordinators: ${ev.coordinators}</div>` : '';
+        const volunText = ev.volunteers ? `<div style="font-size:0.72rem;color:#555;font-weight:normal;"><i class="fas fa-hands-helping" style="margin-right:3px;"></i>Volunteers: ${ev.volunteers}</div>` : '';
+
         return `
             <tr>
                 <td>${logo}</td>
-                <td style="font-weight:600;">${ev.title}</td>
+                <td style="font-weight:600;">
+                    ${ev.title}
+                    ${coordText}
+                    ${volunText}
+                </td>
                 <td style="text-transform:capitalize;">${ev.category}</td>
                 <td>${fee}</td>
                 <td>${team}</td>
                 <td>${active}</td>
                 <td>
-                    <button class="action-btn edit" onclick="openEditEventModal('${ev.id}')" title="Edit Event & Logo"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn edit" onclick="openEditEventModal('${ev.id}')" title="Edit Event & Staff"><i class="fas fa-edit"></i></button>
                     <button class="action-btn pass" onclick="changePassword('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Change Event Password"><i class="fas fa-key"></i></button>
                     <button class="action-btn edit" onclick="toggleVisibility('${ev.id}', ${ev.is_active})" title="${ev.is_active ? 'Hide Event' : 'Show Event'}"><i class="fas ${ev.is_active ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
                     <button class="action-btn delete" onclick="deleteEv('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Delete Event"><i class="fas fa-trash-alt"></i></button>
@@ -361,6 +368,8 @@ function openEditEventModal(id) {
     document.getElementById('editEvMembers').value = ev.max_members || 1;
     document.getElementById('editEvFee').value = ev.fee !== undefined ? ev.fee : 0;
     document.getElementById('editEvColor').value = ev.color || '#7B2FBE';
+    document.getElementById('editEvCoordinators').value = ev.coordinators || '';
+    document.getElementById('editEvVolunteers').value = ev.volunteers || '';
     document.getElementById('editEvDesc').value = ev.description || '';
     document.getElementById('editEvPass').value = ev.password || '';
     document.getElementById('editEvLogo').value = '';
@@ -464,9 +473,13 @@ async function submitEventEdit() {
     if (cat === 'nontech') badge = 'Fun';
     if (cat === 'game') badge = 'Gaming';
 
+    const coordinators = document.getElementById('editEvCoordinators').value.trim();
+    const volunteers = document.getElementById('editEvVolunteers').value.trim();
+
     const updates = {
         title, description: desc, category: cat, type, fee,
-        max_members: max, logo_url: logoUrl, color, badge
+        max_members: max, logo_url: logoUrl, color, badge,
+        coordinators, volunteers
     };
 
     if (pass) {
@@ -575,10 +588,14 @@ async function submitNewEvent() {
     if (cat === 'nontech') badge = 'Fun';
     if (cat === 'game') badge = 'Gaming';
 
+    const coordinators = document.getElementById('addCoordinators').value.trim();
+    const volunteers = document.getElementById('addVolunteers').value.trim();
+
     const newEvent = {
         title, description: desc, category: cat, type, fee,
         max_members: max, logo_url: logoUrl, color, badge,
-        password: pass, is_active: true
+        password: pass, is_active: true,
+        coordinators, volunteers
     };
 
     const { data, error } = await createEvent(newEvent);
@@ -599,6 +616,8 @@ async function submitNewEvent() {
     document.getElementById('addTitle').value = '';
     document.getElementById('addPass').value = '';
     document.getElementById('addDesc').value = '';
+    document.getElementById('addCoordinators').value = '';
+    document.getElementById('addVolunteers').value = '';
     document.getElementById('addLogo').value = '';
     document.getElementById('logoPreview').style.display = 'none';
     

@@ -80,14 +80,25 @@ function renderEventInfo() {
             <span style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-clock" style="margin-right:0.4rem;color:#ffa502;"></i>Pending Cash</span>
             <span class="stat-value" style="color:#ffa502;" id="statPending">--</span>
         </div>
-        <div class="stat-box" style="margin-bottom:0;">
+        <div class="stat-box" style="margin-bottom:1rem;">
             <span style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-rupee-sign" style="margin-right:0.4rem;color:var(--gold);"></i>Revenue</span>
             <span class="stat-value" id="statRev">--</span>
         </div>
 
+        <div style="background:#f8f9fa; border:1.5px solid #000000; border-radius:14px; padding:1rem; margin-bottom:1rem; font-size:0.82rem;">
+            <div style="margin-bottom:0.4rem; color:#000; font-weight:600;">
+                <i class="fas fa-user-tie" style="margin-right:0.4rem;"></i>Coordinators:
+                <div style="font-weight:400; color:#333; margin-top:2px;" id="dispCoordinators">${currentEvent.coordinators || 'None assigned'}</div>
+            </div>
+            <div style="color:#000; font-weight:600; margin-top:0.6rem;">
+                <i class="fas fa-hands-helping" style="margin-right:0.4rem;"></i>Volunteers:
+                <div style="font-weight:400; color:#333; margin-top:2px;" id="dispVolunteers">${currentEvent.volunteers || 'None assigned'}</div>
+            </div>
+        </div>
+
         <div class="edit-section">
             <h3 style="font-size:0.9rem;margin-bottom:1rem;color:var(--accent);">
-                <i class="fas fa-edit"></i> Edit Event Info & Logo
+                <i class="fas fa-edit"></i> Edit Event Details & Staff
             </h3>
             <div class="form-group">
                 <label class="form-label">Event Title</label>
@@ -99,6 +110,14 @@ function renderEventInfo() {
                 <div id="evLogoPreviewArea" style="margin-top:0.5rem; ${currentEvent.logo_url ? '' : 'display:none;'}">
                     <img id="evLogoPreviewImg" src="${currentEvent.logo_url || ''}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; border:2px solid #000;">
                 </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Coordinators</label>
+                <input type="text" id="evCoordinators" class="form-input" placeholder="e.g. John Doe, Jane Smith" value="${currentEvent.coordinators || ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Volunteers</label>
+                <input type="text" id="evVolunteers" class="form-input" placeholder="e.g. Alex, Bob, Charlie" value="${currentEvent.volunteers || ''}">
             </div>
             <div class="form-group">
                 <label class="form-label">Fee (₹)</label>
@@ -574,6 +593,8 @@ async function saveEventInfo() {
     const title = document.getElementById('evTitle').value.trim();
     const fee = parseInt(document.getElementById('evFee').value, 10);
     const desc = document.getElementById('evDesc').value.trim();
+    const coordinators = document.getElementById('evCoordinators').value.trim();
+    const volunteers = document.getElementById('evVolunteers').value.trim();
     const logoFile = document.getElementById('evLogoFile')?.files[0];
     
     if (!title) { showToast('Event title is required', 'error'); return; }
@@ -619,7 +640,7 @@ async function saveEventInfo() {
     }
     
     const { data, error } = await updateEvent(eventId, {
-        title, fee, description: desc, logo_url: newLogoUrl
+        title, fee, description: desc, logo_url: newLogoUrl, coordinators, volunteers
     });
     
     btn.innerHTML = oldHtml;
@@ -634,11 +655,13 @@ async function saveEventInfo() {
     currentEvent.fee = fee;
     currentEvent.description = desc;
     currentEvent.logo_url = newLogoUrl;
+    currentEvent.coordinators = coordinators;
+    currentEvent.volunteers = volunteers;
     
     renderEventInfo();
     updateStats();
     
-    showToast('Event info & logo saved! ✅', 'success');
+    showToast('Event details & staff saved! ✅', 'success');
     
     // Green glow effect on button
     btn.style.boxShadow = '0 0 15px #2ed573';

@@ -189,6 +189,17 @@ function renderRegistrationForm(ev) {
                     <div class="reg-meta-value" style="text-transform:capitalize;">${ev.badge}</div>
                 </div>
             </div>
+
+            <div style="margin-top: 1.2rem; padding: 0.9rem 1.2rem; background: #f8f9fa; border-radius: 16px; border: 1.5px solid #000000; text-align: left; font-size: 0.85rem;">
+                <div style="margin-bottom: 0.4rem; color: #000000; font-weight: 600; display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+                    <span style="white-space: nowrap;"><i class="fas fa-user-tie" style="margin-right: 0.4rem;"></i>Coordinators:</span>
+                    <span style="font-weight: 400; color: #333333;">${ev.coordinators || 'TBA'}</span>
+                </div>
+                <div style="color: #000000; font-weight: 600; display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+                    <span style="white-space: nowrap;"><i class="fas fa-hands-helping" style="margin-right: 0.4rem;"></i>Volunteers:</span>
+                    <span style="font-weight: 400; color: #333333;">${ev.volunteers || 'TBA'}</span>
+                </div>
+            </div>
         </div>
 
         <!-- Registration Form -->
