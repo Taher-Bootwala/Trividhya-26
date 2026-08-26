@@ -244,7 +244,10 @@ function renderCards(data, gridId) {
     }
     
     observe();
-    if (typeof AOS !== 'undefined' && !isMobile) AOS.refresh();
+    if (typeof AOS !== 'undefined') {
+        AOS.refresh();
+        setTimeout(() => AOS.refresh(), 200);
+    }
 }
 
 /* ── Pagination State ── */
@@ -353,6 +356,20 @@ function renderPaginationUI(containerId, totalPages, currentPage, onPageChange) 
     });
 }
 
+/* ── Initialize AOS Animations ── */
+function initAOS() {
+    if (typeof AOS !== 'undefined') {
+        AOS.init({
+            duration: 800,
+            easing: 'ease-out-cubic',
+            once: true,
+            offset: 30
+        });
+    }
+}
+document.addEventListener('DOMContentLoaded', initAOS);
+initAOS();
+
 /* ── Load with skeleton delay ── */
 showSkeletons(6);
 loadEvents().then(() => {
@@ -362,6 +379,9 @@ loadEvents().then(() => {
     if (evG) evG.style.display = 'grid';
     renderEventsSection();
     renderGamesSection();
+    if (typeof AOS !== 'undefined') {
+        setTimeout(() => AOS.refresh(), 150);
+    }
 }).catch(err => {
     console.error('Error loading events:', err);
     const skel = document.getElementById('skelGrid');
@@ -370,6 +390,9 @@ loadEvents().then(() => {
     if (evG) evG.style.display = 'grid';
     renderEventsSection();
     renderGamesSection();
+    if (typeof AOS !== 'undefined') {
+        setTimeout(() => AOS.refresh(), 150);
+    }
 });
 
 /* ── Filter ── */
