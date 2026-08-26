@@ -294,6 +294,7 @@ function renderEventsTable() {
                 <td>${team}</td>
                 <td>${active}</td>
                 <td>
+                    <button class="action-btn edit" onclick="openEditEventModal('${ev.id}')" title="Edit Event & Logo"><i class="fas fa-edit"></i></button>
                     <button class="action-btn pass" onclick="changePassword('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Change Event Password"><i class="fas fa-key"></i></button>
                     <button class="action-btn edit" onclick="toggleVisibility('${ev.id}', ${ev.is_active})" title="${ev.is_active ? 'Hide Event' : 'Show Event'}"><i class="fas ${ev.is_active ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
                     <button class="action-btn delete" onclick="deleteEv('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Delete Event"><i class="fas fa-trash-alt"></i></button>
@@ -348,6 +349,147 @@ async function deleteEv(id, title) {
     await loadDashboard();
 }
 
+/* ── Edit Event Modal Functions ── */
+function openEditEventModal(id) {
+    const ev = allEvents.find(e => e.id === id);
+    if (!ev) return;
+
+    document.getElementById('editEvId').value = ev.id;
+    document.getElementById('editEvTitle').value = ev.title || '';
+    document.getElementById('editEvCat').value = ev.category || 'tech';
+    document.getElementById('editEvType').value = ev.type || 'individual';
+    document.getElementById('editEvMembers').value = ev.max_members || 1;
+    document.getElementById('editEvFee').value = ev.fee !== undefined ? ev.fee : 0;
+    document.getElementById('editEvColor').value = ev.color || '#7B2FBE';
+    document.getElementById('editEvDesc').value = ev.description || '';
+    document.getElementById('editEvPass').value = ev.password || '';
+    document.getElementById('editEvLogo').value = '';
+    document.getElementById('editEvError').style.display = 'none';
+
+    const preview = document.getElementById('editLogoPreview');
+    const img = document.getElementById('editLogoPreviewImg');
+    if (ev.logo_url) {
+        img.src = ev.logo_url;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+
+    document.getElementById('editEventModal').classList.add('open');
+}
+
+function closeEditEventModal() {
+    document.getElementById('editEventModal').classList.remove('open');
+}
+
+function previewEditLogo(input) {
+    const preview = document.getElementById('editLogoPreview');
+    const img = document.getElementById('editLogoPreviewImg');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function submitEventEdit() {
+    const id = document.getElementById('editEvId').value;
+    const ev = allEvents.find(e => e.id === id);
+    if (!ev) return;
+
+    const btn = document.getElementById('saveEventEditBtn');
+    const errEl = document.getElementById('editEvError');
+    errEl.style.display = 'none';
+
+    const title = document.getElementById('editEvTitle').value.trim();
+    const cat = document.getElementById('editEvCat').value;
+    const type = document.getElementById('editEvType').value;
+    const max = parseInt(document.getElementById('editEvMembers').value, 10);
+    const fee = parseInt(document.getElementById('editEvFee').value, 10);
+    const color = document.getElementById('editEvColor').value;
+    const logoFile = document.getElementById('editEvLogo').files[0];
+    const desc = document.getElementById('editEvDesc').value.trim();
+    const pass = document.getElementById('editEvPass').value.trim();
+
+    if (!title || isNaN(max) || isNaN(fee)) {
+        errEl.textContent = 'Please fill all required (*) fields correctly.';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    let logoUrl = ev.logo_url;
+    if (logoFile) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compressing logo...';
+        const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+
+        const safeName = title.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const filePath = `event_logos/${safeName}_${Date.now()}.webp`;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading logo...';
+
+        const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('trividhya_images')
+            .upload(filePath, compressedLogo, {
+                cacheControl: '31536000',
+                contentType: 'image/webp',
+                upsert: true
+            });
+
+        if (uploadError) {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            errEl.textContent = 'Logo upload failed: ' + uploadError.message;
+            errEl.style.display = 'block';
+            showToast('Logo upload failed', 'error');
+            return;
+        }
+
+        const { data: urlData } = supabaseClient
+            .storage
+            .from('trividhya_images')
+            .getPublicUrl(filePath);
+
+        logoUrl = urlData.publicUrl;
+    }
+
+    let badge = 'Tech';
+    if (cat === 'nontech') badge = 'Fun';
+    if (cat === 'game') badge = 'Gaming';
+
+    const updates = {
+        title, description: desc, category: cat, type, fee,
+        max_members: max, logo_url: logoUrl, color, badge
+    };
+
+    if (pass) {
+        updates.password = pass;
+    }
+
+    const { data, error } = await updateEvent(id, updates);
+
+    btn.innerHTML = oldHtml;
+    btn.disabled = false;
+
+    if (error) {
+        errEl.textContent = 'Error: ' + error.message;
+        errEl.style.display = 'block';
+        showToast('Failed to update event', 'error');
+        return;
+    }
+
+    showToast(`Event "${title}" updated successfully! 🎉`, 'success');
+    closeEditEventModal();
+    await loadDashboard();
+}
+
 /* ── Logo Preview ── */
 function previewLogo(input) {
     const preview = document.getElementById('logoPreview');
@@ -392,17 +534,20 @@ async function submitNewEvent() {
     // Upload logo to Supabase Storage if provided
     let logoUrl = '';
     if (logoFile) {
-        const ext = logoFile.name.split('.').pop();
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compressing logo...';
+        const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+
         const safeName = title.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-        const filePath = `event_logos/${safeName}_${Date.now()}.${ext}`;
+        const filePath = `event_logos/${safeName}_${Date.now()}.webp`;
 
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading logo...';
 
         const { data: uploadData, error: uploadError } = await supabaseClient
             .storage
             .from('trividhya_images')
-            .upload(filePath, logoFile, {
-                cacheControl: '3600',
+            .upload(filePath, compressedLogo, {
+                cacheControl: '31536000',
+                contentType: 'image/webp',
                 upsert: false
             });
 
@@ -634,15 +779,22 @@ async function updateSiteSettings() {
 
     // Handle QR image upload if selected
     if (qrFileInput.files && qrFileInput.files.length > 0) {
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading QR...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compressing QR...';
         const file = qrFileInput.files[0];
-        const ext = file.name.split('.').pop();
-        const fileName = `qr_codes/qr_${Date.now()}.${ext}`;
+        const compressedQr = await compressImageFile(file, 800, 800, 0.8);
+
+        const fileName = `qr_codes/qr_${Date.now()}.webp`;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading QR...';
 
         const { data: uploadData, error: uploadError } = await supabaseClient
             .storage
             .from('trividhya_images')
-            .upload(fileName, file, { cacheControl: '3600', upsert: true });
+            .upload(fileName, compressedQr, {
+                cacheControl: '31536000',
+                contentType: 'image/webp',
+                upsert: true
+            });
 
         if (uploadError) {
             console.error('QR Upload error:', uploadError);

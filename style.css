@@ -600,6 +600,23 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             gap: 1.5rem; max-width: 1200px; margin: 0 auto;
         }
 
+        #games .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #games .cards-grid .event-card,
+        #games .cards-grid .sk-card {
+            width: 270px;
+            max-width: 100%;
+            flex: 0 0 270px;
+        }
+
         @media (max-width: 1100px) {
             .cards-grid {
                 grid-template-columns: repeat(3, 1fr);
@@ -609,6 +626,14 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         @media (max-width: 768px) {
             .cards-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            #games .cards-grid .event-card,
+            #games .cards-grid .sk-card {
+                width: 100%;
+                flex: 1 1 100%;
             }
         }
 

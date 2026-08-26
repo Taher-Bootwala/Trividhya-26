@@ -200,6 +200,72 @@
         </div>
     </div>
 
+    <!-- Edit Event Modal -->
+    <div class="modal-overlay" id="editEventModal" onclick="if(event.target===this)closeEditEventModal()">
+        <div class="admin-panel-card" style="max-width: 700px; width: 100%; margin: 2rem auto; position: relative;">
+            <button class="action-btn" onclick="closeEditEventModal()" style="position:absolute; top:1.2rem; right:1.2rem; border:none; font-size:1.2rem;"><i class="fas fa-times"></i></button>
+            <h3 style="margin-bottom: 1.5rem; color: #000;"><i class="fas fa-edit"></i> Edit Event & Logo</h3>
+            
+            <input type="hidden" id="editEvId">
+            <div class="add-event-grid">
+                <div class="form-group">
+                    <label class="form-label">Event Title *</label>
+                    <input type="text" id="editEvTitle" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category *</label>
+                    <select id="editEvCat" class="form-select">
+                        <option value="tech">Tech Event</option>
+                        <option value="nontech">Non-Tech Event</option>
+                        <option value="game">Game / ESports</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Event Type *</label>
+                    <select id="editEvType" class="form-select">
+                        <option value="individual">Individual (Solo)</option>
+                        <option value="group">Group / Team</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Members *</label>
+                    <input type="number" id="editEvMembers" class="form-input" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fee (₹) *</label>
+                    <input type="number" id="editEvFee" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Theme Color</label>
+                    <input type="color" id="editEvColor" class="form-input" style="height:45px;padding:0.2rem;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Event Logo (Image)</label>
+                    <input type="file" id="editEvLogo" class="form-input" accept="image/*" style="padding:0.6rem;" onchange="previewEditLogo(this)">
+                    <div id="editLogoPreview" style="margin-top:0.8rem; display:none;">
+                        <img id="editLogoPreviewImg" style="width:80px; height:80px; object-fit:cover; border-radius:12px; border:2px solid #000;">
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Description</label>
+                    <textarea id="editEvDesc" class="form-input" rows="4"></textarea>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Event Admin Password</label>
+                    <input type="text" id="editEvPass" class="form-input">
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn-outline" onclick="closeEditEventModal()" style="flex: 1; justify-content: center;">Cancel</button>
+                <button class="btn-primary" id="saveEventEditBtn" style="flex: 2; justify-content: center;" onclick="submitEventEdit()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+            <p id="editEvError" style="color:#ff4757;display:none; text-align:center; margin-top:1rem; font-size:0.85rem;"></p>
+        </div>
+    </div>
+
     <div class="admin-page">
         <div class="admin-header">
             <div class="admin-title">

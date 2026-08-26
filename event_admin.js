@@ -87,11 +87,18 @@ function renderEventInfo() {
 
         <div class="edit-section">
             <h3 style="font-size:0.9rem;margin-bottom:1rem;color:var(--accent);">
-                <i class="fas fa-edit"></i> Edit Event Info
+                <i class="fas fa-edit"></i> Edit Event Info & Logo
             </h3>
             <div class="form-group">
                 <label class="form-label">Event Title</label>
                 <input type="text" id="evTitle" class="form-input" value="${currentEvent.title}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Event Logo (Image)</label>
+                <input type="file" id="evLogoFile" class="form-input" accept="image/*" style="padding:0.5rem;" onchange="previewEvLogo(this)">
+                <div id="evLogoPreviewArea" style="margin-top:0.5rem; ${currentEvent.logo_url ? '' : 'display:none;'}">
+                    <img id="evLogoPreviewImg" src="${currentEvent.logo_url || ''}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; border:2px solid #000;">
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Fee (₹)</label>
@@ -99,13 +106,26 @@ function renderEventInfo() {
             </div>
             <div class="form-group">
                 <label class="form-label">Description</label>
-                <textarea id="evDesc" class="form-input" rows="4">${currentEvent.description}</textarea>
+                <textarea id="evDesc" class="form-input" rows="4">${currentEvent.description || ''}</textarea>
             </div>
             <button class="btn-primary" id="saveInfoBtn" style="width:100%;border-radius:10px;justify-content:center;padding:0.6rem;" onclick="saveEventInfo()">
                 <i class="fas fa-save"></i> Save Changes
             </button>
         </div>
     `;
+}
+
+function previewEvLogo(input) {
+    const area = document.getElementById('evLogoPreviewArea');
+    const img = document.getElementById('evLogoPreviewImg');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            area.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
 }
 
 let currentTab = 'active'; // 'active', 'cancelled', 'deleted'
@@ -549,11 +569,12 @@ async function permanentDeleteReg(regId, groupName) {
     showToast('Permanently deleted registration', 'info');
 }
 
-/* ── Save Event Info ── */
+/* ── Save Event Info & Logo ── */
 async function saveEventInfo() {
     const title = document.getElementById('evTitle').value.trim();
     const fee = parseInt(document.getElementById('evFee').value, 10);
     const desc = document.getElementById('evDesc').value.trim();
+    const logoFile = document.getElementById('evLogoFile')?.files[0];
     
     if (!title) { showToast('Event title is required', 'error'); return; }
     
@@ -561,9 +582,44 @@ async function saveEventInfo() {
     const oldHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled = true;
+
+    let newLogoUrl = currentEvent.logo_url;
+
+    if (logoFile) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compressing logo...';
+        const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+
+        const safeName = title.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const filePath = `event_logos/${safeName}_${Date.now()}.webp`;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading logo...';
+
+        const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('trividhya_images')
+            .upload(filePath, compressedLogo, {
+                cacheControl: '31536000',
+                contentType: 'image/webp',
+                upsert: true
+            });
+
+        if (uploadError) {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            showToast('Logo upload failed: ' + uploadError.message, 'error');
+            return;
+        }
+
+        const { data: urlData } = supabaseClient
+            .storage
+            .from('trividhya_images')
+            .getPublicUrl(filePath);
+
+        newLogoUrl = urlData.publicUrl;
+    }
     
     const { data, error } = await updateEvent(eventId, {
-        title, fee, description: desc
+        title, fee, description: desc, logo_url: newLogoUrl
     });
     
     btn.innerHTML = oldHtml;
@@ -577,12 +633,12 @@ async function saveEventInfo() {
     currentEvent.title = title;
     currentEvent.fee = fee;
     currentEvent.description = desc;
+    currentEvent.logo_url = newLogoUrl;
     
-    const titleEl = document.querySelector('.info-title');
-    if (titleEl) titleEl.textContent = title;
+    renderEventInfo();
     updateStats();
     
-    showToast('Event info saved! ✅', 'success');
+    showToast('Event info & logo saved! ✅', 'success');
     
     // Green glow effect on button
     btn.style.boxShadow = '0 0 15px #2ed573';
