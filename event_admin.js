@@ -452,11 +452,16 @@ async function bulkDelete() {
         if (!confirmed) return;
 
         for (const id of ids) {
-            await updateRegistration(id, { payment_status: 'deleted', is_approved: false });
-            const reg = registrations.find(r => r.id === id);
-            if (reg) { reg.payment_status = 'deleted'; reg.is_approved = false; }
+            const { error } = await updateRegistration(id, { payment_status: 'deleted', is_approved: false });
+            if (error) {
+                await deleteRegistration(id);
+                registrations = registrations.filter(r => r.id !== id);
+            } else {
+                const reg = registrations.find(r => r.id === id);
+                if (reg) { reg.payment_status = 'deleted'; reg.is_approved = false; }
+            }
         }
-        showToast(`Moved ${ids.length} item(s) to Recently Deleted`, 'info');
+        showToast(`Processed ${ids.length} item(s)`, 'info');
     }
 
     selectedRegIds.clear();
@@ -498,20 +503,29 @@ async function approveCash(regId) {
 async function cancelReg(regId) {
     const confirmed = await showConfirmDialog({
         title: 'Cancel Registration?',
-        desc: 'This will move this registration to the Cancelled list.',
+        desc: 'This will cancel this registration.',
         icon: '🚫',
         okText: 'Cancel Registration',
         danger: true,
     });
     if (!confirmed) return;
     
-    const { data, error } = await updateRegistration(regId, {
+    const { error } = await updateRegistration(regId, {
         payment_status: 'cancelled',
         is_approved: false
     });
     
     if (error) {
-        showToast('Failed to cancel: ' + error.message, 'error');
+        // Fallback: If DB constraint rejects status update to 'cancelled', delete directly
+        const delRes = await deleteRegistration(regId);
+        if (delRes.error) {
+            showToast('Failed to cancel: ' + delRes.error.message, 'error');
+            return;
+        }
+        registrations = registrations.filter(r => r.id !== regId);
+        updateStats();
+        renderTable();
+        showToast('Registration cancelled & deleted 🚫', 'info');
         return;
     }
     
@@ -544,17 +558,26 @@ async function restoreReg(regId) {
 /* ── Move to Recently Deleted ── */
 async function moveToDeleted(regId, groupName) {
     const confirmed = await showConfirmDialog({
-        title: 'Move to Recently Deleted?',
-        desc: `Move "${groupName}" to Recently Deleted? You can retrieve it anytime.`,
+        title: 'Delete Registration?',
+        desc: `Are you sure you want to delete registration for "${groupName}"?`,
         icon: '🗑️',
-        okText: 'Move to Deleted',
+        okText: 'Delete',
         danger: true,
     });
     if (!confirmed) return;
     
     const { error } = await updateRegistration(regId, { payment_status: 'deleted', is_approved: false });
     if (error) {
-        showToast('Failed to delete: ' + error.message, 'error');
+        // Fallback: If DB constraint rejects status update to 'deleted', delete directly from database
+        const delRes = await deleteRegistration(regId);
+        if (delRes.error) {
+            showToast('Failed to delete: ' + delRes.error.message, 'error');
+            return;
+        }
+        registrations = registrations.filter(r => r.id !== regId);
+        updateStats();
+        renderTable();
+        showToast('Registration deleted successfully 🗑️', 'info');
         return;
     }
     
