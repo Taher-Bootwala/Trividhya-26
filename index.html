@@ -82,6 +82,26 @@
                         <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                     <span class="nav-label">Contact</span>
+                </a>
+            </li>
+            <li class="mobile-login-li">
+                <a href="#" class="nav-icon-link mobile-login-toggle" onclick="toggleMobileLoginMenu(event)"
+                    data-tooltip="Login" aria-label="Login">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span class="nav-label">Login</span>
+                </a>
+                <ul class="mobile-login-dropdown" id="mobileLoginDropdown">
+                    <li><a href="eventmanagers.html"><i class="fas fa-users-cog"
+                                style="margin-right:0.5rem;color:var(--accent);"></i>Event Managers Portal</a></li>
+                    <li><a href="#" onclick="openEventAdminFromMobile(event)"><i class="fas fa-shield-alt"
+                                style="margin-right:0.5rem;color:var(--accent);"></i>Quick Event Login</a></li>
+                    <li><a href="#" onclick="openMainAdminFromMobile(event)"><i class="fas fa-user-shield"
+                                style="margin-right:0.5rem;color:var(--gold);"></i>Login as Super Admin</a></li>
+                </ul>
             </li>
         </ul>
     </nav>
