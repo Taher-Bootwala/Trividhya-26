@@ -257,7 +257,7 @@ function renderTable() {
         
         let membersHtml = '';
         if (r.members && r.members.length > 0) {
-            membersHtml = r.members.map(m => `<div>• ${m.name}</div>`).join('');
+            membersHtml = r.members.map(m => `<div>• ${escapeHtml(m.name)}</div>`).join('');
             membersHtml = `<div class="member-list">${membersHtml}</div>`;
         } else {
             membersHtml = '<div class="member-list" style="color:rgba(0,0,0,0.3);">— Solo —</div>';
@@ -275,17 +275,17 @@ function renderTable() {
             // Edit team details
             actionHtml += `<button class="action-btn edit" onclick="openEditModal('${r.id}')" title="Edit Team Details"><i class="fas fa-edit"></i></button>`;
             // Move to deleted
-            actionHtml += `<button class="action-btn delete" onclick="moveToDeleted('${r.id}', '${r.group_name.replace(/'/g, "\\'")}')" title="Move to Recently Deleted"><i class="fas fa-trash-alt"></i></button>`;
+            actionHtml += `<button class="action-btn delete" onclick="moveToDeleted('${r.id}', '${escapeHtml(r.group_name.replace(/'/g, "\\'"))}')" title="Move to Recently Deleted"><i class="fas fa-trash-alt"></i></button>`;
         } else if (currentTab === 'cancelled') {
             // Restore / Retrieve
             actionHtml += `<button class="action-btn approve" onclick="restoreReg('${r.id}')" title="Retrieve / Restore Registration"><i class="fas fa-undo" style="font-size:0.9rem;"></i> Restore</button>`;
             // Move to deleted
-            actionHtml += `<button class="action-btn delete" onclick="moveToDeleted('${r.id}', '${r.group_name.replace(/'/g, "\\'")}')" title="Move to Recently Deleted"><i class="fas fa-trash-alt"></i></button>`;
+            actionHtml += `<button class="action-btn delete" onclick="moveToDeleted('${r.id}', '${escapeHtml(r.group_name.replace(/'/g, "\\'"))}')" title="Move to Recently Deleted"><i class="fas fa-trash-alt"></i></button>`;
         } else if (currentTab === 'deleted') {
             // Restore / Retrieve
             actionHtml += `<button class="action-btn approve" onclick="restoreReg('${r.id}')" title="Retrieve / Restore Registration"><i class="fas fa-undo" style="font-size:0.9rem;"></i> Restore</button>`;
             // Delete Permanently
-            actionHtml += `<button class="action-btn delete" onclick="permanentDeleteReg('${r.id}', '${r.group_name.replace(/'/g, "\\'")}')" title="Delete Permanently"><i class="fas fa-times-circle"></i> Permanent Delete</button>`;
+            actionHtml += `<button class="action-btn delete" onclick="permanentDeleteReg('${r.id}', '${escapeHtml(r.group_name.replace(/'/g, "\\'"))}')" title="Delete Permanently"><i class="fas fa-times-circle"></i> Permanent Delete</button>`;
         }
 
         let statusText = r.is_approved 
@@ -295,11 +295,11 @@ function renderTable() {
         return `
             <tr>
                 <td><input type="checkbox" class="row-cb" value="${r.id}" ${isChecked} onchange="toggleSelectRow('${r.id}', this.checked)" style="cursor:pointer; width:16px; height:16px;"></td>
-                <td style="font-weight:700;color:#000000;">${r.group_name}</td>
+                <td style="font-weight:700;color:#000000;">${escapeHtml(r.group_name)}</td>
                 <td>
-                    <div style="font-weight:600;color:#000000;">${r.leader_name} <i class="fas fa-crown" style="color:#000;font-size:0.65rem;margin-left:3px;"></i></div>
-                    <div style="font-size:0.72rem;color:#555;margin-top:2px;">${r.leader_email}</div>
-                    <div style="font-size:0.72rem;color:#555;">${r.leader_mobile}</div>
+                    <div style="font-weight:600;color:#000000;">${escapeHtml(r.leader_name)} <i class="fas fa-crown" style="color:#000;font-size:0.65rem;margin-left:3px;"></i></div>
+                    <div style="font-size:0.72rem;color:#555;margin-top:2px;">${escapeHtml(r.leader_email)}</div>
+                    <div style="font-size:0.72rem;color:#555;">${escapeHtml(r.leader_mobile)}</div>
                 </td>
                 <td>${membersHtml}</td>
                 <td>${paymentBadge}<div style="margin-top:0.3rem;">${modeBadge}</div></td>

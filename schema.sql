@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   enrollment TEXT,
   semester INTEGER,
   payment_mode TEXT NOT NULL CHECK (payment_mode IN ('online','cash')),
-  payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN ('pending','paid')),
+  payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN ('pending','paid','cancelled','deleted')),
   transaction_id TEXT,
   is_approved BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
