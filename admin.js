@@ -36,10 +36,24 @@ function closeConfirm(result) {
 
 /* ── Init ── */
 async function initMainAdmin() {
-    if (!sessionStorage.getItem('mainAdmin')) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (!session) {
         window.location.href = 'index.html';
         return;
     }
+
+    const { data: mfaLevel, error } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    if (error || !mfaLevel || mfaLevel.currentLevel !== 'aal2') {
+        // Not authenticated with 2FA, force re-login
+        await supabaseClient.auth.signOut();
+        sessionStorage.removeItem('mainAdmin');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Passed 2FA
     await loadDashboard();
 }
 
@@ -664,7 +678,8 @@ async function submitNewEvent() {
     switchTab('events', document.querySelectorAll('.tab-btn')[1]);
 }
 
-function logoutAdmin() {
+async function logoutAdmin() {
+    await supabaseClient.auth.signOut();
     sessionStorage.removeItem('mainAdmin');
     window.location.href = 'index.html';
 }

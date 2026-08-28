@@ -314,14 +314,48 @@
                 <span class="typed-text">Super Admin</span><span class="typing-cursor gold-cursor">|</span>
             </h2>
             <p class="admin-login-sub">Full access to all events & data</p>
-            <div class="admin-login-form">
+            <div class="admin-login-form" id="maLoginForm">
+                <div class="admin-input-group">
+                    <i class="fas fa-envelope admin-input-icon"></i>
+                    <input type="email" id="maEmail" class="admin-input" placeholder="Enter admin email">
+                </div>
                 <div class="admin-input-group">
                     <i class="fas fa-lock admin-input-icon"></i>
                     <input type="password" id="maPassword" class="admin-input" placeholder="Enter admin password">
                 </div>
                 <p id="maError" class="admin-login-error"></p>
                 <button class="admin-login-btn gold-btn" onclick="loginMainAdmin()">
-                    <span class="admin-btn-text"><i class="fas fa-sign-in-alt"></i> Login</span>
+                    <span class="admin-btn-text"><i class="fas fa-sign-in-alt"></i> Continue</span>
+                    <span class="admin-btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+                </button>
+            </div>
+
+            <!-- MFA Challenge Step -->
+            <div class="admin-login-form" id="maMfaForm" style="display:none;">
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1rem; text-align:center;">Enter the 6-digit code from Google Authenticator.</p>
+                <div class="admin-input-group">
+                    <i class="fas fa-key admin-input-icon"></i>
+                    <input type="text" id="maOtp" class="admin-input" placeholder="000000" maxlength="6" style="text-align:center; letter-spacing:4px; font-weight:bold;">
+                </div>
+                <input type="hidden" id="maFactorId">
+                <p id="maOtpError" class="admin-login-error"></p>
+                <button class="admin-login-btn gold-btn" onclick="verifyMainAdminOtp()">
+                    <span class="admin-btn-text"><i class="fas fa-check-circle"></i> Verify</span>
+                    <span class="admin-btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+                </button>
+            </div>
+
+            <!-- MFA Enrollment Step -->
+            <div class="admin-login-form" id="maEnrollForm" style="display:none; text-align:center;">
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1rem;">Scan this QR code with your Authenticator app (e.g., Google Authenticator) to set up 2FA.</p>
+                <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:1rem; padding:10px; background:#fff; border-radius:10px; border:2px solid var(--gold);"></div>
+                <div class="admin-input-group">
+                    <input type="text" id="maEnrollOtp" class="admin-input" placeholder="Enter 6-digit code" maxlength="6" style="text-align:center; letter-spacing:4px; font-weight:bold;">
+                </div>
+                <input type="hidden" id="maEnrollFactorId">
+                <p id="maEnrollError" class="admin-login-error"></p>
+                <button class="admin-login-btn gold-btn" onclick="verifyMainAdminEnrollment()">
+                    <span class="admin-btn-text"><i class="fas fa-check-circle"></i> Enable 2FA</span>
                     <span class="admin-btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
                 </button>
             </div>
@@ -331,6 +365,7 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="supabase-config.js"></script>
     <script src="script.js"></script>
 </body>

@@ -726,39 +726,161 @@ function openMainAdminFromMobile(e) {
     document.body.style.overflow = 'hidden';
 }
 
-/* ── Main Admin Login ── */
+/* ── Main Admin Login (Supabase Auth with MFA) ── */
 async function loginMainAdmin() {
+    const email = document.getElementById('maEmail').value.trim();
     const password = document.getElementById('maPassword').value;
     const errEl = document.getElementById('maError');
-    const btn = document.querySelector('#mainAdminModal .admin-login-btn');
+    const btn = document.querySelector('#maLoginForm .admin-login-btn');
 
-    if (!password) {
-        errEl.textContent = 'Please enter the password';
+    if (!email || !password) {
+        errEl.textContent = 'Please enter email and password';
         return;
     }
 
-    // Show loading
     btn.querySelector('.admin-btn-text').style.display = 'none';
     btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
     btn.disabled = true;
     errEl.textContent = '';
 
-    const valid = await verifyMainAdminPassword(password);
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
     btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
     btn.querySelector('.admin-btn-loader').style.display = 'none';
     btn.disabled = false;
 
-    if (valid) {
-        showToast('Super Admin login successful!', 'success');
-        sessionStorage.setItem('mainAdmin', 'true');
-        setTimeout(() => { window.location.href = 'admin.html'; }, 500);
-    } else {
-        errEl.textContent = 'Invalid password!';
+    if (error) {
+        errEl.textContent = error.message;
         const card = btn.closest('.admin-login-card');
         card.style.animation = 'none';
         void card.offsetWidth;
         card.style.animation = 'shake 0.4s ease';
         setTimeout(() => card.style.animation = '', 400);
+        return;
     }
+
+    // Check MFA status
+    const { data: mfaLevel, error: mfaError } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+    
+    if (mfaLevel && mfaLevel.currentLevel !== 'aal2') {
+        // Needs MFA
+        const { data: factors } = await supabaseClient.auth.mfa.listFactors();
+        const totpFactor = factors?.totp[0];
+
+        if (!totpFactor || totpFactor.status === 'unverified') {
+            // Needs Enrollment
+            document.getElementById('maLoginForm').style.display = 'none';
+            document.getElementById('maEnrollForm').style.display = 'block';
+            
+            const enroll = await supabaseClient.auth.mfa.enroll({ factorType: 'totp' });
+            if (enroll.error) {
+                document.getElementById('maEnrollError').textContent = enroll.error.message;
+                return;
+            }
+            document.getElementById('maEnrollFactorId').value = enroll.data.id;
+            
+            // Generate QR Code
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: enroll.data.totp.uri,
+                width: 150,
+                height: 150
+            });
+        } else {
+            // Needs Verification
+            document.getElementById('maLoginForm').style.display = 'none';
+            document.getElementById('maMfaForm').style.display = 'block';
+            
+            const challenge = await supabaseClient.auth.mfa.challenge({ factorId: totpFactor.id });
+            if (challenge.error) {
+                document.getElementById('maOtpError').textContent = challenge.error.message;
+                return;
+            }
+            document.getElementById('maFactorId').value = totpFactor.id;
+        }
+    } else {
+        // Already logged in fully (maybe from previous session or AAL1 is enough if no MFA setup)
+        finishMainAdminLogin();
+    }
+}
+
+async function verifyMainAdminOtp() {
+    const otp = document.getElementById('maOtp').value.trim();
+    const factorId = document.getElementById('maFactorId').value;
+    const errEl = document.getElementById('maOtpError');
+    const btn = document.querySelector('#maMfaForm .admin-login-btn');
+
+    if (otp.length !== 6) {
+        errEl.textContent = 'Please enter a 6-digit code';
+        return;
+    }
+
+    btn.querySelector('.admin-btn-text').style.display = 'none';
+    btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+    btn.disabled = true;
+    errEl.textContent = '';
+
+    const verify = await supabaseClient.auth.mfa.verify({
+        factorId,
+        challengeId: (await supabaseClient.auth.mfa.challenge({ factorId })).data.id,
+        code: otp
+    });
+
+    btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+    btn.querySelector('.admin-btn-loader').style.display = 'none';
+    btn.disabled = false;
+
+    if (verify.error) {
+        errEl.textContent = 'Invalid OTP code';
+    } else {
+        finishMainAdminLogin();
+    }
+}
+
+async function verifyMainAdminEnrollment() {
+    const otp = document.getElementById('maEnrollOtp').value.trim();
+    const factorId = document.getElementById('maEnrollFactorId').value;
+    const errEl = document.getElementById('maEnrollError');
+    const btn = document.querySelector('#maEnrollForm .admin-login-btn');
+
+    if (otp.length !== 6) {
+        errEl.textContent = 'Please enter a 6-digit code';
+        return;
+    }
+
+    btn.querySelector('.admin-btn-text').style.display = 'none';
+    btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+    btn.disabled = true;
+    errEl.textContent = '';
+
+    const challenge = await supabaseClient.auth.mfa.challenge({ factorId });
+    if (challenge.error) {
+        errEl.textContent = challenge.error.message;
+        btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+        btn.querySelector('.admin-btn-loader').style.display = 'none';
+        btn.disabled = false;
+        return;
+    }
+
+    const verify = await supabaseClient.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.data.id,
+        code: otp
+    });
+
+    btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+    btn.querySelector('.admin-btn-loader').style.display = 'none';
+    btn.disabled = false;
+
+    if (verify.error) {
+        errEl.textContent = 'Invalid OTP code';
+    } else {
+        finishMainAdminLogin();
+    }
+}
+
+function finishMainAdminLogin() {
+    showToast('Super Admin login successful!', 'success');
+    sessionStorage.setItem('mainAdmin', 'true');
+    setTimeout(() => { window.location.href = 'admin.html'; }, 500);
 }

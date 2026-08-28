@@ -170,24 +170,7 @@ async function verifyEventAdminPassword(eventId, password) {
     return data.password === password;
 }
 
-async function verifyMainAdminPassword(password) {
-    const { data, error } = await supabaseClient
-        .from('admin_config')
-        .select('main_admin_password')
-        .eq('id', 1)
-        .single();
-    if (error || !data) return false;
-    return data.main_admin_password === password;
-}
 
-async function updateMainAdminPassword(newPassword) {
-    const { error } = await supabaseClient
-        .from('admin_config')
-        .update({ main_admin_password: newPassword })
-        .eq('id', 1);
-    if (error) { console.error('Error updating password:', error); return { error }; }
-    return { success: true };
-}
 
 async function updateEventPassword(eventId, newPassword) {
     const { error } = await supabaseClient
