@@ -4,6 +4,7 @@
 
 let allEvents = [];
 let allRegs = [];
+let allCombos = [];
 
 /* ── Toast & Confirm (standalone for admin pages) ── */
 function showToast(message, type = 'info', duration = 3500) {
@@ -69,6 +70,11 @@ async function loadDashboard() {
     // Sort events alphabetically
     allEvents.sort((a, b) => a.title.localeCompare(b.title));
     renderEventsTable();
+    
+    allCombos = await getAllCombosAdmin();
+    renderCombosTable();
+    populateComboEventsList();
+
     await updateGlobalStats();
     renderCharts();
 }
@@ -87,7 +93,7 @@ async function updateGlobalStats() {
     
     const paidRegs = allRegs.filter(r => r.payment_status === 'paid');
     const pendingRegs = allRegs.filter(r => r.payment_status === 'pending');
-    const totalRev = paidRegs.reduce((sum, r) => sum + (r.events?.fee || 0), 0);
+    const totalRev = paidRegs.reduce((sum, r) => sum + (r.amount !== undefined && r.amount !== null ? r.amount : (r.events?.fee || 0)), 0);
     
     document.getElementById('stRev').textContent = '₹' + totalRev;
     document.getElementById('stPending').textContent = pendingRegs.length;
@@ -734,15 +740,22 @@ async function renderRegDetails(categories, containerId) {
                 ? '<span style="background:rgba(46,213,115,0.15); color:#2ed573; padding:0.2rem 0.6rem; border-radius:50px; font-size:0.72rem; font-weight:600;">PAID</span>'
                 : '<span style="background:rgba(255,165,2,0.15); color:#ffa502; padding:0.2rem 0.6rem; border-radius:50px; font-size:0.72rem; font-weight:600;">PENDING</span>';
 
+            const regTypeBadge = r.is_combo 
+                ? '<span style="background:rgba(142,68,173,0.15); color:#8e44ad; border: 1px solid rgba(142,68,173,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">Combo Deal</span>' 
+                : '<span style="background:rgba(41,128,185,0.15); color:#2980b9; border: 1px solid rgba(41,128,185,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">Single Event</span>';
+
+            const priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${event.fee}`;
+
             return `
                 <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(123,47,190,0.15); border-radius:14px; padding:1rem 1.2rem; margin-bottom:0.8rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
-                        <div>
+                        <div style="display:flex; align-items:center;">
                             <span style="font-weight:700; font-size:0.95rem;">${r.group_name}</span>
+                            ${regTypeBadge}
                             <span style="color:var(--muted); font-size:0.78rem; margin-left:0.5rem;">by ${r.leader_name}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:0.8rem;">
-                            <span style="color:var(--muted); font-size:0.78rem;">₹${event.fee}</span>
+                            <span style="color:var(--gold); font-weight:800; font-size:0.9rem;">${priceText}</span>
                             ${statusBadge}
                         </div>
                     </div>
@@ -908,6 +921,478 @@ async function updateSiteSettings() {
         
         setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
     }
+}
+
+/* ══════════════════════════════════════
+   COMBOS MANAGEMENT
+   ══════════════════════════════════════ */
+
+function renderCombosTable() {
+    const tbody = document.getElementById('cbTableBody');
+    if (!tbody) return;
+    
+    if (allCombos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--muted);">No combos found. Create one above!</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    allCombos.forEach(combo => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="font-weight: 600; color: #fff;">${combo.name}</td>
+            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${combo.description || '-'}</td>
+            <td>${combo.min_members} - ${combo.max_members}</td>
+            <td style="color: var(--gold); font-weight: bold;">₹${combo.total_fee}</td>
+            <td>
+                <label class="toggle-switch">
+                    <input type="checkbox" ${combo.is_active ? 'checked' : ''} onchange="toggleComboVisibility('${combo.id}', ${combo.is_active})">
+                    <span class="slider"></span>
+                </label>
+            </td>
+            <td>
+                <button class="action-btn" onclick="openEditComboModal('${combo.id}')" title="Edit Combo" style="margin-right: 0.5rem;">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn danger" onclick="deleteComboPrompt('${combo.id}')" title="Delete Combo">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function populateComboEventsList() {
+    const container = document.getElementById('comboEventsList');
+    if (!container) return;
+    
+    if (allEvents.length === 0) {
+        container.innerHTML = '<div style="color: var(--muted);">No events available to create a combo.</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    allEvents.forEach(ev => {
+        const item = document.createElement('div');
+        item.className = 'combo-ev-item';
+        item.dataset.title = ev.title.toLowerCase();
+        item.style.display = 'flex';
+        item.style.alignItems = 'center';
+        item.style.gap = '1rem';
+        item.style.marginBottom = '0.8rem';
+        item.innerHTML = `
+            <label style="flex: 1; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" class="combo-ev-checkbox" value="${ev.id}" onchange="calculateComboTotal()">
+                <span>${ev.title}</span>
+            </label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.8rem; color: var(--muted);">Allocation (₹):</span>
+                <input type="number" class="combo-ev-allocation form-input" id="alloc_${ev.id}" min="0" value="0" style="width: 80px; padding: 0.3rem;" onkeyup="calculateComboTotal()" onchange="calculateComboTotal()" disabled>
+            </div>
+        `;
+        // Enable input only if checkbox is checked
+        const cb = item.querySelector('.combo-ev-checkbox');
+        const input = item.querySelector('.combo-ev-allocation');
+        cb.addEventListener('change', () => {
+            input.disabled = !cb.checked;
+            if (!cb.checked) input.value = '0';
+            calculateComboTotal();
+        });
+        container.appendChild(item);
+    });
+}
+
+function previewComboLogo(input) {
+    const area = document.getElementById('comboLogoPreviewArea');
+    const img = document.getElementById('comboLogoPreviewImg');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            area.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function filterComboEvents() {
+    const searchVal = document.getElementById('comboEventSearch').value.toLowerCase().trim();
+    const items = document.querySelectorAll('.combo-ev-item');
+    items.forEach(item => {
+        if (item.dataset.title.includes(searchVal)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function calculateComboTotal() {
+    let total = 0;
+    document.querySelectorAll('.combo-ev-checkbox:checked').forEach(cb => {
+        const val = parseInt(document.getElementById(`alloc_${cb.value}`).value) || 0;
+        total += val;
+    });
+    document.getElementById('comboTotalPrice').textContent = total;
+}
+
+async function submitNewCombo() {
+    const title = document.getElementById('addComboTitle').value.trim();
+    const desc = document.getElementById('addComboDesc').value.trim();
+    const minM = parseInt(document.getElementById('addComboMin').value) || 1;
+    const maxM = parseInt(document.getElementById('addComboMax').value) || 1;
+    
+    if (!title) {
+        showToast('Combo Title is required', 'error');
+        return;
+    }
+    if (minM > maxM) {
+        showToast('Min members cannot exceed max members', 'error');
+        return;
+    }
+
+    const selectedEvents = [];
+    let totalFee = 0;
+    document.querySelectorAll('.combo-ev-checkbox:checked').forEach(cb => {
+        const alloc = parseInt(document.getElementById(`alloc_${cb.value}`).value) || 0;
+        selectedEvents.push({ event_id: cb.value, allocation: alloc });
+        totalFee += alloc;
+    });
+
+    if (selectedEvents.length < 2) {
+        showToast('A combo must have at least 2 events', 'error');
+        return;
+    }
+
+    const btn = document.querySelector('#tab-combos .action-btn.primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    // Handle Image Upload
+    let imageUrl = null;
+    const logoInput = document.getElementById('addComboLogo');
+    if (logoInput && logoInput.files && logoInput.files[0]) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compressing logo...';
+        const logoFile = logoInput.files[0];
+        try {
+            const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+            const safeName = title.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            const filePath = `combo_logos/${safeName}_${Date.now()}.webp`;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading logo...';
+            const { data: uploadData, error: uploadError } = await supabaseClient
+                .storage
+                .from('trividhya_images')
+                .upload(filePath, compressedLogo, {
+                    cacheControl: '31536000',
+                    contentType: 'image/webp',
+                    upsert: true
+                });
+
+            if (uploadError) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast('Logo upload failed: ' + uploadError.message, 'error');
+                return;
+            }
+
+            const { data: urlData } = supabaseClient
+                .storage
+                .from('trividhya_images')
+                .getPublicUrl(filePath);
+
+            imageUrl = urlData.publicUrl;
+        } catch (e) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('Error processing logo: ' + e.message, 'error');
+            return;
+        }
+    }
+
+    const newCombo = {
+        name: title,
+        description: desc,
+        min_members: minM,
+        max_members: maxM,
+        events_data: selectedEvents,
+        total_fee: totalFee,
+        image_url: imageUrl,
+        is_active: true
+    };
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Combo...';
+    const result = await createCombo(newCombo);
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+
+    if (result.error) {
+        showToast('Error creating combo: ' + result.error.message, 'error');
+    } else {
+        showToast('Combo created successfully!', 'success');
+        document.getElementById('addComboTitle').value = '';
+        document.getElementById('addComboDesc').value = '';
+        if(document.getElementById('addComboLogo')) document.getElementById('addComboLogo').value = '';
+        if(document.getElementById('comboLogoPreviewArea')) document.getElementById('comboLogoPreviewArea').style.display = 'none';
+        document.querySelectorAll('.combo-ev-checkbox').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.combo-ev-allocation').forEach(input => { input.disabled = true; input.value = '0'; });
+        calculateComboTotal();
+        
+        // Refresh combos
+        allCombos = await getAllCombosAdmin();
+        renderCombosTable();
+    }
+}
+
+async function toggleComboVisibility(id, currentStatus) {
+    const { error } = await supabaseClient.from('combos').update({ is_active: !currentStatus }).eq('id', id);
+    if (error) {
+        showToast('Failed to update visibility', 'error');
+        allCombos = await getAllCombosAdmin();
+        renderCombosTable(); // Revert toggle
+    } else {
+        showToast('Combo visibility updated', 'success');
+        allCombos = await getAllCombosAdmin();
+        renderCombosTable();
+    }
+}
+
+async function deleteComboPrompt(id) {
+    const confirm = await showConfirmDialog({
+        title: 'Delete Combo?',
+        desc: 'Are you sure you want to delete this combo? This action cannot be undone.',
+        danger: true,
+        okText: 'Delete'
+    });
+    if (confirm) {
+        const res = await deleteCombo(id);
+        if (res.success) {
+            showToast('Combo deleted', 'success');
+            allCombos = await getAllCombosAdmin();
+            renderCombosTable();
+        } else {
+            showToast('Failed to delete combo', 'error');
+        }
+    }
+}
+
+/* ── Edit Combo Logic ── */
+async function openEditComboModal(id) {
+    const combo = allCombos.find(c => c.id === id);
+    if (!combo) return;
+
+    document.getElementById('editComboId').value = combo.id;
+    document.getElementById('editComboName').value = combo.name;
+    document.getElementById('editComboMax').value = combo.max_members;
+    document.getElementById('editComboMin').value = combo.min_members || 1;
+    document.getElementById('editComboDesc').value = combo.description || '';
+    document.getElementById('editComboActive').value = combo.is_active ? 'true' : 'false';
+    
+    // Logo preview
+    const logoArea = document.getElementById('editComboLogoPreviewArea');
+    const logoImg = document.getElementById('editComboLogoPreviewImg');
+    if (combo.image_url) {
+        logoImg.src = combo.image_url;
+        logoArea.style.display = 'block';
+    } else {
+        logoArea.style.display = 'none';
+        logoImg.src = '';
+    }
+    document.getElementById('editComboLogo').value = '';
+
+    // Events list
+    const container = document.getElementById('editComboEventsList');
+    container.innerHTML = '';
+    
+    if (allEvents.length === 0) {
+        container.innerHTML = '<div style="color: var(--muted);">No events available.</div>';
+    } else {
+        allEvents.forEach(ev => {
+            const isSelected = combo.events_data.find(e => e.event_id === ev.id);
+            const allocation = isSelected ? isSelected.allocation : 0;
+            
+            const item = document.createElement('div');
+            item.className = 'edit-combo-ev-item';
+            item.dataset.title = ev.title.toLowerCase();
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.gap = '1rem';
+            item.style.marginBottom = '0.8rem';
+            item.innerHTML = `
+                <label style="flex: 1; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" class="edit-combo-ev-checkbox" value="${ev.id}" onchange="calculateEditComboTotal()" ${isSelected ? 'checked' : ''}>
+                    <span>${ev.title}</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.8rem; color: var(--muted);">Allocation (₹):</span>
+                    <input type="number" class="edit-combo-ev-allocation form-input" id="edit_alloc_${ev.id}" min="0" value="${allocation}" style="width: 80px; padding: 0.3rem;" onkeyup="calculateEditComboTotal()" onchange="calculateEditComboTotal()" ${!isSelected ? 'disabled' : ''}>
+                </div>
+            `;
+            const cb = item.querySelector('.edit-combo-ev-checkbox');
+            const input = item.querySelector('.edit-combo-ev-allocation');
+            cb.addEventListener('change', () => {
+                input.disabled = !cb.checked;
+                if (!cb.checked) input.value = '0';
+                calculateEditComboTotal();
+            });
+            container.appendChild(item);
+        });
+    }
+    
+    calculateEditComboTotal();
+    document.getElementById('editComboError').style.display = 'none';
+    document.getElementById('editComboModal').classList.add('show');
+}
+
+function closeEditComboModal() {
+    document.getElementById('editComboModal').classList.remove('show');
+}
+
+function filterEditComboEvents() {
+    const q = document.getElementById('editComboEventSearch').value.toLowerCase();
+    const items = document.querySelectorAll('.edit-combo-ev-item');
+    items.forEach(item => {
+        if (item.dataset.title.includes(q)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function calculateEditComboTotal() {
+    let total = 0;
+    document.querySelectorAll('.edit-combo-ev-checkbox:checked').forEach(cb => {
+        const val = parseInt(document.getElementById(`edit_alloc_${cb.value}`).value) || 0;
+        total += val;
+    });
+    document.getElementById('editComboTotalPrice').textContent = total;
+}
+
+function previewEditComboLogo(input) {
+    const area = document.getElementById('editComboLogoPreviewArea');
+    const img = document.getElementById('editComboLogoPreviewImg');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            area.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function submitComboEdit() {
+    const id = document.getElementById('editComboId').value;
+    const name = document.getElementById('editComboName').value.trim();
+    const desc = document.getElementById('editComboDesc').value.trim();
+    const minM = parseInt(document.getElementById('editComboMin').value) || 1;
+    const maxM = parseInt(document.getElementById('editComboMax').value) || 1;
+    const isActive = document.getElementById('editComboActive').value === 'true';
+    const errEl = document.getElementById('editComboError');
+    
+    errEl.style.display = 'none';
+
+    if (!name) {
+        errEl.textContent = 'Combo Name is required';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (minM > maxM) {
+        errEl.textContent = 'Min members cannot exceed max members';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    const selectedEvents = [];
+    let totalFee = 0;
+    document.querySelectorAll('.edit-combo-ev-checkbox:checked').forEach(cb => {
+        const alloc = parseInt(document.getElementById(`edit_alloc_${cb.value}`).value) || 0;
+        selectedEvents.push({ event_id: cb.value, allocation: alloc });
+        totalFee += alloc;
+    });
+
+    if (selectedEvents.length < 2) {
+        errEl.textContent = 'A combo must have at least 2 events';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    const btn = document.getElementById('saveComboEditBtn');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    let imageUrl = null;
+    const logoInput = document.getElementById('editComboLogo');
+    
+    // Check if new image was uploaded
+    if (logoInput && logoInput.files && logoInput.files[0]) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing image...';
+        const logoFile = logoInput.files[0];
+        try {
+            const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+            const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            const filePath = `combo_logos/${safeName}_${Date.now()}.webp`;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            const { data: uploadData, error: uploadError } = await supabaseClient
+                .storage
+                .from('trividhya_images')
+                .upload(filePath, compressedLogo, {
+                    cacheControl: '31536000',
+                    contentType: 'image/webp',
+                    upsert: true
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabaseClient.storage.from('trividhya_images').getPublicUrl(filePath);
+            imageUrl = urlData.publicUrl;
+        } catch (e) {
+            errEl.textContent = 'Image upload failed: ' + e.message;
+            errEl.style.display = 'block';
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            return;
+        }
+    }
+
+    const updates = {
+        name,
+        description: desc,
+        min_members: minM,
+        max_members: maxM,
+        events_data: selectedEvents,
+        total_fee: totalFee,
+        is_active: isActive
+    };
+    
+    if (imageUrl) {
+        updates.image_url = imageUrl;
+    }
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating combo...';
+    
+    const { data, error } = await updateCombo(id, updates);
+    
+    btn.innerHTML = oldHtml;
+    btn.disabled = false;
+
+    if (error) {
+        errEl.textContent = 'Error: ' + error.message;
+        errEl.style.display = 'block';
+        showToast('Failed to update combo', 'error');
+        return;
+    }
+
+    showToast(`Combo "${name}" updated successfully! 🎉`, 'success');
+    closeEditComboModal();
+    allCombos = await getAllCombosAdmin();
+    renderCombosTable();
 }
 
 /* Override switchTab to load game details and settings on tab switch */

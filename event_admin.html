@@ -171,12 +171,12 @@
         }
         tbody tr { transition: background 0.2s; }
         tbody tr:hover { background: rgba(0,0,0,0.04) !important; }
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+        
+        /* Fixed broken CSS block */
+        td {
+            border-bottom: 1px solid rgba(0,0,0,0.08);
             font-size: 0.85rem;
         }
-        th { color: #ffffff; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-size: 0.72rem; font-family: var(--font-body); }
-        tbody tr { transition: background 0.2s; }
-        tbody tr:hover { background: rgba(255,255,255,0.05); }
 
         .badge {
             padding: 0.3rem 0.6rem;
@@ -362,6 +362,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="event_admin.js"></script>
+    <script src="event_admin.js?v=2"></script>
 </body>
 </html>

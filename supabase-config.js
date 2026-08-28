@@ -70,6 +70,69 @@ async function deleteEvent(id) {
 }
 
 // ═══════════════════════════════════════════════════
+//  COMBO HELPERS
+// ═══════════════════════════════════════════════════
+
+async function getAllCombos() {
+    const { data, error } = await supabaseClient
+        .from('combos')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+    if (error) { console.error('Error fetching combos:', error); return []; }
+    return data;
+}
+
+async function getAllCombosAdmin() {
+    const { data, error } = await supabaseClient
+        .from('combos')
+        .select('*')
+        .order('created_at', { ascending: true });
+    if (error) { console.error('Error fetching combos:', error); return []; }
+    return data;
+}
+
+async function getComboById(id) {
+    const { data, error } = await supabaseClient
+        .from('combos')
+        .select('*')
+        .eq('id', id)
+        .single();
+    if (error) { console.error('Error fetching combo:', error); return null; }
+    return data;
+}
+
+async function createCombo(comboData) {
+    const { data, error } = await supabaseClient
+        .from('combos')
+        .insert([comboData])
+        .select()
+        .single();
+    if (error) { console.error('Error creating combo:', error); return { error }; }
+    return { data };
+}
+
+async function updateCombo(id, comboData) {
+    const { data, error } = await supabaseClient
+        .from('combos')
+        .update(comboData)
+        .eq('id', id)
+        .select()
+        .single();
+    if (error) { console.error('Error updating combo:', error); return { error }; }
+    return { data };
+}
+
+async function deleteCombo(id) {
+    const { error } = await supabaseClient
+        .from('combos')
+        .delete()
+        .eq('id', id);
+    if (error) { console.error('Error deleting combo:', error); return { error }; }
+    return { success: true };
+}
+
+// ═══════════════════════════════════════════════════
 //  REGISTRATION HELPERS
 // ═══════════════════════════════════════════════════
 
@@ -140,8 +203,13 @@ async function deleteRegistration(id) {
 async function checkRegistrationDuplicate(eventId, email, mobile) {
     let query = supabaseClient
         .from('registrations')
-        .select('id, leader_email, leader_mobile')
-        .eq('event_id', eventId);
+        .select('id, leader_email, leader_mobile');
+        
+    if (Array.isArray(eventId)) {
+        query = query.in('event_id', eventId);
+    } else {
+        query = query.eq('event_id', eventId);
+    }
 
     if (email && mobile) {
         query = query.or(`leader_email.eq.${email},leader_mobile.eq.${mobile}`);

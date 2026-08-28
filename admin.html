@@ -278,6 +278,67 @@
         </div>
     </div>
 
+    <!-- Edit Combo Modal -->
+    <div class="modal-overlay" id="editComboModal" onclick="if(event.target===this)closeEditComboModal()">
+        <div class="admin-panel-card" style="max-width: 700px; width: 100%; margin: 2rem auto; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button class="action-btn" onclick="closeEditComboModal()" style="position:absolute; top:1.2rem; right:1.2rem; border:none; font-size:1.2rem;"><i class="fas fa-times"></i></button>
+            <h3 style="margin-bottom: 1.5rem; color: #000;"><i class="fas fa-edit"></i> Edit Combo</h3>
+            
+            <input type="hidden" id="editComboId">
+            <div class="add-event-grid">
+                <div class="form-group">
+                    <label class="form-label">Combo Name *</label>
+                    <input type="text" id="editComboName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Members *</label>
+                    <input type="number" id="editComboMax" class="form-input" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Min Members *</label>
+                    <input type="number" id="editComboMin" class="form-input" min="1">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Description</label>
+                    <textarea id="editComboDesc" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Combo Logo (Optional)</label>
+                    <input type="file" id="editComboLogo" class="form-input" accept="image/*" onchange="previewEditComboLogo(this)">
+                    <div id="editComboLogoPreviewArea" style="margin-top: 1rem; display: none;">
+                        <img id="editComboLogoPreviewImg" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px; border: 2px solid #000;">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <label class="form-label">Select Events & Revenue Allocation *</label>
+                    <input type="text" id="editComboEventSearch" class="form-input" placeholder="Search events..." onkeyup="filterEditComboEvents()" style="margin-bottom: 1rem;">
+                    <div id="editComboEventsList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background: #fafafa;">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <div style="margin-top: 1rem; text-align: right; font-weight: bold; font-size: 1.2rem;">
+                        Total Price: ₹<span id="editComboTotalPrice">0</span>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Is Active?</label>
+                    <select id="editComboActive" class="form-select">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn-outline" onclick="closeEditComboModal()" style="flex: 1; justify-content: center;">Cancel</button>
+                <button class="btn-primary" id="saveComboEditBtn" style="flex: 2; justify-content: center;" onclick="submitComboEdit()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+            <p id="editComboError" style="color:#ff4757;display:none; text-align:center; margin-top:1rem; font-size:0.85rem;"></p>
+        </div>
+    </div>
+
     <div class="admin-page">
         <div class="admin-header">
             <div class="admin-title">
@@ -293,6 +354,7 @@
         <div class="admin-tabs">
             <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-bar" style="margin-right:0.4rem;"></i>Dashboard</button>
             <button class="tab-btn" onclick="switchTab('events', this)"><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i>Events</button>
+            <button class="tab-btn" onclick="switchTab('combos', this)"><i class="fas fa-layer-group" style="margin-right:0.4rem;"></i>Combos</button>
             <button class="tab-btn" onclick="switchTab('add', this)"><i class="fas fa-plus-circle" style="margin-right:0.4rem;"></i>Add Event</button>
             <button class="tab-btn" onclick="switchTab('game-details', this)"><i class="fas fa-gamepad" style="margin-right:0.4rem;"></i>Game Details</button>
             <button class="tab-btn" onclick="switchTab('event-details', this)"><i class="fas fa-calendar-check" style="margin-right:0.4rem;"></i>Event Details</button>
@@ -368,6 +430,76 @@
                         <tr><td colspan="7" class="admin-loading"><i class="fas fa-spinner"></i> Loading events...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- TAB: COMBOS -->
+        <div id="tab-combos" class="tab-content">
+            <div class="admin-panel-card" style="margin-bottom: 2rem;">
+                <div class="panel-header">
+                    <h3 style="font-size: 1.2rem;"><i class="fas fa-layer-group" style="color:var(--accent);margin-right:0.5rem;"></i>Manage Combos</h3>
+                </div>
+                <table id="combosTable">
+                    <thead>
+                        <tr>
+                            <th>Combo Name</th>
+                            <th>Description</th>
+                            <th>Min-Max Members</th>
+                            <th>Total Fee</th>
+                            <th>Visibility</th>
+                            <th>Manage</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cbTableBody">
+                        <tr><td colspan="6" class="admin-loading"><i class="fas fa-spinner"></i> Loading combos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-panel-card" style="max-width: 800px; margin: 0 auto;">
+                <h3 style="margin-bottom: 2rem; color: var(--accent);"><i class="fas fa-plus-circle"></i> Create New Combo</h3>
+                
+                <div class="add-event-grid">
+                    <div class="form-group">
+                        <label class="form-label">Combo Title *</label>
+                        <input type="text" id="addComboTitle" class="form-input" placeholder="e.g. Mega Gamer Pack">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Description (Optional)</label>
+                        <textarea id="addComboDesc" class="form-input" placeholder="Combo description..." rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Members *</label>
+                        <input type="number" id="addComboMax" class="form-input" min="1" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Min Members *</label>
+                        <input type="number" id="addComboMin" class="form-input" min="1" value="1">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Combo Image/Logo (Optional)</label>
+                        <input type="file" id="addComboLogo" class="form-input" accept="image/*" onchange="previewComboLogo(this)">
+                        <div id="comboLogoPreviewArea" style="display:none; margin-top:1rem; text-align:center; padding:1rem; background:rgba(0,0,0,0.2); border-radius:12px;">
+                            <img id="comboLogoPreviewImg" src="" style="max-width:100%; max-height:150px; border-radius:8px;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Select Events & Revenue Allocation *</label>
+                        <input type="text" id="comboEventSearch" class="form-input" placeholder="Search events..." onkeyup="filterComboEvents()" style="margin-bottom: 1rem;">
+                        <div id="comboEventsList" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; max-height: 250px; overflow-y: auto;">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1; display:flex; align-items:center; gap: 1rem;">
+                        <label class="form-label" style="margin-bottom:0;">Total Combo Price (Calculated):</label>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--gold);">₹<span id="comboTotalPrice">0</span></div>
+                    </div>
+                </div>
+                
+                <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
+                    <button class="action-btn" onclick="document.getElementById('addComboTitle').value=''; document.getElementById('addComboDesc').value='';"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="action-btn primary" onclick="submitNewCombo()"><i class="fas fa-save"></i> Save Combo</button>
+                </div>
             </div>
         </div>
 
@@ -519,6 +651,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="supabase-config.js"></script>
-    <script src="admin.js"></script>
+    <script src="admin.js?v=4"></script>
 </body>
 </html>

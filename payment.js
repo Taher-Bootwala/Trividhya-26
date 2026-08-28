@@ -149,35 +149,84 @@ async function payCash() {
 // Process the registration with Supabase
 async function processRegistration(mode, status, isApproved, transactionId = null) {
     if (!regData) return;
-
-    regData.payment_mode = mode;
-    regData.payment_status = status;
-    regData.is_approved = isApproved;
-    if (transactionId) {
-        regData.transaction_id = transactionId;
-    }
-    // If it's a free event, it goes as online/paid with approval = true
-
     try {
-        const { data, error } = await createRegistration(regData, membersData);
+        const comboDataStr = sessionStorage.getItem('pendingComboData');
+        let comboData = null;
+    try { if (comboDataStr) comboData = JSON.parse(comboDataStr); } catch(e){}
 
-        if (error) {
-            console.error('Registration failed:', error);
-            // Check for unique constraint violation (code 23505)
-            if (error.code === '23505') {
-                showError('A registration with this email or mobile number already exists for this event.');
-            } else {
-                showError(error.message || 'Failed to submit registration. Please try again.');
+    if (comboData && comboData.events_data && comboData.events_data.length > 0) {
+        // Handle Combo Registration: Insert multiple rows, one for each event
+        let hasError = false;
+        let lastErrorMsg = '';
+        
+        for (let i = 0; i < comboData.events_data.length; i++) {
+            const ev = comboData.events_data[i];
+            
+            // Clone regData for this specific event
+            const specificRegData = { ...regData };
+            specificRegData.event_id = ev.event_id;
+            specificRegData.payment_mode = mode;
+            specificRegData.payment_status = status;
+            specificRegData.is_approved = isApproved;
+            specificRegData.amount = ev.allocation;
+            specificRegData.is_combo = true;
+            specificRegData.combo_id = comboData.id;
+            
+            // Append suffix to transaction ID to keep it unique per row
+            if (transactionId) {
+                specificRegData.transaction_id = `${transactionId}-C${i+1}`;
             }
+
+            const { data, error } = await createRegistration(specificRegData, membersData);
+            if (error) {
+                console.error(`Registration failed for event ${ev.event_id}:`, error);
+                hasError = true;
+                lastErrorMsg = error.message;
+            }
+        }
+
+        if (hasError) {
+            showError(lastErrorMsg || 'Some registrations in the combo failed to process. Please contact support.');
             return;
         }
 
-        // Success - Clear session
-        sessionStorage.removeItem('pendingRegistration');
-        sessionStorage.removeItem('pendingMembers');
-        sessionStorage.removeItem('pendingEventTitle');
-        sessionStorage.removeItem('pendingEventFee');
-        sessionStorage.removeItem('pendingEventLogo');
+    } else {
+        // Handle Single Event Registration
+        regData.payment_mode = mode;
+        regData.payment_status = status;
+        regData.is_approved = isApproved;
+        regData.amount = eventFee;
+        regData.is_combo = false;
+        
+        if (transactionId) {
+            regData.transaction_id = transactionId;
+        }
+
+        try {
+            const { data, error } = await createRegistration(regData, membersData);
+
+            if (error) {
+                console.error('Registration failed:', error);
+                if (error.code === '23505') {
+                    showError('A registration with this email or mobile number already exists for this event.');
+                } else {
+                    showError(error.message || 'Failed to submit registration. Please try again.');
+                }
+                return;
+            }
+        } catch (e) {
+            showError('An unexpected error occurred.');
+            return;
+        }
+    }
+
+    // Success - Clear session
+    sessionStorage.removeItem('pendingRegistration');
+    sessionStorage.removeItem('pendingMembers');
+    sessionStorage.removeItem('pendingEventTitle');
+    sessionStorage.removeItem('pendingEventFee');
+    sessionStorage.removeItem('pendingEventLogo');
+    sessionStorage.removeItem('pendingComboData');
 
         // Show outcome
         document.getElementById('payChoiceSection').style.display = 'none';

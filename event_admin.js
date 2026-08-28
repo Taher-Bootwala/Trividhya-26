@@ -210,7 +210,12 @@ function updateStats() {
     
     document.getElementById('statPaid').textContent = paidCount;
     document.getElementById('statPending').textContent = pendingCount;
-    document.getElementById('statRev').textContent = '₹' + (paidCount * currentEvent.fee);
+    
+    const totalRev = activeRegs
+        .filter(r => r.payment_status === 'paid')
+        .reduce((sum, r) => sum + (r.amount !== undefined && r.amount !== null ? r.amount : currentEvent.fee), 0);
+        
+    document.getElementById('statRev').textContent = '₹' + totalRev;
 }
 
 function renderTable() {
@@ -261,7 +266,13 @@ function renderTable() {
         let modeBadge = r.payment_mode === 'online' 
             ? '<span class="badge online">Online</span>' 
             : '<span class="badge cash">Cash</span>';
-        
+            
+        let regTypeBadge = r.is_combo 
+            ? '<span class="badge" style="background:#8e44ad; color:#fff; font-size:0.65rem; margin-top:4px; border: 1px solid rgba(0,0,0,0.1);">Combo Deal</span>' 
+            : '<span class="badge" style="background:#2980b9; color:#fff; font-size:0.65rem; margin-top:4px; border: 1px solid rgba(0,0,0,0.1);">Single Event</span>';
+            
+        let priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${currentEvent.fee}`;
+
         let membersHtml = '';
         if (r.members && r.members.length > 0) {
             membersHtml = r.members.map(m => `<div>• ${m.name}</div>`).join('');
@@ -302,14 +313,21 @@ function renderTable() {
         return `
             <tr>
                 <td><input type="checkbox" class="row-cb" value="${r.id}" ${isChecked} onchange="toggleSelectRow('${r.id}', this.checked)" style="cursor:pointer; width:16px; height:16px;"></td>
-                <td style="font-weight:700;color:#000000;">${r.group_name}</td>
+                <td style="font-weight:700;color:#000000;">
+                    ${r.group_name}
+                    <div style="margin-top:0.3rem;">${regTypeBadge}</div>
+                </td>
                 <td>
                     <div style="font-weight:600;color:#000000;">${r.leader_name} <i class="fas fa-crown" style="color:#000;font-size:0.65rem;margin-left:3px;"></i></div>
                     <div style="font-size:0.72rem;color:#555;margin-top:2px;">${r.leader_email}</div>
                     <div style="font-size:0.72rem;color:#555;">${r.leader_mobile}</div>
                 </td>
                 <td>${membersHtml}</td>
-                <td>${paymentBadge}<div style="margin-top:0.3rem;">${modeBadge}</div></td>
+                <td>
+                    <div style="font-weight:800; font-size:0.95rem; margin-bottom:6px; color:#2c3e50;">${priceText}</div>
+                    ${paymentBadge}
+                    <div style="margin-top:0.3rem;">${modeBadge}</div>
+                </td>
                 <td>${statusText}</td>
                 <td style="white-space:nowrap;">${actionHtml}</td>
             </tr>

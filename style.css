@@ -594,7 +594,8 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             gap: 1.5rem; max-width: 1200px; margin: 0 auto;
         }
 
-        #games .cards-grid {
+        #games .cards-grid,
+        #combosGrid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
@@ -605,7 +606,8 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         }
 
         #games .cards-grid .event-card,
-        #games .cards-grid .sk-card {
+        #games .cards-grid .sk-card,
+        #combosGrid .event-card {
             width: 270px;
             max-width: 100%;
             flex: 0 0 270px;
@@ -625,7 +627,8 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         @media (max-width: 600px) {
             #games .cards-grid .event-card,
-            #games .cards-grid .sk-card {
+            #games .cards-grid .sk-card,
+            #combosGrid .event-card {
                 width: 100%;
                 flex: 1 1 100%;
             }

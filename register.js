@@ -9,17 +9,18 @@ let leaderEmailVerified = false;
 // Parse event ID from URL
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
+const comboId = urlParams.get('combo_id');
 
 async function initRegisterPage() {
     const container = document.getElementById('regContainer');
     const loading = document.getElementById('regLoading');
 
-    if (!eventId) {
+    if (!eventId && !comboId) {
         container.innerHTML = `
             <div class="reg-error-page">
                 <i class="fas fa-exclamation-triangle"></i>
-                <h2>No Event Selected</h2>
-                <p>Please select an event from the main page first.</p>
+                <h2>No Event/Combo Selected</h2>
+                <p>Please select an event or combo from the main page first.</p>
                 <a href="index.html" class="btn-primary" style="display:inline-flex;margin-top:1.5rem;border-radius:12px;">
                     <i class="fas fa-arrow-left"></i> Go to Events
                 </a>
@@ -27,14 +28,52 @@ async function initRegisterPage() {
         return;
     }
 
-    currentEvent = await getEventById(eventId);
+    if (comboId) {
+        const combo = await getComboById(comboId);
+        if (combo) {
+            // Fetch all associated events to get coordinators/volunteers
+            const eventIds = combo.events_data.map(e => e.event_id);
+            const { data: eventsList } = await supabaseClient
+                .from('events')
+                .select('title, coordinators, volunteers')
+                .in('id', eventIds);
+
+            let allCoords = [];
+            let allVols = [];
+            if (eventsList) {
+                eventsList.forEach(e => {
+                    if (e.coordinators) allCoords.push(`${e.title}: ${e.coordinators}`);
+                    if (e.volunteers) allVols.push(`${e.title}: ${e.volunteers}`);
+                });
+            }
+
+            currentEvent = {
+                id: 'COMBO_' + combo.id,
+                title: combo.name,
+                category: 'combo',
+                badge: 'Combo Deal',
+                type: combo.max_members > 1 ? 'group' : 'individual',
+                max_members: combo.max_members,
+                min_members: combo.min_members,
+                fee: combo.total_fee,
+                description: combo.description,
+                coordinators: allCoords.join('<br>') || 'TBA',
+                volunteers: allVols.join('<br>') || 'TBA',
+                is_combo: true,
+                combo_data: combo,
+                logo_url: combo.image_url
+            };
+        }
+    } else {
+        currentEvent = await getEventById(eventId);
+    }
 
     if (!currentEvent) {
         container.innerHTML = `
             <div class="reg-error-page">
                 <i class="fas fa-exclamation-triangle"></i>
-                <h2>Event Not Found</h2>
-                <p>This event doesn't exist or has been removed.</p>
+                <h2>Not Found</h2>
+                <p>This event or combo doesn't exist or has been removed.</p>
                 <a href="index.html" class="btn-primary" style="display:inline-flex;margin-top:1.5rem;border-radius:12px;">
                     <i class="fas fa-arrow-left"></i> Go to Events
                 </a>
@@ -460,9 +499,10 @@ async function handleRegistration(e) {
     }
 
     // FINAL DUPLICATE CHECK (MOBILE)
-    const { data: existing, error: dupError } = await checkRegistrationDuplicate(currentEvent.id, null, leaderMobile);
+    const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.events_data.map(e => e.event_id) : currentEvent.id;
+    const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, null, leaderMobile);
     if (existing) {
-        errEl.textContent = `This mobile number (${leaderMobile}) is already registered for this event.`;
+        errEl.textContent = `This mobile number (${leaderMobile}) is already registered for ${currentEvent.is_combo ? 'one of the events in this combo' : 'this event'}.`;
         errEl.style.display = 'block';
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
@@ -476,7 +516,7 @@ async function handleRegistration(e) {
 
     // Store data in session and go to payment
     const regData = {
-        event_id: currentEvent.id,
+        event_id: currentEvent.id, // For combos, this is a placeholder 'COMBO_uuid' string
         group_name: groupName,
         leader_name: leaderName,
         leader_email: leaderEmail,
@@ -498,9 +538,14 @@ async function handleRegistration(e) {
     sessionStorage.setItem('pendingEventTitle', currentEvent.title);
     sessionStorage.setItem('pendingEventFee', currentEvent.fee);
     sessionStorage.setItem('pendingEventLogo', currentEvent.logo_url || '');
-
-    // Navigate to payment page
-    window.location.href = `payment.html?event_id=${currentEvent.id}`;
+    
+    if (currentEvent.is_combo) {
+        sessionStorage.setItem('pendingComboData', JSON.stringify(currentEvent.combo_data));
+        window.location.href = `payment.html?combo_id=${currentEvent.combo_data.id}&v=${Date.now()}`;
+    } else {
+        sessionStorage.setItem('pendingComboData', '');
+        window.location.href = `payment.html?event_id=${currentEvent.id}&v=${Date.now()}`;
+    }
 }
 
 /* ── Supabase Email OTP Verification — with Custom SMTP ── */
@@ -522,10 +567,11 @@ async function sendOtp() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking email...';
 
-    const { data: existing, error: dupError } = await checkRegistrationDuplicate(currentEvent.id, email, null);
+    const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.events_data.map(e => e.event_id) : currentEvent.id;
+    const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, email, null);
     if (existing) {
         otpSection.style.display = 'block';
-        otpMsg.textContent = `This email (${email}) is already registered for this event. Please use a different email.`;
+        otpMsg.textContent = `This email (${email}) is already registered for ${currentEvent.is_combo ? 'one of the events in this combo' : 'this event'}. Please use a different email.`;
         otpMsg.style.color = '#ff4757';
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';

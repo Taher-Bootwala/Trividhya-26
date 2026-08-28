@@ -337,12 +337,57 @@ function renderPaginationUI(containerId, totalPages, currentPage, onPageChange) 
 
 /* ── Load with skeleton delay ── */
 showSkeletons(6);
-loadEvents().then(() => {
+Promise.all([loadEvents(), loadCombos()]).then(() => {
     document.getElementById('skelGrid').style.display = 'none';
     document.getElementById('evGrid').style.display   = 'grid';
     renderEventsSection();
     renderGamesSection();
 });
+
+let ALL_COMBOS = [];
+
+async function loadCombos() {
+    ALL_COMBOS = await getAllCombos();
+    renderCombosSection();
+}
+
+function renderCombosSection() {
+    const section = document.getElementById('combosSection');
+    const grid = document.getElementById('combosGrid');
+    
+    if (ALL_COMBOS.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    
+    grid.innerHTML = ALL_COMBOS.map((combo, i) => `
+        <div class="event-card" style="border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.05);" ${isMobile ? '' : `data-aos="zoom-in" data-aos-delay="${Math.min(i*50, 400)}"`} onclick="window.location.href='register.html?combo_id=${combo.id}'">
+            <div class="card-img" style="height: 120px; display:flex; justify-content:center; align-items:center; background: ${combo.image_url ? 'url(' + combo.image_url + ') center/cover' : 'rgba(0,0,0,0.5)'};">
+                ${!combo.image_url ? '<i class="fas fa-layer-group" style="font-size: 3rem; color: var(--gold);"></i>' : ''}
+                <span class="card-badge" style="color:#000; background: var(--gold); border:none; font-weight:bold;">COMBO DEAL</span>
+            </div>
+            <div class="card-body">
+                <div class="card-title" style="color: var(--gold);">${combo.name}</div>
+                <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.8rem; line-height: 1.4;">${combo.description || 'Special multi-event package'}</div>
+                <div class="card-meta">
+                    <span><i class="fas fa-users"></i>${combo.min_members === combo.max_members ? combo.max_members : combo.min_members + '-' + combo.max_members} Members</span>
+                    <span style="color: #2ed573; font-weight: bold;"><i class="fas fa-ticket-alt"></i>₹${combo.total_fee}</span>
+                </div>
+                <div class="card-btn" style="background: var(--gold); color: #000; border-radius: 8px; border:none; font-weight:bold;">
+                    <i class="fas fa-bolt"></i> Register Combo
+                </div>
+            </div>
+        </div>`).join('');
+        
+    if (typeof VanillaTilt !== 'undefined' && !isMobile) {
+        VanillaTilt.init(grid.querySelectorAll(".event-card"), {
+            max: 15, speed: 400, glare: true, "max-glare": 0.2,
+        });
+    }
+}
 
 /* ── Filter ── */
 function filterEvent(cat, btn) {
