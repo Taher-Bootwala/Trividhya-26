@@ -628,6 +628,20 @@ async function saveEventInfo() {
     const logoFile = document.getElementById('evLogoFile')?.files[0];
     
     if (!title) { showToast('Event title is required', 'error'); return; }
+
+    const minMembersEl = document.getElementById('evMinMembers');
+    let minMembers = minMembersEl ? parseInt(minMembersEl.value, 10) : 1;
+
+    if (minMembersEl) {
+        if (isNaN(minMembers) || minMembers < 1) {
+            showToast('Minimum participants must be at least 1', 'error');
+            return;
+        }
+        if (currentEvent.max_members && minMembers > currentEvent.max_members) {
+            showToast(`Minimum participants (${minMembers}) cannot exceed Max Team Size (${currentEvent.max_members})`, 'error');
+            return;
+        }
+    }
     
     const btn = document.getElementById('saveInfoBtn');
     const oldHtml = btn.innerHTML;
@@ -669,23 +683,6 @@ async function saveEventInfo() {
         newLogoUrl = urlData.publicUrl;
     }
     
-    const minMembersEl = document.getElementById('evMinMembers');
-    let minMembers = minMembersEl ? parseInt(minMembersEl.value, 10) : 1;
-
-    if (minMembersEl) {
-        if (isNaN(minMembers) || minMembers < 1) {
-            btn.innerHTML = oldHtml;
-            btn.disabled = false;
-            showToast('Minimum participants must be at least 1', 'error');
-            return;
-        }
-        if (currentEvent.max_members && minMembers > currentEvent.max_members) {
-            btn.innerHTML = oldHtml;
-            btn.disabled = false;
-            showToast(`Minimum participants (${minMembers}) cannot exceed Max Team Size (${currentEvent.max_members})`, 'error');
-            return;
-        }
-    }
 
     const updates = {
         title, fee, description: desc, logo_url: newLogoUrl, coordinators, volunteers

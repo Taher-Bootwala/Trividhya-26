@@ -280,7 +280,16 @@ function renderEventsTable() {
             : `<div style="width:40px;height:40px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-trophy"></i></div>`;
             
         const fee = ev.fee > 0 ? '₹' + ev.fee : 'Free';
-        const team = ev.max_members > 1 ? ev.max_members + ' Members' : 'Solo';
+        let team = 'Solo';
+        if (ev.max_members > 1) {
+            if (ev.min_members && ev.min_members !== ev.max_members && ev.min_members > 1) {
+                team = `${ev.min_members} - ${ev.max_members} Members`;
+            } else if (ev.min_members === 1 && ev.max_members > 1) {
+                team = `1 - ${ev.max_members} Members`;
+            } else {
+                team = `${ev.max_members} Members`;
+            }
+        }
         const active = ev.is_active 
             ? `<span style="color:#2ed573;"><i class="fas fa-eye"></i> Active</span>` 
             : `<span style="color:#ff4757;"><i class="fas fa-eye-slash"></i> Hidden</span>`;
@@ -418,6 +427,7 @@ async function submitEventEdit() {
     const cat = document.getElementById('editEvCat').value;
     const type = document.getElementById('editEvType').value;
     const max = parseInt(document.getElementById('editEvMembers').value, 10);
+    const min = parseInt(document.getElementById('editEvMinMembers')?.value || '1', 10);
     const fee = parseInt(document.getElementById('editEvFee').value, 10);
     const color = document.getElementById('editEvColor').value;
     const logoFile = document.getElementById('editEvLogo').files[0];
@@ -426,6 +436,12 @@ async function submitEventEdit() {
 
     if (!title || isNaN(max) || isNaN(fee)) {
         errEl.textContent = 'Please fill all required (*) fields correctly.';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    if (min > max) {
+        errEl.textContent = 'Minimum members cannot exceed maximum members.';
         errEl.style.display = 'block';
         return;
     }
@@ -474,7 +490,6 @@ async function submitEventEdit() {
     if (cat === 'nontech') badge = 'Fun';
     if (cat === 'game') badge = 'Gaming';
 
-    const min = parseInt(document.getElementById('editEvMinMembers')?.value || '1', 10);
     const coordinators = document.getElementById('editEvCoordinators').value.trim();
     const volunteers = document.getElementById('editEvVolunteers').value.trim();
 
@@ -538,6 +553,7 @@ async function submitNewEvent() {
     const cat = document.getElementById('addCat').value;
     const type = document.getElementById('addType').value;
     const max = parseInt(document.getElementById('addMembers').value, 10);
+    const min = parseInt(document.getElementById('addMinMembers')?.value || '1', 10);
     const fee = parseInt(document.getElementById('addFee').value, 10);
     const color = document.getElementById('addColor').value;
     const logoFile = document.getElementById('addLogo').files[0];
@@ -546,6 +562,12 @@ async function submitNewEvent() {
 
     if (!title || !pass || isNaN(max) || isNaN(fee)) {
         errEl.textContent = 'Please fill all required (*) fields correctly.';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    if (min > max) {
+        errEl.textContent = 'Minimum members cannot exceed maximum members.';
         errEl.style.display = 'block';
         return;
     }
@@ -597,7 +619,6 @@ async function submitNewEvent() {
     if (cat === 'nontech') badge = 'Fun';
     if (cat === 'game') badge = 'Gaming';
 
-    const min = parseInt(document.getElementById('addMinMembers')?.value || '1', 10);
     const coordinators = document.getElementById('addCoordinators').value.trim();
     const volunteers = document.getElementById('addVolunteers').value.trim();
 
