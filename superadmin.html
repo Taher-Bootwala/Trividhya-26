@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Portal | Trividhya'26</title>
+    <meta name="description" content="Super Admin Login Portal for Trividhya'26 — GEC Dahod.">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .mgr-page {
+            min-height: 100vh;
+            padding: 5rem 1.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .mgr-back {
+            position: fixed;
+            top: 1.2rem;
+            left: 1.5rem;
+            color: #000000 !important;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+            transition: all 0.3s ease;
+            background: #ffffff !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            border: 2px solid #000000 !important;
+            font-family: var(--font-body);
+            font-weight: 600;
+        }
+        .mgr-back:hover { color: #ffffff !important; background: #000000 !important; transform: translateY(-2px); }
+
+        .mgr-container {
+            width: 100%;
+            max-width: 500px; /* narrowed because no directory needed */
+            z-index: 1;
+        }
+
+        .mgr-header-card {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2rem;
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            color: #000000 !important;
+        }
+
+        .mgr-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(243, 156, 18, 0.08);
+            color: #f39c12;
+            border: 1.5px solid #f39c12;
+            padding: 0.35rem 1rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .mgr-title {
+            font-family: var(--font-heading) !important;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.6rem;
+            color: #000000 !important;
+        }
+
+        .mgr-sub {
+            color: #555555;
+            font-size: 0.92rem;
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Login Card */
+        .mgr-card {
+            background: #ffffff !important;
+            border-radius: 24px;
+            border: 2px solid #000000 !important;
+            padding: 2.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2.5rem;
+            color: #000000 !important;
+        }
+
+        .mgr-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-family: var(--font-heading);
+            color: #000000 !important;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 1.5px solid #ccc;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #f39c12;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.1);
+        }
+
+        .pass-wrapper {
+            position: relative;
+        }
+        .pass-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .mgr-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #000000 !important;
+            border: 2px solid #000000 !important;
+            border-radius: 50px;
+            color: #ffffff !important;
+            font-family: var(--font-body) !important;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .mgr-btn:hover {
+            background: #ffffff !important;
+            color: #000000 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+        .mgr-btn.gold-btn:hover {
+            border-color: #f39c12 !important;
+            color: #f39c12 !important;
+        }
+        .mgr-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .mgr-error {
+            color: #ff4757;
+            font-size: 0.85rem;
+            margin-top: 0.8rem;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="mgr-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="mgr-page">
+        <div class="mgr-container">
+            
+            <!-- Header Card -->
+            <div class="mgr-header-card">
+                <div class="mgr-badge"><i class="fas fa-crown"></i> Super Admin Portal</div>
+                <h1 class="mgr-title">Admin Login</h1>
+                <p class="mgr-sub">Welcome back! Please sign in with your administrator credentials to access the Super Admin Dashboard.</p>
+            </div>
+
+            <!-- Login Form Card -->
+            <div class="mgr-card" id="maLoginFormContainer">
+                <div class="mgr-card-title">
+                    <i class="fas fa-user-shield" style="color:#f39c12;"></i> Secure Login
+                </div>
+
+                <form id="maLoginForm" onsubmit="handleMainAdminLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">Email Address *</label>
+                        <input type="email" id="maEmail" class="form-input" placeholder="admin@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password *</label>
+                        <div class="pass-wrapper">
+                            <input type="password" id="maPassword" class="form-input" placeholder="Enter password" required>
+                            <button type="button" class="pass-toggle" onclick="togglePassVisibility()">
+                                <i class="fas fa-eye" id="passIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p id="maError" class="mgr-error"></p>
+
+                    <button type="submit" class="mgr-btn gold-btn" id="maLoginBtn">
+                        <span class="admin-btn-text"><i class="fas fa-sign-in-alt"></i> Login</span>
+                        <span class="admin-btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- MFA Challenge Step -->
+            <div class="mgr-card" id="maMfaFormContainer" style="display:none;">
+                <div class="mgr-card-title">
+                    <i class="fas fa-lock" style="color:#f39c12;"></i> Two-Factor Authentication
+                </div>
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1.5rem; text-align:center;">Enter the 6-digit code from your Authenticator App.</p>
+                
+                <form id="maMfaForm" onsubmit="handleVerifyOtp(event)">
+                    <div class="form-group">
+                        <input type="text" id="maOtp" class="form-input" placeholder="000000" maxlength="6" style="text-align:center; letter-spacing:8px; font-weight:bold; font-size:1.2rem;" required>
+                    </div>
+                    <input type="hidden" id="maFactorId">
+                    <p id="maOtpError" class="mgr-error"></p>
+                    <button type="submit" class="mgr-btn gold-btn" id="maMfaBtn">
+                        <span class="admin-btn-text"><i class="fas fa-check-circle"></i> Verify Code</span>
+                        <span class="admin-btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- MFA Enrollment Step -->
+            <div class="mgr-card" id="maEnrollFormContainer" style="display:none;">
+                <div class="mgr-card-title">
+                    <i class="fas fa-qrcode" style="color:#f39c12;"></i> Setup 2FA
+                </div>
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1.5rem; text-align:center;">Scan this QR code with your Authenticator app (e.g., Google Authenticator) to set up 2FA.</p>
+                
+                <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:1.5rem; padding:15px; background:#fff; border-radius:12px; border:2px solid #f39c12;"></div>
+                
+                <form id="maEnrollForm" onsubmit="handleVerifyEnrollment(event)">
+                    <div class="form-group">
+                        <input type="text" id="maEnrollOtp" class="form-input" placeholder="Enter 6-digit code" maxlength="6" style="text-align:center; letter-spacing:8px; font-weight:bold; font-size:1.2rem;" required>
+                    </div>
+                    <input type="hidden" id="maEnrollFactorId">
+                    <p id="maEnrollError" class="mgr-error"></p>
+                    <button type="submit" class="mgr-btn gold-btn" id="maEnrollBtn">
+                        <span class="admin-btn-text"><i class="fas fa-shield-alt"></i> Enable 2FA</span>
+                        <span class="admin-btn-loader" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.style.background = type === 'success' ? '#2ed573' : type === 'error' ? '#ff4757' : '#f39c12';
+            toast.style.color = '#ffffff';
+            toast.style.padding = '0.8rem 1.2rem';
+            toast.style.borderRadius = '12px';
+            toast.style.fontWeight = '600';
+            toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '0.6rem';
+            toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, duration);
+        }
+
+        function togglePassVisibility() {
+            const passInput = document.getElementById('maPassword');
+            const passIcon = document.getElementById('passIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                passIcon.className = 'fas fa-eye-slash';
+            } else {
+                passInput.type = 'password';
+                passIcon.className = 'fas fa-eye';
+            }
+        }
+
+        async function handleMainAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('maEmail').value.trim();
+            const password = document.getElementById('maPassword').value;
+            const errEl = document.getElementById('maError');
+            const btn = document.getElementById('maLoginBtn');
+
+            btn.querySelector('.admin-btn-text').style.display = 'none';
+            btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+            btn.disabled = true;
+            errEl.textContent = '';
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+            btn.querySelector('.admin-btn-loader').style.display = 'none';
+            btn.disabled = false;
+
+            if (error) {
+                errEl.textContent = error.message;
+                return;
+            }
+
+            // Check MFA status
+            const { data: mfaLevel, error: mfaError } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+            
+            if (mfaLevel && mfaLevel.currentLevel !== 'aal2') {
+                // Needs MFA
+                const { data: factors } = await supabaseClient.auth.mfa.listFactors();
+                const totpFactor = factors?.totp[0];
+
+                if (!totpFactor || totpFactor.status === 'unverified') {
+                    // Needs Enrollment
+                    document.getElementById('maLoginFormContainer').style.display = 'none';
+                    document.getElementById('maEnrollFormContainer').style.display = 'block';
+                    
+                    const enroll = await supabaseClient.auth.mfa.enroll({ factorType: 'totp' });
+                    if (enroll.error) {
+                        document.getElementById('maEnrollError').textContent = enroll.error.message;
+                        return;
+                    }
+                    document.getElementById('maEnrollFactorId').value = enroll.data.id;
+                    
+                    // Generate QR Code
+                    document.getElementById('qrcode').innerHTML = '';
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: enroll.data.totp.uri,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff"
+                    });
+                } else {
+                    // Needs Verification
+                    document.getElementById('maLoginFormContainer').style.display = 'none';
+                    document.getElementById('maMfaFormContainer').style.display = 'block';
+                    
+                    const challenge = await supabaseClient.auth.mfa.challenge({ factorId: totpFactor.id });
+                    if (challenge.error) {
+                        document.getElementById('maOtpError').textContent = challenge.error.message;
+                        return;
+                    }
+                    document.getElementById('maFactorId').value = totpFactor.id;
+                }
+            } else {
+                finishMainAdminLogin();
+            }
+        }
+
+        async function handleVerifyOtp(e) {
+            e.preventDefault();
+            const otp = document.getElementById('maOtp').value.trim();
+            const factorId = document.getElementById('maFactorId').value;
+            const errEl = document.getElementById('maOtpError');
+            const btn = document.getElementById('maMfaBtn');
+
+            if (otp.length !== 6) {
+                errEl.textContent = 'Please enter a 6-digit code';
+                return;
+            }
+
+            btn.querySelector('.admin-btn-text').style.display = 'none';
+            btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+            btn.disabled = true;
+            errEl.textContent = '';
+
+            const verify = await supabaseClient.auth.mfa.verify({
+                factorId,
+                challengeId: (await supabaseClient.auth.mfa.challenge({ factorId })).data.id,
+                code: otp
+            });
+
+            btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+            btn.querySelector('.admin-btn-loader').style.display = 'none';
+            btn.disabled = false;
+
+            if (verify.error) {
+                errEl.textContent = 'Invalid OTP code';
+            } else {
+                finishMainAdminLogin();
+            }
+        }
+
+        async function handleVerifyEnrollment(e) {
+            e.preventDefault();
+            const otp = document.getElementById('maEnrollOtp').value.trim();
+            const factorId = document.getElementById('maEnrollFactorId').value;
+            const errEl = document.getElementById('maEnrollError');
+            const btn = document.getElementById('maEnrollBtn');
+
+            if (otp.length !== 6) {
+                errEl.textContent = 'Please enter a 6-digit code';
+                return;
+            }
+
+            btn.querySelector('.admin-btn-text').style.display = 'none';
+            btn.querySelector('.admin-btn-loader').style.display = 'inline-flex';
+            btn.disabled = true;
+            errEl.textContent = '';
+
+            const challenge = await supabaseClient.auth.mfa.challenge({ factorId });
+            if (challenge.error) {
+                errEl.textContent = challenge.error.message;
+                btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+                btn.querySelector('.admin-btn-loader').style.display = 'none';
+                btn.disabled = false;
+                return;
+            }
+
+            const verify = await supabaseClient.auth.mfa.verify({
+                factorId,
+                challengeId: challenge.data.id,
+                code: otp
+            });
+
+            btn.querySelector('.admin-btn-text').style.display = 'inline-flex';
+            btn.querySelector('.admin-btn-loader').style.display = 'none';
+            btn.disabled = false;
+
+            if (verify.error) {
+                errEl.textContent = 'Invalid OTP code';
+            } else {
+                finishMainAdminLogin();
+            }
+        }
+
+        function finishMainAdminLogin() {
+            showToast('Super Admin login successful!', 'success');
+            sessionStorage.setItem('mainAdmin', 'true');
+            setTimeout(() => { window.location.href = 'admin.html'; }, 500);
+        }
+    </script>
+</body>
+</html>
