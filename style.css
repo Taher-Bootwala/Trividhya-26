@@ -24,7 +24,7 @@
     --muted: #555555;
     --grad: #000000;
     --font-heading: 'Epic Pro Demo Regular', sans-serif;
-    --font-body: 'Epic Pro Demo Light', sans-serif;
+    --font-body: 'Poppins', Arial, sans-serif;
 }
 
 html { scroll-behavior: smooth; }
