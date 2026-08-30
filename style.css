@@ -55,6 +55,15 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             top: 1.5rem;
             left: 2rem;
             z-index: 1000;
+            background: #ffffff;
+            border-radius: 50px;
+            border: 2px solid #000000;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(14px);
+            padding: 0.5rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .logo {
@@ -689,6 +698,8 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             align-items: center;
             margin-top: 2.5rem;
             width: 100%;
+            position: relative;
+            z-index: 10;
         }
 
         .pagination-wrapper {
@@ -702,6 +713,8 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             flex-wrap: wrap;
             justify-content: center;
+            position: relative;
+            z-index: 10;
         }
 
         #games .pagination-wrapper {
