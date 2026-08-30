@@ -249,7 +249,39 @@
             transition: 0.3s;
             z-index: 100;
         }
-        .nav-back:hover { color: var(--accent); }
+        .logout-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .my-regs-container {
+                padding: 1rem;
+                padding-top: 5rem;
+            }
+            .nav-back {
+                top: 1rem;
+                left: 1rem;
+                font-size: 0.9rem;
+            }
+            .reg-grid {
+                grid-template-columns: 1fr;
+            }
+            .auth-card {
+                padding: 1.5rem;
+            }
+            .dash-header h2 {
+                font-size: 1.4rem;
+            }
+            .logout-btn {
+                top: 1rem;
+                right: 1rem;
+                padding: 0.5rem 0.8rem;
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 
@@ -281,12 +313,12 @@
 
         <!-- 3. DASHBOARD -->
         <div class="dashboard-container" id="dashboardCard">
+            <button class="btn-outline logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
             <div class="dash-header">
                 <div>
                     <h2>My Registrations</h2>
                     <div style="color:var(--muted); font-size:0.9rem;" id="dashEmailDisplay"></div>
                 </div>
-                <button class="btn-outline" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
             
             <div id="loadingRegs" style="text-align:center; padding:3rem; display:none;">

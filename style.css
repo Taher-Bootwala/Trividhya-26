@@ -1576,9 +1576,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
     /* Optimize background images */
     .hero, .events, .games {
-        background-attachment: scroll;
-        background-image: none !important; /* Disable large background images on mobile for performance */
-        background: var(--dark) !important; /* Solid background instead */
+        background-attachment: scroll !important;
     }
 
     /* Disable scroll-behavior on mobile for better performance */
