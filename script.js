@@ -327,12 +327,17 @@ function renderCombosSection() {
     const section = document.getElementById('combosSection');
     const grid = document.getElementById('combosGrid');
     
+    const heroExploreCombosBtn = document.getElementById('heroExploreCombosBtn');
+    
     if (ALL_COMBOS.length === 0) {
         section.style.display = 'none';
+        if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'none';
         return;
     }
     
     section.style.display = 'block';
+    if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'inline-flex';
+    
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
     
     grid.innerHTML = ALL_COMBOS.map((combo, i) => `
