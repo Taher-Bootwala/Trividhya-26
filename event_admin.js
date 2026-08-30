@@ -267,8 +267,9 @@ function renderTable() {
             ? '<span class="badge online">Online</span>' 
             : '<span class="badge cash">Cash</span>';
             
+        let comboNameText = r.combos && r.combos.name ? `Combo Deal: ${r.combos.name}` : 'Combo Deal';
         let regTypeBadge = r.is_combo 
-            ? '<span class="badge" style="background:#8e44ad; color:#fff; font-size:0.65rem; margin-top:4px; border: 1px solid rgba(0,0,0,0.1);">Combo Deal</span>' 
+            ? `<span class="badge" style="background:#8e44ad; color:#fff; font-size:0.65rem; margin-top:4px; border: 1px solid rgba(0,0,0,0.1);">${comboNameText}</span>` 
             : '<span class="badge" style="background:#2980b9; color:#fff; font-size:0.65rem; margin-top:4px; border: 1px solid rgba(0,0,0,0.1);">Single Event</span>';
             
         let priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${currentEvent.fee}`;

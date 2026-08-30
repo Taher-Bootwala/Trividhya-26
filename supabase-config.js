@@ -132,6 +132,80 @@ async function deleteCombo(id) {
     return { success: true };
 }
 
+async function forceDeleteCombo(id) {
+    try {
+        // 1. Get combo details
+        const { data: combo } = await supabaseClient
+            .from('combos')
+            .select('name')
+            .eq('id', id)
+            .single();
+        const comboName = combo ? combo.name : 'Unknown Combo';
+
+        // 2. Get all registrations for this combo WITH members
+        const { data: regs } = await supabaseClient
+            .from('registrations')
+            .select('*, members(*)')
+            .eq('combo_id', id);
+        
+        // 3. Archive and delete if there are registrations
+        if (regs && regs.length > 0) {
+            // Try to archive data, but DO NOT halt if it fails
+            const archiveData = regs.map(reg => ({
+                combo_id: id,
+                combo_name: comboName,
+                registration_data: reg
+            }));
+            
+            const { error: archiveErr } = await supabaseClient
+                .from('archived_registrations')
+                .insert(archiveData);
+            if (archiveErr) console.warn('Archiving failed (table might not exist), proceeding to delete anyway:', archiveErr);
+
+            const regIds = regs.map(r => r.id);
+            
+            // Try to delete members first (ignore errors, they might cascade or not exist)
+            const { error: memErr } = await supabaseClient
+                .from('members')
+                .delete()
+                .in('registration_id', regIds);
+            if (memErr) console.warn('Deleting members warning:', memErr);
+            
+            // Delete registrations (essential before deleting combo)
+            const { error: regErr } = await supabaseClient
+                .from('registrations')
+                .delete()
+                .in('id', regIds);
+            if (regErr) console.error('Error deleting combo registrations:', regErr);
+        }
+        
+        // 4. Delete combo
+        const { error: comboErr } = await supabaseClient
+            .from('combos')
+            .delete()
+            .eq('id', id);
+        if (comboErr) { console.error('Error force deleting combo:', comboErr); return { error: comboErr }; }
+        
+        return { success: true };
+    } catch (err) {
+        console.error('Exception in forceDeleteCombo:', err);
+        return { error: err };
+    }
+}
+
+// ═══════════════════════════════════════════════════
+//  ARCHIVED REGISTRATIONS HELPERS
+// ═══════════════════════════════════════════════════
+
+async function getArchivedRegistrations() {
+    const { data, error } = await supabaseClient
+        .from('archived_registrations')
+        .select('*')
+        .order('archived_at', { ascending: false });
+    if (error) { console.error('Error fetching archived registrations:', error); return []; }
+    return data;
+}
+
 // ═══════════════════════════════════════════════════
 //  REGISTRATION HELPERS
 // ═══════════════════════════════════════════════════
@@ -160,7 +234,7 @@ async function createRegistration(regData, membersData) {
 async function getRegistrationsByEvent(eventId) {
     const { data, error } = await supabaseClient
         .from('registrations')
-        .select(`*, members(*)`)
+        .select(`*, members(*), combos(name)`)
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
     if (error) { console.error('Error fetching registrations:', error); return []; }
@@ -170,11 +244,39 @@ async function getRegistrationsByEvent(eventId) {
 async function getRegistrationById(regId) {
     const { data, error } = await supabaseClient
         .from('registrations')
-        .select(`*, members(*), events(*)`)
+        .select(`*, members(*), events(*), combos(name)`)
         .eq('id', regId)
         .single();
     if (error) { console.error('Error fetching registration:', error); return null; }
     return data;
+}
+
+async function approveRegistration(regId) {
+    const { data, error } = await supabaseClient
+        .from('registrations')
+        .update({ payment_status: 'paid', is_approved: true })
+        .eq('id', regId)
+        .select();
+    if (error) { console.error('Error approving registration:', error); return { error }; }
+    return { data, success: true };
+}
+
+async function deleteRegistration(regId) {
+    // Delete members first
+    const { error: memErr } = await supabaseClient
+        .from('members')
+        .delete()
+        .eq('registration_id', regId);
+    if (memErr) { console.error('Error deleting members:', memErr); return { error: memErr }; }
+    
+    // Delete registration
+    const { error: regErr } = await supabaseClient
+        .from('registrations')
+        .delete()
+        .eq('id', regId);
+    if (regErr) { console.error('Error deleting registration:', regErr); return { error: regErr }; }
+    
+    return { success: true };
 }
 
 async function updateRegistration(id, updates) {

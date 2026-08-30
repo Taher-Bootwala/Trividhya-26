@@ -355,6 +355,7 @@
             <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-bar" style="margin-right:0.4rem;"></i>Dashboard</button>
             <button class="tab-btn" onclick="switchTab('events', this)"><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i>Events</button>
             <button class="tab-btn" onclick="switchTab('combos', this)"><i class="fas fa-layer-group" style="margin-right:0.4rem;"></i>Combos</button>
+            <button class="tab-btn" onclick="switchTab('archived', this)"><i class="fas fa-archive" style="margin-right:0.4rem;"></i>Archived Combos</button>
             <button class="tab-btn" onclick="switchTab('add', this)"><i class="fas fa-plus-circle" style="margin-right:0.4rem;"></i>Add Event</button>
             <button class="tab-btn" onclick="switchTab('game-details', this)"><i class="fas fa-gamepad" style="margin-right:0.4rem;"></i>Game Details</button>
             <button class="tab-btn" onclick="switchTab('event-details', this)"><i class="fas fa-calendar-check" style="margin-right:0.4rem;"></i>Event Details</button>
@@ -503,6 +504,20 @@
             </div>
         </div>
 
+        <!-- TAB: ARCHIVED COMBOS -->
+        <div id="tab-archived" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="font-family: var(--font-heading);"><i class="fas fa-archive"></i> Archived Combos</h2>
+                <div style="display:flex; gap:1rem;">
+                    <button class="btn-outline" onclick="loadAdminData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+            </div>
+            
+            <div id="archivedList" style="display: flex; flex-direction: column; gap: 2rem;">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </div>
+
         <!-- TAB: ADD EVENT -->
         <div id="tab-add" class="tab-content">
             <div class="admin-panel-card" style="max-width: 800px; margin: 0 auto;">
@@ -584,10 +599,11 @@
         <!-- TAB: GAME DETAILS -->
         <div id="tab-game-details" class="tab-content">
             <div class="admin-panel-card">
-                <div class="panel-header">
-                    <h3 style="font-size: 1.2rem;"><i class="fas fa-gamepad" style="color:var(--accent);margin-right:0.5rem;"></i>Game Registration Details</h3>
+                <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <h3 style="font-size: 1.2rem; margin:0;"><i class="fas fa-gamepad" style="color:var(--accent);margin-right:0.5rem;"></i>Game Registration Details</h3>
+                    <input type="text" id="gameSearchInput" class="form-input" style="max-width:300px; padding:0.5rem 1rem;" placeholder="Search team, email, leader..." onkeyup="renderGameDetailsTab()">
                 </div>
-                <div id="gameDetailsContainer">
+                <div id="gameDetailsContainer" style="margin-top: 1.5rem;">
                     <div class="admin-loading"><i class="fas fa-spinner"></i> Loading game details...</div>
                 </div>
             </div>
@@ -596,10 +612,11 @@
         <!-- TAB: EVENT DETAILS -->
         <div id="tab-event-details" class="tab-content">
             <div class="admin-panel-card">
-                <div class="panel-header">
-                    <h3 style="font-size: 1.2rem;"><i class="fas fa-calendar-check" style="color:var(--accent);margin-right:0.5rem;"></i>Event Registration Details</h3>
+                <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <h3 style="font-size: 1.2rem; margin:0;"><i class="fas fa-calendar-check" style="color:var(--accent);margin-right:0.5rem;"></i>Event Registration Details</h3>
+                    <input type="text" id="eventSearchInput" class="form-input" style="max-width:300px; padding:0.5rem 1rem;" placeholder="Search team, email, leader..." onkeyup="renderEventDetailsTab()">
                 </div>
-                <div id="eventDetailsContainer">
+                <div id="eventDetailsContainer" style="margin-top: 1.5rem;">
                     <div class="admin-loading"><i class="fas fa-spinner"></i> Loading event details...</div>
                 </div>
             </div>

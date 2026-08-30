@@ -5,6 +5,7 @@
 let allEvents = [];
 let allRegs = [];
 let allCombos = [];
+let allArchivedCombos = [];
 
 /* ── Toast & Confirm (standalone for admin pages) ── */
 function showToast(message, type = 'info', duration = 3500) {
@@ -74,6 +75,9 @@ async function loadDashboard() {
     allCombos = await getAllCombosAdmin();
     renderCombosTable();
     populateComboEventsList();
+
+    allArchivedCombos = await getArchivedRegistrations();
+    renderArchivedTab();
 
     await updateGlobalStats();
     renderCharts();
@@ -695,7 +699,7 @@ async function logoutAdmin() {
    ══════════════════════════════════════ */
 
 /* ── Generic Registration Details Renderer ── */
-async function renderRegDetails(categories, containerId) {
+async function renderRegDetails(categories, containerId, searchTerm = '') {
     const container = document.getElementById(containerId);
     container.innerHTML = '<div class="admin-loading"><i class="fas fa-spinner"></i> Loading details...</div>';
 
@@ -704,8 +708,21 @@ async function renderRegDetails(categories, containerId) {
 
     // Fetch registrations for each event
     const eventData = [];
+    const term = searchTerm.toLowerCase().trim();
+
     for (const ev of events) {
-        const regs = await getRegistrationsByEvent(ev.id);
+        let regs = await getRegistrationsByEvent(ev.id);
+        
+        // Filter by search term
+        if (term) {
+            regs = regs.filter(r => {
+                const teamMatch = (r.group_name || '').toLowerCase().includes(term) || (r.team_name || '').toLowerCase().includes(term);
+                const leaderMatch = (r.leader_name || '').toLowerCase().includes(term) || (r.leader_email || '').toLowerCase().includes(term) || (r.leader_phone || r.leader_mobile || '').toLowerCase().includes(term);
+                const membersMatch = r.members && r.members.some(m => (m.name || '').toLowerCase().includes(term));
+                return teamMatch || leaderMatch || membersMatch;
+            });
+        }
+
         if (regs.length > 0) {
             eventData.push({ event: ev, regs });
         }
@@ -715,7 +732,7 @@ async function renderRegDetails(categories, containerId) {
         container.innerHTML = `
             <div style="text-align:center; padding:3rem; color:var(--muted);">
                 <i class="fas fa-info-circle" style="font-size:3rem; margin-bottom:1rem; display:block; opacity:0.3;"></i>
-                <p>No registrations found for these categories.</p>
+                <p>No registrations found.</p>
             </div>`;
         return;
     }
@@ -740,17 +757,22 @@ async function renderRegDetails(categories, containerId) {
                 ? '<span style="background:rgba(46,213,115,0.15); color:#2ed573; padding:0.2rem 0.6rem; border-radius:50px; font-size:0.72rem; font-weight:600;">PAID</span>'
                 : '<span style="background:rgba(255,165,2,0.15); color:#ffa502; padding:0.2rem 0.6rem; border-radius:50px; font-size:0.72rem; font-weight:600;">PENDING</span>';
 
+            const comboNameText = r.combos && r.combos.name ? `Combo Deal: ${r.combos.name}` : 'Combo Deal';
             const regTypeBadge = r.is_combo 
-                ? '<span style="background:rgba(142,68,173,0.15); color:#8e44ad; border: 1px solid rgba(142,68,173,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">Combo Deal</span>' 
+                ? `<span style="background:rgba(142,68,173,0.15); color:#8e44ad; border: 1px solid rgba(142,68,173,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">${comboNameText}</span>` 
                 : '<span style="background:rgba(41,128,185,0.15); color:#2980b9; border: 1px solid rgba(41,128,185,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">Single Event</span>';
 
             const priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${event.fee}`;
+
+            const approveBtnHtml = r.payment_status !== 'paid' ? 
+                `<button class="action-btn success" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="approveRegPrompt('${r.id}')"><i class="fas fa-check"></i> Approve</button>` : '';
+            const deleteBtnHtml = `<button class="action-btn danger" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="deleteRegPrompt('${r.id}')"><i class="fas fa-trash"></i> Delete</button>`;
 
             return `
                 <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(123,47,190,0.15); border-radius:14px; padding:1rem 1.2rem; margin-bottom:0.8rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
                         <div style="display:flex; align-items:center;">
-                            <span style="font-weight:700; font-size:0.95rem;">${r.group_name}</span>
+                            <span style="font-weight:700; font-size:0.95rem;">${r.group_name || r.team_name || 'Individual'}</span>
                             ${regTypeBadge}
                             <span style="color:var(--muted); font-size:0.78rem; margin-left:0.5rem;">by ${r.leader_name}</span>
                         </div>
@@ -760,13 +782,22 @@ async function renderRegDetails(categories, containerId) {
                         </div>
                     </div>
                     <div style="padding-left:0.5rem;">
-                        <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
-                            <i class="fas fa-crown" style="color:var(--gold); font-size:0.7rem;"></i>
-                            <span style="font-size:0.82rem; font-weight:600;">${r.leader_name}</span>
-                            <span style="color:var(--muted); font-size:0.75rem;">${r.leader_mobile}</span>
-                            <span style="color:var(--gold); font-size:0.68rem; font-weight:600;">LEADER</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                            <div>
+                                <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                    <i class="fas fa-crown" style="color:var(--gold); font-size:0.7rem;"></i>
+                                    <span style="font-size:0.82rem; font-weight:600;">${r.leader_name}</span>
+                                    <span style="color:var(--muted); font-size:0.75rem;">${r.leader_phone || r.leader_mobile}</span>
+                                    <span style="color:var(--muted); font-size:0.75rem;">${r.leader_email || ''}</span>
+                                    <span style="color:var(--gold); font-size:0.68rem; font-weight:600;">LEADER</span>
+                                </div>
+                                ${membersHtml}
+                            </div>
+                            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                                ${approveBtnHtml}
+                                ${deleteBtnHtml}
+                            </div>
                         </div>
-                        ${membersHtml}
                     </div>
                 </div>`;
         }).join('');
@@ -792,11 +823,53 @@ async function renderRegDetails(categories, containerId) {
 }
 
 async function renderGameDetailsTab() {
-    await renderRegDetails(['game'], 'gameDetailsContainer');
+    const searchTerm = document.getElementById('gameSearchInput')?.value || '';
+    await renderRegDetails(['game'], 'gameDetailsContainer', searchTerm);
 }
 
 async function renderEventDetailsTab() {
-    await renderRegDetails(['tech', 'nontech'], 'eventDetailsContainer');
+    const searchTerm = document.getElementById('eventSearchInput')?.value || '';
+    await renderRegDetails(['tech', 'nontech'], 'eventDetailsContainer', searchTerm);
+}
+
+async function approveRegPrompt(id) {
+    const confirm = await showConfirmDialog({
+        title: 'Approve Registration?',
+        desc: 'Mark this registration as PAID? This will approve their participation.',
+        okText: 'Approve'
+    });
+    if (confirm) {
+        const res = await approveRegistration(id);
+        if (res.success) {
+            showToast('Registration approved successfully', 'success');
+            // Re-render tabs to reflect changes
+            renderGameDetailsTab();
+            renderEventDetailsTab();
+            updateGlobalStats();
+        } else {
+            showToast('Failed to approve registration', 'error');
+        }
+    }
+}
+
+async function deleteRegPrompt(id) {
+    const confirm = await showConfirmDialog({
+        title: 'Delete Registration?',
+        desc: 'Are you sure you want to permanently delete this registration?',
+        danger: true,
+        okText: 'Delete'
+    });
+    if (confirm) {
+        const res = await deleteRegistration(id);
+        if (res.success) {
+            showToast('Registration deleted', 'success');
+            renderGameDetailsTab();
+            renderEventDetailsTab();
+            updateGlobalStats();
+        } else {
+            showToast('Failed to delete registration', 'error');
+        }
+    }
 }
 
 
@@ -1174,7 +1247,23 @@ async function deleteComboPrompt(id) {
             allCombos = await getAllCombosAdmin();
             renderCombosTable();
         } else {
-            showToast('Failed to delete combo', 'error');
+            // Normal delete failed, likely due to registered users constraint. Ask for force delete.
+            const forceConfirm = await showConfirmDialog({
+                title: 'Force Delete Combo?',
+                desc: 'This combo likely has registered users. Do you want to force delete it? This will delete ALL registrations and users associated with this combo. This action cannot be undone.',
+                danger: true,
+                okText: 'Force Delete'
+            });
+            if (forceConfirm) {
+                const forceRes = await forceDeleteCombo(id);
+                if (forceRes.success) {
+                    showToast('Combo force deleted successfully', 'success');
+                    allCombos = await getAllCombosAdmin();
+                    renderCombosTable();
+                } else {
+                    showToast('Force delete failed', 'error');
+                }
+            }
         }
     }
 }
@@ -1403,6 +1492,8 @@ switchTab = function(tabId, btn) {
         renderGameDetailsTab();
     } else if (tabId === 'event-details') {
         renderEventDetailsTab();
+    } else if (tabId === 'archived') {
+        renderArchivedTab();
     } else if (tabId === 'settings') {
         loadSiteSettingsAdmin();
     }
@@ -1414,6 +1505,83 @@ loadDashboard = async function() {
     await _origLoadDashboard();
     // Pre-load settings form
     loadSiteSettingsAdmin();
+    allArchivedCombos = await getArchivedRegistrations();
 };
+
+async function renderArchivedTab() {
+    const container = document.getElementById('archivedList');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading archived combos...</div>';
+    
+    allArchivedCombos = await getArchivedRegistrations();
+    
+    if (allArchivedCombos.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding:3rem; color:var(--muted);">
+                <i class="fas fa-box-open" style="font-size:3rem; margin-bottom:1rem; display:block; opacity:0.3;"></i>
+                <p>No archived combos found.</p>
+            </div>`;
+        return;
+    }
+    
+    // Group by combo_id (and format date)
+    const grouped = {};
+    allArchivedCombos.forEach(item => {
+        const key = item.combo_id;
+        if (!grouped[key]) {
+            grouped[key] = {
+                id: item.combo_id,
+                name: item.combo_name || 'Unknown Combo',
+                date: new Date(item.archived_at).toLocaleString(),
+                regs: []
+            };
+        }
+        grouped[key].regs.push(item.registration_data);
+    });
+
+    const groupsHtml = Object.values(grouped).map(group => {
+        const regsHtml = group.regs.map(r => {
+            const membersHtml = (r.members && r.members.length > 0) 
+                ? r.members.map(m => `<div style="font-size:0.8rem; color:var(--muted); padding:2px 0;">• ${m.name} ${m.mobile ? `(${m.mobile})` : ''}</div>`).join('')
+                : '<div style="font-size:0.8rem; color:var(--muted);">No additional members</div>';
+                
+            return `
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:1rem; margin-bottom:0.5rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                        <span style="font-weight:700;">${r.group_name || 'Individual'}</span>
+                        <span style="color:${r.payment_status === 'paid' ? '#2ed573' : '#ffa502'}; font-size:0.8rem; font-weight:600; text-transform:uppercase;">${r.payment_status}</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.2rem; margin-bottom:0.8rem;">
+                        <span style="font-size:0.85rem;"><i class="fas fa-crown" style="color:var(--gold); margin-right:4px;"></i> ${r.leader_name}</span>
+                        <span style="font-size:0.8rem; color:var(--muted);"><i class="fas fa-envelope" style="margin-right:4px;"></i> ${r.leader_email}</span>
+                        <span style="font-size:0.8rem; color:var(--muted);"><i class="fas fa-phone" style="margin-right:4px;"></i> ${r.leader_mobile}</span>
+                    </div>
+                    <div style="border-top:1px dashed rgba(255,255,255,0.1); padding-top:0.5rem;">
+                        <div style="font-size:0.75rem; font-weight:600; color:var(--accent); margin-bottom:4px;">TEAM MEMBERS</div>
+                        ${membersHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="admin-panel-card" style="border: 1px solid rgba(255,71,87,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem;">
+                    <div>
+                        <h3 style="color:#ff4757; margin-bottom:0.3rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i>${group.name}</h3>
+                        <div style="font-size:0.8rem; color:var(--muted);">Archived on: ${group.date}</div>
+                    </div>
+                    <div style="background:rgba(255,71,87,0.1); color:#ff4757; padding:0.4rem 0.8rem; border-radius:50px; font-size:0.8rem; font-weight:700;">
+                        ${group.regs.length} Registrations
+                    </div>
+                </div>
+                <div>${regsHtml}</div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = groupsHtml;
+}
 
 initMainAdmin();
