@@ -280,11 +280,18 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
             text-align: center; padding: 6rem 2rem 2rem;
-            position: relative; overflow: hidden;
-            background: url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/homebg.png') center/cover no-repeat;
+            position: relative;
+            z-index: 1;
+            background: transparent;
         }
 
-        .hero::before { display: none; }
+        .hero::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/homebg.png') center/cover no-repeat;
+            -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 150px), transparent 100%);
+            mask-image: linear-gradient(to bottom, black calc(100% - 150px), transparent 100%);
+        }
 
         .hero-bg { display: none; }
 
@@ -487,18 +494,30 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         .cd-lbl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: #e0e0e0; font-family: var(--font-body); }
 
         /* ───── SECTIONS ───── */
-        section { padding: 6rem 2rem; background: #ffffff; }
+        section { padding: 6rem 2rem; background: transparent; position: relative; z-index: 1; }
 
         #events {
+            position: relative;
+        }
+        #events::before {
+            content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
+            z-index: -1;
             background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/events_bg.jpg') center/cover no-repeat;
             background-attachment: fixed;
-            position: relative;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
         }
 
         #games {
+            position: relative;
+        }
+        #games::before {
+            content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
+            z-index: -1;
             background: linear-gradient(rgba(10, 10, 26, 0.75), rgba(10, 10, 26, 0.75)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/games_bg.jpg') center/cover no-repeat;
             background-attachment: fixed;
-            position: relative;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
         }
 
         #games .sec-title,
@@ -862,9 +881,18 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         /* ───── FOOTER ───── */
         footer {
-            background: #ffffff;
+            background: transparent;
+            position: relative;
+            z-index: 1;
             padding: 4rem 2rem 2rem;
             border-top: 1px solid rgba(0,0,0,0.12);
+        }
+        footer::before {
+            content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/homebg.png') center/cover no-repeat;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black 100%);
         }
 
         .footer-grid {
@@ -872,32 +900,32 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             gap: 3rem; max-width: 1100px; margin: 0 auto 3rem;
         }
 
-        .footer-brand .logo { font-size: 1.7rem; display: block; margin-bottom: 1rem; color: #000000; }
-        .footer-brand p { color: #555555; font-size: 0.88rem; line-height: 1.7; margin-bottom: 1.5rem; font-family: var(--font-body); }
+        .footer-brand .logo { font-size: 2rem; display: block; margin-bottom: 1rem; color: #ffffff; font-weight: 800; }
+        .footer-brand p { color: #ffffff; font-size: 1rem; font-weight: 500; line-height: 1.7; margin-bottom: 1.5rem; font-family: var(--font-body); }
 
         .social-links { display: flex; gap: 0.8rem; }
 
         .social-links a {
             width: 40px; height: 40px; border-radius: 50%;
-            background: #f0f0f0;
-            border: 1px solid rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
             display: flex; align-items: center; justify-content: center;
-            color: #000000; text-decoration: none; transition: all 0.3s;
+            color: #ffffff; text-decoration: none; transition: all 0.3s;
         }
 
-        .social-links a:hover { background: #000000; color: #ffffff; transform: translateY(-3px); }
+        .social-links a:hover { background: #ffffff; color: #000000; transform: translateY(-3px); }
 
-        .footer-col h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 1.3rem; font-family: var(--font-heading) !important; color: #000000; }
+        .footer-col h4 { font-size: 1.2rem; font-weight: 800; margin-bottom: 1.3rem; font-family: var(--font-heading) !important; color: #ffffff; }
 
         .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
 
-        .footer-col ul a { color: #555555; text-decoration: none; font-size: 0.88rem; transition: color 0.3s; font-family: var(--font-body); }
-        .footer-col ul a:hover { color: #000000; }
+        .footer-col ul a { color: #ffffff; font-weight: 500; text-decoration: none; font-size: 1rem; transition: color 0.3s; font-family: var(--font-body); }
+        .footer-col ul a:hover { color: #ffffff; }
 
         .footer-bottom {
-            border-top: 1px solid rgba(0,0,0,0.08);
+            border-top: 1px solid rgba(255,255,255,0.08);
             padding-top: 2rem; text-align: center;
-            color: #666666; font-size: 0.82rem;
+            color: #ffffff; font-size: 0.95rem; font-weight: 500;
             max-width: 1100px; margin: 0 auto;
             font-family: var(--font-body);
         }
