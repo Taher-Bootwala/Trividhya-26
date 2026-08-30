@@ -6,6 +6,7 @@ let allEvents = [];
 let allRegs = [];
 let allCombos = [];
 let allArchivedCombos = [];
+let allPaymentQrs = [];
 
 /* ── Toast & Confirm (standalone for admin pages) ── */
 function showToast(message, type = 'info', duration = 3500) {
@@ -59,11 +60,25 @@ async function initMainAdmin() {
     await loadDashboard();
 }
 
-function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
+function switchTab(tabId, btnElement) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tabId}`).classList.add('active');
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnElement) {
+        btnElement.classList.add('active');
+    }
+
+    // Hide mobile menu on selection
+    const mobileMenu = document.querySelector('.admin-tabs');
+    if (mobileMenu) mobileMenu.classList.remove('show');
+}
+
+function toggleMobileMenu() {
+    const tabs = document.querySelector('.admin-tabs');
+    if (tabs) {
+        tabs.classList.toggle('show');
+    }
 }
 
 async function loadDashboard() {
@@ -406,6 +421,7 @@ function openEditEventModal(id) {
     document.getElementById('editEvVolunteers').value = ev.volunteers || '';
     document.getElementById('editEvDesc').value = ev.description || '';
     document.getElementById('editEvPass').value = ev.password || '';
+    document.getElementById('editEvPaymentQr').value = ev.payment_qr_id || '';
     document.getElementById('editEvLogo').value = '';
     document.getElementById('editEvError').style.display = 'none';
 
@@ -516,11 +532,12 @@ async function submitEventEdit() {
 
     const coordinators = document.getElementById('editEvCoordinators').value.trim();
     const volunteers = document.getElementById('editEvVolunteers').value.trim();
+    const paymentQr = document.getElementById('editEvPaymentQr').value || null;
 
     const updates = {
         title, description: desc, category: cat, type, fee,
         max_members: max, min_members: min, logo_url: logoUrl, color, badge,
-        coordinators, volunteers
+        coordinators, volunteers, payment_qr_id: paymentQr
     };
 
     if (pass) {
@@ -645,12 +662,13 @@ async function submitNewEvent() {
 
     const coordinators = document.getElementById('addCoordinators').value.trim();
     const volunteers = document.getElementById('addVolunteers').value.trim();
+    const paymentQr = document.getElementById('addPaymentQr').value || null;
 
     const newEvent = {
         title, description: desc, category: cat, type, fee,
         max_members: max, min_members: min, logo_url: logoUrl, color, badge,
         password: pass, is_active: true,
-        coordinators, volunteers
+        coordinators, volunteers, payment_qr_id: paymentQr
     };
 
     let { data, error } = await createEvent(newEvent);
@@ -680,6 +698,7 @@ async function submitNewEvent() {
     document.getElementById('addDesc').value = '';
     document.getElementById('addCoordinators').value = '';
     document.getElementById('addVolunteers').value = '';
+    document.getElementById('addPaymentQr').value = '';
     document.getElementById('addLogo').value = '';
     document.getElementById('logoPreview').style.display = 'none';
     
@@ -1583,5 +1602,172 @@ async function renderArchivedTab() {
 
     container.innerHTML = groupsHtml;
 }
+
+/* ══════════════════════════════════════
+   PAYMENT QRS TAB LOGIC
+   ══════════════════════════════════════ */
+async function loadPaymentQrsTab() {
+    allPaymentQrs = await getAllPaymentQrs();
+    renderPaymentQrsTable();
+    populatePaymentQrDropdowns();
+}
+
+function renderPaymentQrsTable() {
+    const tbody = document.getElementById('paymentQrsBody');
+    if (!tbody) return;
+    
+    if (allPaymentQrs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--muted);">No Payment QRs uploaded yet.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = allPaymentQrs.map(qr => {
+        return `
+            <tr>
+                <td><img src="${qr.qr_url}" style="width:60px;height:60px;object-fit:contain;background:#fff;border-radius:8px;"></td>
+                <td style="font-weight:700;font-size:1.1rem;">₹${qr.amount}</td>
+                <td>${qr.upi_id || '<span style="color:var(--muted)">N/A</span>'}</td>
+                <td>
+                    <button class="action-btn delete" onclick="deleteQrPrompt('${qr.id}', ${qr.amount})" title="Delete QR"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function populatePaymentQrDropdowns() {
+    const addDropdown = document.getElementById('addPaymentQr');
+    const editDropdown = document.getElementById('editEvPaymentQr');
+    
+    if (!addDropdown || !editDropdown) return;
+    
+    let optionsHtml = '<option value="">Default (Global QR)</option>';
+    allPaymentQrs.forEach(qr => {
+        optionsHtml += `<option value="${qr.id}">₹${qr.amount} QR</option>`;
+    });
+    
+    addDropdown.innerHTML = optionsHtml;
+    // Don't overwrite the selected value of the edit dropdown immediately if it's already set
+    const currentEditVal = editDropdown.value;
+    editDropdown.innerHTML = optionsHtml;
+    if (currentEditVal) editDropdown.value = currentEditVal;
+}
+
+function previewNewQr(input) {
+    const preview = document.getElementById('newQrPreviewArea');
+    const img = document.getElementById('newQrPreviewImg');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+async function submitNewPaymentQr() {
+    const btn = document.getElementById('saveNewQrBtn');
+    const errEl = document.getElementById('addQrError');
+    errEl.style.display = 'none';
+    
+    const amount = parseInt(document.getElementById('addQrAmount').value, 10);
+    const upi = document.getElementById('addQrUpi').value.trim();
+    const file = document.getElementById('addQrImg').files[0];
+    
+    if (isNaN(amount) || amount < 0 || !file) {
+        errEl.textContent = 'Please provide a valid Amount and select a QR Image.';
+        errEl.style.display = 'block';
+        return;
+    }
+    
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    btn.disabled = true;
+    
+    let qrUrl = '';
+    
+    try {
+        const compressedLogo = await compressImageFile(file, 600, 600, 0.9);
+        const filePath = `payment_qrs/${amount}_${Date.now()}.webp`;
+        
+        const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('trividhya_images')
+            .upload(filePath, compressedLogo, {
+                cacheControl: '31536000',
+                contentType: 'image/webp',
+                upsert: false
+            });
+            
+        if (uploadError) throw uploadError;
+        
+        const { data: urlData } = supabaseClient.storage.from('trividhya_images').getPublicUrl(filePath);
+        qrUrl = urlData.publicUrl;
+        
+        const { data: dbData, error: dbError } = await createPaymentQr({
+            amount: amount,
+            upi_id: upi || null,
+            qr_url: qrUrl
+        });
+        
+        if (dbError) throw dbError;
+        
+        showToast('Payment QR added successfully!', 'success');
+        
+        // Reset form
+        document.getElementById('addQrAmount').value = '';
+        document.getElementById('addQrUpi').value = '';
+        document.getElementById('addQrImg').value = '';
+        document.getElementById('newQrPreviewArea').style.display = 'none';
+        
+        await loadPaymentQrsTab();
+        
+    } catch (e) {
+        errEl.textContent = 'Error: ' + e.message;
+        errEl.style.display = 'block';
+    } finally {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
+    }
+}
+
+async function deleteQrPrompt(id, amount) {
+    const confirmed = await showConfirmDialog({
+        title: 'Delete QR Code?',
+        desc: `Are you sure you want to delete the ₹${amount} QR code? Events using this QR will revert to the Global QR.`,
+        icon: '🗑️',
+        okText: 'Delete',
+        danger: true
+    });
+    
+    if (!confirmed) return;
+    
+    const { error } = await deletePaymentQr(id);
+    if (error) {
+        showToast('Error deleting QR: ' + error.message, 'error');
+        return;
+    }
+    
+    showToast(`₹${amount} QR deleted successfully.`, 'success');
+    await loadPaymentQrsTab();
+}
+
+// Hook into dashboard load and tab switches to load QRs
+const _origLoadDashboardQRs = loadDashboard;
+loadDashboard = async function() {
+    await _origLoadDashboardQRs();
+    await loadPaymentQrsTab();
+};
+
+const _origSwitchTabQRs = switchTab;
+switchTab = function(tabId, btn) {
+    _origSwitchTabQRs(tabId, btn);
+    if (tabId === 'payment-qrs') {
+        loadPaymentQrsTab();
+    }
+};
 
 initMainAdmin();

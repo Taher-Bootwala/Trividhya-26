@@ -7,6 +7,7 @@ const eventId = urlParams.get('id');
 
 let currentEvent = null;
 let registrations = [];
+let allPaymentQrs = [];
 
 /* ── Toast & Confirm (standalone) ── */
 function showToast(message, type = 'info', duration = 3500) {
@@ -46,6 +47,7 @@ async function initAdmin() {
     }
 
     currentEvent = await getEventById(eventId);
+    allPaymentQrs = await getAllPaymentQrs();
     if (!currentEvent) {
         document.body.innerHTML = '<h2 style="color:white;text-align:center;margin-top:5rem;">Event Not Found</h2>';
         return;
@@ -130,6 +132,13 @@ function renderEventInfo() {
                 <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Min team members required for registration (including Leader).</div>
             </div>
             ` : ''}
+            <div class="form-group">
+                <label class="form-label">Payment QR</label>
+                <select id="evPaymentQr" class="form-input" style="padding: 0.7rem; border-radius: 10px; background: #ffffff !important; border: 2px solid #000000 !important;">
+                    <option value="">Default (Global QR)</option>
+                    ${allPaymentQrs.map(qr => `<option value="${qr.id}" ${currentEvent.payment_qr_id === qr.id ? 'selected' : ''}>₹${qr.amount} QR</option>`).join('')}
+                </select>
+            </div>
             <div class="form-group">
                 <label class="form-label">Description</label>
                 <textarea id="evDesc" class="form-input" rows="4">${currentEvent.description || ''}</textarea>
@@ -644,6 +653,7 @@ async function saveEventInfo() {
     const desc = document.getElementById('evDesc').value.trim();
     const coordinators = document.getElementById('evCoordinators').value.trim();
     const volunteers = document.getElementById('evVolunteers').value.trim();
+    const paymentQr = document.getElementById('evPaymentQr').value || null;
     const logoFile = document.getElementById('evLogoFile')?.files[0];
     
     if (!title) { showToast('Event title is required', 'error'); return; }
@@ -704,7 +714,7 @@ async function saveEventInfo() {
     
 
     const updates = {
-        title, fee, description: desc, logo_url: newLogoUrl, coordinators, volunteers
+        title, fee, description: desc, logo_url: newLogoUrl, coordinators, volunteers, payment_qr_id: paymentQr
     };
     if (minMembersEl) {
         updates.min_members = minMembers;
@@ -733,6 +743,7 @@ async function saveEventInfo() {
     currentEvent.logo_url = newLogoUrl;
     currentEvent.coordinators = coordinators;
     currentEvent.volunteers = volunteers;
+    currentEvent.payment_qr_id = paymentQr;
     if (minMembersEl) {
         currentEvent.min_members = minMembers;
     }
@@ -789,6 +800,13 @@ function exportCSV() {
     document.body.removeChild(link);
     
     showToast('CSV exported successfully! 📥', 'success');
+}
+
+function toggleInfoPanel() {
+    const infoPanel = document.getElementById('eventInfoPanel');
+    if (infoPanel) {
+        infoPanel.classList.toggle('show');
+    }
 }
 
 function logoutAdmin() {

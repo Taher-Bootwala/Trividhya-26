@@ -10,6 +10,38 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 //  EVENT HELPERS
 // ═══════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════
+//  PAYMENT QRS HELPERS
+// ═══════════════════════════════════════════════════
+
+async function getAllPaymentQrs() {
+    const { data, error } = await supabaseClient
+        .from('payment_qrs')
+        .select('*')
+        .order('amount', { ascending: true });
+    if (error) { console.error('Error fetching payment qrs:', error); return []; }
+    return data;
+}
+
+async function createPaymentQr(qrData) {
+    const { data, error } = await supabaseClient
+        .from('payment_qrs')
+        .insert([qrData])
+        .select()
+        .single();
+    if (error) { console.error('Error creating payment qr:', error); return { error }; }
+    return { data };
+}
+
+async function deletePaymentQr(id) {
+    const { error } = await supabaseClient
+        .from('payment_qrs')
+        .delete()
+        .eq('id', id);
+    if (error) { console.error('Error deleting payment qr:', error); return { error }; }
+    return { success: true };
+}
+
 async function getAllEvents() {
     const { data, error } = await supabaseClient
         .from('events')
@@ -21,11 +53,24 @@ async function getAllEvents() {
 }
 
 async function getEventById(id) {
-    const { data, error } = await supabaseClient
+    let { data, error } = await supabaseClient
         .from('events')
-        .select('*')
+        .select('*, payment_qrs(*)')
         .eq('id', id)
         .single();
+        
+    // Fallback if the user hasn't updated the schema to include the payment_qrs table/relation yet
+    if (error && error.message && (error.message.includes('payment_qrs') || error.message.includes('relationship'))) {
+        console.warn('payment_qrs relationship not found. Falling back to fetching event without it. Please update schema.sql in Supabase.');
+        const fallback = await supabaseClient
+            .from('events')
+            .select('*')
+            .eq('id', id)
+            .single();
+        data = fallback.data;
+        error = fallback.error;
+    }
+
     if (error) { console.error('Error fetching event:', error); return null; }
     return data;
 }
@@ -40,22 +85,53 @@ async function getAllEventsAdmin() {
 }
 
 async function createEvent(eventData) {
-    const { data, error } = await supabaseClient
+    let { data, error } = await supabaseClient
         .from('events')
         .insert([eventData])
         .select()
         .single();
+        
+    if (error && error.message && error.message.includes('payment_qr_id')) {
+        console.warn('payment_qr_id column missing. Retrying creation without it...');
+        const fallbackData = { ...eventData };
+        delete fallbackData.payment_qr_id;
+        
+        const res = await supabaseClient
+            .from('events')
+            .insert([fallbackData])
+            .select()
+            .single();
+        data = res.data;
+        error = res.error;
+    }
+        
     if (error) { console.error('Error creating event:', error); return { error }; }
     return { data };
 }
 
 async function updateEvent(id, updates) {
-    const { data, error } = await supabaseClient
+    let { data, error } = await supabaseClient
         .from('events')
         .update(updates)
         .eq('id', id)
         .select()
         .single();
+        
+    if (error && error.message && error.message.includes('payment_qr_id')) {
+        console.warn('payment_qr_id column missing. Retrying update without it...');
+        const fallbackUpdates = { ...updates };
+        delete fallbackUpdates.payment_qr_id;
+        
+        const res = await supabaseClient
+            .from('events')
+            .update(fallbackUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+        data = res.data;
+        error = res.error;
+    }
+        
     if (error) { console.error('Error updating event:', error); return { error }; }
     return { data };
 }

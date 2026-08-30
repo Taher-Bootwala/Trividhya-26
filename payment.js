@@ -52,9 +52,20 @@ async function showOnlinePaymentFlow() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
     btn.disabled = true;
 
-    // Fetch the QR code from site settings
+    // Fetch the global settings as fallback
     const settings = await getSiteSettings();
-    const qrUrl = settings?.qr_url || '';
+    let qrUrl = settings?.qr_url || '';
+    let upiId = '';
+
+    // Check if it's a single event and has a specific payment QR
+    const comboDataStr = sessionStorage.getItem('pendingComboData');
+    if (!comboDataStr && regData && regData.event_id) {
+        const ev = await getEventById(regData.event_id);
+        if (ev && ev.payment_qrs) {
+            qrUrl = ev.payment_qrs.qr_url || qrUrl;
+            upiId = ev.payment_qrs.upi_id || '';
+        }
+    }
 
     btn.innerHTML = '<i class="fas fa-credit-card"></i> Pay Online';
     btn.disabled = false;
@@ -68,6 +79,7 @@ async function showOnlinePaymentFlow() {
     
     const qrImg = document.getElementById('paymentQrImg');
     const qrLoading = document.getElementById('qrLoadingText');
+    const upiDiv = document.getElementById('paymentUpiId');
 
     if (qrUrl) {
         qrImg.style.display = 'none';
@@ -75,12 +87,19 @@ async function showOnlinePaymentFlow() {
         qrImg.onload = () => {
             qrLoading.style.display = 'none';
             qrImg.style.display = 'block';
+            if (upiId) {
+                upiDiv.textContent = 'UPI: ' + upiId;
+                upiDiv.style.display = 'block';
+            } else {
+                upiDiv.style.display = 'none';
+            }
         };
         qrImg.src = qrUrl;
     } else {
         qrImg.style.display = 'none';
         qrLoading.style.display = 'block';
         qrLoading.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ff4757;"></i><br>No QR Code set by Admin.';
+        if (upiDiv) upiDiv.style.display = 'none';
     }
 }
 

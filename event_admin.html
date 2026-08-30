@@ -224,8 +224,38 @@
         }
         .edit-modal-overlay.open .edit-modal-box { transform: scale(1); }
 
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #000;
+            cursor: pointer;
+        }
+
         @media (max-width: 992px) {
+            .hamburger-btn { display: block; }
             .dashboard-grid { grid-template-columns: 1fr; }
+            
+            .info-card {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                z-index: 1000;
+                background: #ffffff !important;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            }
+            .info-card.show {
+                display: block;
+                animation: fadeDown 0.3s ease;
+            }
+        }
+        
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -278,9 +308,12 @@
 
     <div class="admin-page">
         <div class="admin-header">
-            <div class="admin-title">
-                <i class="fas fa-shield-alt"></i> 
-                <span>Event Admin Panel</span>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="hamburger-btn" onclick="toggleInfoPanel()"><i class="fas fa-bars"></i></button>
+                <div class="admin-title">
+                    <i class="fas fa-shield-alt"></i> 
+                    <span>Event Admin Panel</span>
+                </div>
             </div>
             <a href="#" class="admin-logout" onclick="logoutAdmin()">
                 <i class="fas fa-sign-out-alt"></i> Logout

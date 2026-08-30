@@ -104,6 +104,9 @@
             gap: 1.5rem;
             transition: transform 0.3s, box-shadow 0.3s;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            box-sizing: border-box;
+            overflow: hidden;
+            width: 100%;
         }
 
         .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
@@ -126,6 +129,27 @@
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
             margin-bottom: 2rem;
+            width: 100%;
+        }
+        .chart-card {
+            background: #ffffff !important;
+            border-radius: 20px;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            overflow: hidden; /* Prevent horizontal scrolling */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #000000 !important;
         }
 
         /* Panel Cards & Events Table */
@@ -176,10 +200,55 @@
         .admin-loading i { font-size: 2rem; animation: spin 1s linear infinite; margin-right: 1rem; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        @media (max-width: 768px) {
-            .add-event-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #000;
+            cursor: pointer;
+        }
+
+        @media (max-width: 992px) {
+            .hamburger-btn { display: block; }
+            
+            .admin-tabs {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                background: #ffffff;
+                border: 2px solid #000000;
+                border-radius: 14px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }
+            .admin-tabs.show {
+                display: flex;
+            }
+            .tab-btn {
+                border: none;
+                border-radius: 8px;
+                text-align: left;
+                margin-bottom: 0.5rem;
+                padding: 0.8rem 1.2rem;
+            }
+            .tab-btn.active {
+                border-radius: 8px;
+            }
             .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .admin-page { padding: 5rem 1rem; overflow-x: hidden; width: 100%; box-sizing: border-box; }
+            .add-event-grid { grid-template-columns: minmax(0, 1fr); }
+            .stats-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; width: 100%; }
+            .charts-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; width: 100%; }
+            .admin-header { padding: 1rem; flex-direction: column; align-items: stretch; gap: 1rem; box-sizing: border-box; width: 100%; }
+            .admin-title { font-size: 1.2rem; justify-content: center; }
+            .admin-logout { justify-content: center; }
+            .chart-card { padding: 1rem; }
+            .stat-card { padding: 1rem; gap: 1rem; flex-direction: column; text-align: center; justify-content: center; }
         }
     </style>
 </head>
@@ -266,6 +335,12 @@
                     <label class="form-label">Event Admin Password</label>
                     <input type="text" id="editEvPass" class="form-input">
                 </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Payment QR</label>
+                    <select id="editEvPaymentQr" class="form-select">
+                        <option value="">Default (Global QR)</option>
+                    </select>
+                </div>
             </div>
 
             <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -341,9 +416,12 @@
 
     <div class="admin-page">
         <div class="admin-header">
-            <div class="admin-title">
-                <i class="fas fa-user-shield"></i> 
-                <span>Main Admin Panel</span>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="hamburger-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+                <div class="admin-title">
+                    <i class="fas fa-user-shield"></i> 
+                    <span>Main Admin Panel</span>
+                </div>
             </div>
             <a href="#" class="admin-logout" onclick="logoutAdmin()">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -359,6 +437,7 @@
             <button class="tab-btn" onclick="switchTab('add', this)"><i class="fas fa-plus-circle" style="margin-right:0.4rem;"></i>Add Event</button>
             <button class="tab-btn" onclick="switchTab('game-details', this)"><i class="fas fa-gamepad" style="margin-right:0.4rem;"></i>Game Details</button>
             <button class="tab-btn" onclick="switchTab('event-details', this)"><i class="fas fa-calendar-check" style="margin-right:0.4rem;"></i>Event Details</button>
+            <button class="tab-btn" onclick="switchTab('payment-qrs', this)"><i class="fas fa-qrcode" style="margin-right:0.4rem;"></i>Payment QRs</button>
             <button class="tab-btn" onclick="switchTab('settings', this)"><i class="fas fa-cog" style="margin-right:0.4rem;"></i>Site Settings</button>
         </div>
 
@@ -585,6 +664,12 @@
                         <input type="text" id="addPass" class="form-input" placeholder="e.g. robowars123">
                         <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Used by event coordinators to login.</div>
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Payment QR</label>
+                        <select id="addPaymentQr" class="form-select">
+                            <option value="">Default (Global QR)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div style="margin-top: 2rem;">
@@ -618,6 +703,56 @@
                 </div>
                 <div id="eventDetailsContainer" style="margin-top: 1.5rem;">
                     <div class="admin-loading"><i class="fas fa-spinner"></i> Loading event details...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PAYMENT QRS -->
+        <div id="tab-payment-qrs" class="tab-content">
+            <div class="admin-panel-card" style="margin-bottom: 2rem;">
+                <div class="panel-header">
+                    <h3 style="font-size: 1.2rem;"><i class="fas fa-qrcode" style="color:var(--accent);margin-right:0.5rem;"></i>Manage Payment QRs</h3>
+                </div>
+                <table id="paymentQrsTable">
+                    <thead>
+                        <tr>
+                            <th>QR Code</th>
+                            <th>Amount (₹)</th>
+                            <th>UPI ID</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentQrsBody">
+                        <tr><td colspan="4" class="admin-loading"><i class="fas fa-spinner"></i> Loading QRs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-panel-card" style="max-width: 600px; margin: 0 auto;">
+                <h3 style="margin-bottom: 2rem; color: var(--accent);"><i class="fas fa-plus-circle"></i> Add New Payment QR</h3>
+                
+                <div class="add-event-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Amount (₹) *</label>
+                        <input type="number" id="addQrAmount" class="form-input" placeholder="e.g. 50" min="0">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">UPI ID (Optional)</label>
+                        <input type="text" id="addQrUpi" class="form-input" placeholder="e.g. user@upi">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">QR Image *</label>
+                        <input type="file" id="addQrImg" class="form-input" accept="image/*" onchange="previewNewQr(this)">
+                        <div id="newQrPreviewArea" style="margin-top:0.8rem; display:none;">
+                            <img id="newQrPreviewImg" style="width:120px; height:120px; object-fit:contain; border-radius:10px; border:2px solid var(--accent); padding: 5px; background: #fff;">
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 2rem;">
+                    <button class="btn-primary" id="saveNewQrBtn" style="width: 100%; border-radius: 12px; justify-content: center; padding: 1rem;" onclick="submitNewPaymentQr()">
+                        <i class="fas fa-upload"></i> Upload QR
+                    </button>
+                    <p id="addQrError" style="color:#ff4757;display:none; text-align:center; margin-top:1rem; font-size:0.85rem;"></p>
                 </div>
             </div>
         </div>

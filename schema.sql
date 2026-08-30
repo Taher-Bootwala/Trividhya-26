@@ -3,7 +3,16 @@
 -- Run this SQL in your Supabase SQL Editor (Dashboard → SQL)
 -- ═══════════════════════════════════════════════════════════
 
--- 1) EVENTS TABLE
+-- 1) PAYMENT QRS TABLE
+CREATE TABLE IF NOT EXISTS payment_qrs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  amount INTEGER NOT NULL,
+  upi_id TEXT,
+  qr_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2) EVENTS TABLE
 CREATE TABLE IF NOT EXISTS events (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
@@ -19,6 +28,7 @@ CREATE TABLE IF NOT EXISTS events (
   password TEXT,
   coordinators TEXT,
   volunteers TEXT,
+  payment_qr_id UUID REFERENCES payment_qrs(id) ON DELETE SET NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -71,10 +81,17 @@ VALUES (1, 'admin123')
 ON CONFLICT (id) DO NOTHING;
 
 -- 5) ROW-LEVEL SECURITY (allow public read/write via anon key for this app)
+ALTER TABLE payment_qrs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_config ENABLE ROW LEVEL SECURITY;
+
+-- Allow public access (anon key)
+CREATE POLICY "Allow public read payment_qrs" ON payment_qrs FOR SELECT USING (true);
+CREATE POLICY "Allow public insert payment_qrs" ON payment_qrs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update payment_qrs" ON payment_qrs FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete payment_qrs" ON payment_qrs FOR DELETE USING (true);
 
 -- Allow public access (anon key)
 CREATE POLICY "Allow public read events" ON events FOR SELECT USING (true);
