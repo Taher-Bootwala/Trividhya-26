@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Registrations | Trividhya'26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .my-regs-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .auth-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            display: none; /* toggled via JS */
+        }
+        
+        .auth-card.active {
+            display: block;
+        }
+
+        .auth-card h2 {
+            font-family: var(--font-heading);
+            color: #000;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .auth-card p {
+            color: #555;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.5rem;
+            background: #f8f9fa;
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 8px;
+            color: #000;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .auth-card input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(224,86,253,0.3);
+        }
+
+        .auth-card button {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: none;
+            padding-top: 80px;
+        }
+        
+        .dashboard-container.active {
+            display: block;
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: 1rem;
+        }
+        
+        .dash-header h2 {
+            font-family: var(--font-heading);
+            color: #000;
+        }
+        
+        .reg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .reg-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        .reg-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: rgba(0,0,0,0.2);
+        }
+        
+        .reg-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--accent);
+            opacity: 0;
+            transition: 0.3s;
+        }
+        
+        .reg-card:hover::before { opacity: 1; }
+
+        .reg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .reg-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #000;
+        }
+
+        .reg-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.3rem 0.6rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+        }
+        
+        .badge-paid { background: rgba(46,213,115,0.15); color: #2ed573; }
+        .badge-pending { background: rgba(255,165,2,0.15); color: #ffa502; }
+        .badge-cancelled { background: rgba(255,71,87,0.15); color: #ff4757; }
+        
+        .combo-badge {
+            display: inline-block;
+            background: rgba(142,68,173,0.15);
+            color: #8e44ad;
+            border: 1px solid rgba(142,68,173,0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .reg-leader {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        
+        .reg-leader div {
+            margin-bottom: 0.3rem;
+            color: #555;
+            font-size: 0.85rem;
+        }
+        .reg-leader div i { width: 16px; text-align: center; margin-right: 8px; color: var(--accent); }
+        .reg-leader .leader-name { color: #000; font-weight: 600; font-size: 0.95rem; }
+
+        .reg-members h4 {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .reg-members ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .reg-members li {
+            font-size: 0.85rem;
+            color: #333;
+            padding: 0.3rem 0;
+            display: flex;
+            align-items: center;
+        }
+        .reg-members li::before {
+            content: '•';
+            color: var(--accent);
+            margin-right: 8px;
+        }
+        
+        #errorMsg, #otpErrorMsg {
+            color: #ff4757;
+            font-size: 0.85rem;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        #successMsg {
+            color: #2ed573;
+            font-size: 0.85rem;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .nav-back {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: #333;
+            text-decoration: none;
+            font-family: var(--font-heading);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.3s;
+            z-index: 100;
+        }
+        .nav-back:hover { color: var(--accent); }
+    </style>
+</head>
+
+<body>
+    <div class="cyber-grid"></div>
+
+    <a href="index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="my-regs-container">
+        <!-- 1. EMAIL FORM -->
+        <div class="auth-card active" id="emailFormCard">
+            <h2>Check Registration</h2>
+            <p>Enter the email you used to register to receive a one-time passcode.</p>
+            <input type="email" id="emailInput" placeholder="leader@example.com" required>
+            <div id="errorMsg"></div>
+            <button class="btn-primary" id="sendOtpBtn" onclick="requestOtp()">Send OTP</button>
+        </div>
+
+        <!-- 2. OTP FORM -->
+        <div class="auth-card" id="otpFormCard">
+            <h2>Verify OTP</h2>
+            <p>Enter the 8-digit code sent to <span id="displayEmail" style="color:#000;font-weight:600;"></span></p>
+            <input type="text" id="otpInput" placeholder="12345678" maxlength="8" style="text-align:center; letter-spacing:4px; font-size:1.2rem; font-weight:700;">
+            <div id="otpErrorMsg"></div>
+            <div id="successMsg"></div>
+            <button class="btn-primary" id="verifyOtpBtn" onclick="submitOtp()">Verify & Login</button>
+            <button class="btn-outline" style="width:100%;" onclick="showEmailForm()">Use a different email</button>
+        </div>
+
+        <!-- 3. DASHBOARD -->
+        <div class="dashboard-container" id="dashboardCard">
+            <div class="dash-header">
+                <div>
+                    <h2>My Registrations</h2>
+                    <div style="color:var(--muted); font-size:0.9rem;" id="dashEmailDisplay"></div>
+                </div>
+                <button class="btn-outline" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+            
+            <div id="loadingRegs" style="text-align:center; padding:3rem; display:none;">
+                <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:var(--accent);"></i>
+                <div style="margin-top:1rem; color:var(--muted);">Fetching your registrations...</div>
+            </div>
+            
+            <div class="reg-grid" id="regGrid">
+                <!-- Registration cards go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <script src="supabase-config.js"></script>
+    <script src="my_registrations.js"></script>
+</body>
+</html>

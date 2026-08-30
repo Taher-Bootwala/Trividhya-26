@@ -251,6 +251,16 @@ async function getRegistrationById(regId) {
     return data;
 }
 
+async function getRegistrationsByEmail(email) {
+    const { data, error } = await supabaseClient
+        .from('registrations')
+        .select(`*, members(*), events(*), combos(name)`)
+        .eq('leader_email', email)
+        .order('created_at', { ascending: false });
+    if (error) { console.error('Error fetching registrations by email:', error); return []; }
+    return data;
+}
+
 async function approveRegistration(regId) {
     const { data, error } = await supabaseClient
         .from('registrations')
