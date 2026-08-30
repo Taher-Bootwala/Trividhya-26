@@ -150,35 +150,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
     // Particles disabled
 })();
 
-/* ── Countdown ── */
-function tick() {
-    const target = new Date('2026-03-23T10:00:00');
-    const now    = new Date();
-    const diff   = target - now;
-    const pad    = n => String(Math.max(0, Math.floor(n))).padStart(2,'0');
-    if (diff <= 0) {
-        ['d','h','m','s'].forEach(k => document.getElementById('cd-'+k).textContent = '00');
-        return;
-    }
 
-    const updates = [
-        { id: 'cd-d', val: pad(diff / 86400000) },
-        { id: 'cd-h', val: pad((diff % 86400000) / 3600000) },
-        { id: 'cd-m', val: pad((diff % 3600000)  / 60000) },
-        { id: 'cd-s', val: pad((diff % 60000)    / 1000) }
-    ];
-
-    updates.forEach(({ id, val }) => {
-        const el = document.getElementById(id);
-        if (el.textContent !== val) {
-            el.textContent = val;
-            el.classList.remove('tick-vert');
-            void el.offsetWidth;
-            el.classList.add('tick-vert');
-        }
-    });
-}
-tick(); setInterval(tick, 1000);
 
 /* ── Skeleton ── */
 function showSkeletons(n) {

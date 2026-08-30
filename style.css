@@ -281,7 +281,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             display: flex; align-items: center; justify-content: center;
             text-align: center; padding: 6rem 2rem 2rem;
             position: relative; overflow: hidden;
-            background: #ffffff;
+            background: url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/homebg.png') center/cover no-repeat;
         }
 
         .hero::before { display: none; }
@@ -490,13 +490,13 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         section { padding: 6rem 2rem; background: #ffffff; }
 
         #events {
-            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('events_bg.jpg') center/cover no-repeat;
+            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/events_bg.jpg') center/cover no-repeat;
             background-attachment: fixed;
             position: relative;
         }
 
         #games {
-            background: linear-gradient(rgba(10, 10, 26, 0.75), rgba(10, 10, 26, 0.75)), url('games_bg.jpg') center/cover no-repeat;
+            background: linear-gradient(rgba(10, 10, 26, 0.75), rgba(10, 10, 26, 0.75)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/games_bg.jpg') center/cover no-repeat;
             background-attachment: fixed;
             position: relative;
         }

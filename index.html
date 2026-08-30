@@ -123,31 +123,11 @@
 
     </section>
 
-    <!-- ═══════════ COUNTDOWN ═══════════ -->
-    <div class="countdown-section">
-        <p class="countdown-label-top">⏳ Event Starts In</p>
-        <div class="countdown">
-            <div class="cd-item">
-                <div class="cd-num" id="cd-d">00</div>
-                <div class="cd-lbl">Days</div>
-            </div>
-            <div class="cd-item">
-                <div class="cd-num" id="cd-h">00</div>
-                <div class="cd-lbl">Hours</div>
-            </div>
-            <div class="cd-item">
-                <div class="cd-num" id="cd-m">00</div>
-                <div class="cd-lbl">Minutes</div>
-            </div>
-            <div class="cd-item">
-                <div class="cd-num" id="cd-s">00</div>
-                <div class="cd-lbl">Seconds</div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- ═══════════ COMBOS ═══════════ -->
-    <section id="combosSection" style="display: none; background: linear-gradient(135deg, rgba(123,47,190,0.1), rgba(46,213,115,0.05)); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <section id="combosSection"
+        style="display: none; background: linear-gradient(135deg, rgba(123,47,190,0.1), rgba(46,213,115,0.05)); border-bottom: 1px solid rgba(255,255,255,0.05);">
         <div class="sec-header" data-aos="fade-up" style="margin-bottom: 2rem;">
             <h2 class="sec-title">Event <span>Combos</span></h2>
         </div>
@@ -186,7 +166,7 @@
     <!-- ═══════════ GAMES ═══════════ -->
     <section id="games">
         <div class="sec-header" data-aos="fade-up">
-            <div class="sec-tag">🎮 Games</div>
+            <div class="sec-tag">Games</div>
             <h2 class="sec-title">Play Hard, <span>Win Big</span></h2>
             <p class="sec-desc">Compete in thrilling games and sports tournaments. Glory and prizes await the brave.</p>
         </div>
@@ -257,12 +237,15 @@
                     <div class="modal-dval" id="mTeam"></div>
                 </div>
             </div>
-            <div id="mStaffArea" style="margin-top: 1rem; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 12px; border: 1.5px solid #000000; font-size: 0.82rem; text-align: left;">
+            <div id="mStaffArea"
+                style="margin-top: 1rem; padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 12px; border: 1.5px solid #000000; font-size: 0.82rem; text-align: left;">
                 <div style="margin-bottom: 0.4rem; color: #000000; font-weight: 600;">
-                    <i class="fas fa-user-tie" style="margin-right: 0.4rem;"></i>Coordinators: <span id="mCoords" style="font-weight: 400; color: #333;">—</span>
+                    <i class="fas fa-user-tie" style="margin-right: 0.4rem;"></i>Coordinators: <span id="mCoords"
+                        style="font-weight: 400; color: #333;">—</span>
                 </div>
                 <div style="color: #000000; font-weight: 600;">
-                    <i class="fas fa-hands-helping" style="margin-right: 0.4rem;"></i>Volunteers: <span id="mVolunteers" style="font-weight: 400; color: #333;">—</span>
+                    <i class="fas fa-hands-helping" style="margin-right: 0.4rem;"></i>Volunteers: <span id="mVolunteers"
+                        style="font-weight: 400; color: #333;">—</span>
                 </div>
             </div>
             <a href="#" id="mLink" class="modal-form-btn">
@@ -353,10 +336,12 @@
 
             <!-- MFA Challenge Step -->
             <div class="admin-login-form" id="maMfaForm" style="display:none;">
-                <p style="font-size:0.85rem; color:#555; margin-bottom:1rem; text-align:center;">Enter the 6-digit code from Google Authenticator.</p>
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1rem; text-align:center;">Enter the 6-digit code
+                    from Google Authenticator.</p>
                 <div class="admin-input-group">
                     <i class="fas fa-key admin-input-icon"></i>
-                    <input type="text" id="maOtp" class="admin-input" placeholder="000000" maxlength="6" style="text-align:center; letter-spacing:4px; font-weight:bold;">
+                    <input type="text" id="maOtp" class="admin-input" placeholder="000000" maxlength="6"
+                        style="text-align:center; letter-spacing:4px; font-weight:bold;">
                 </div>
                 <input type="hidden" id="maFactorId">
                 <p id="maOtpError" class="admin-login-error"></p>
@@ -368,10 +353,14 @@
 
             <!-- MFA Enrollment Step -->
             <div class="admin-login-form" id="maEnrollForm" style="display:none; text-align:center;">
-                <p style="font-size:0.85rem; color:#555; margin-bottom:1rem;">Scan this QR code with your Authenticator app (e.g., Google Authenticator) to set up 2FA.</p>
-                <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:1rem; padding:10px; background:#fff; border-radius:10px; border:2px solid var(--gold);"></div>
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1rem;">Scan this QR code with your Authenticator
+                    app (e.g., Google Authenticator) to set up 2FA.</p>
+                <div id="qrcode"
+                    style="display:flex; justify-content:center; margin-bottom:1rem; padding:10px; background:#fff; border-radius:10px; border:2px solid var(--gold);">
+                </div>
                 <div class="admin-input-group">
-                    <input type="text" id="maEnrollOtp" class="admin-input" placeholder="Enter 6-digit code" maxlength="6" style="text-align:center; letter-spacing:4px; font-weight:bold;">
+                    <input type="text" id="maEnrollOtp" class="admin-input" placeholder="Enter 6-digit code"
+                        maxlength="6" style="text-align:center; letter-spacing:4px; font-weight:bold;">
                 </div>
                 <input type="hidden" id="maEnrollFactorId">
                 <p id="maEnrollError" class="admin-login-error"></p>
