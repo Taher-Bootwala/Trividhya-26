@@ -312,8 +312,20 @@ async function getRegistrationsByEvent(eventId) {
         .from('registrations')
         .select(`*, members(*), combos(name)`)
         .eq('event_id', eventId)
+        .neq('is_combo', true)
         .order('created_at', { ascending: false });
     if (error) { console.error('Error fetching registrations:', error); return []; }
+    return data;
+}
+
+async function getComboRegistrations(comboId) {
+    const { data, error } = await supabaseClient
+        .from('registrations')
+        .select(`*, members(*), combos(name)`)
+        .eq('combo_id', comboId)
+        .eq('is_combo', true)
+        .order('created_at', { ascending: false });
+    if (error) { console.error('Error fetching combo registrations:', error); return []; }
     return data;
 }
 
@@ -330,7 +342,7 @@ async function getRegistrationById(regId) {
 async function getRegistrationsByEmail(email) {
     const { data, error } = await supabaseClient
         .from('registrations')
-        .select(`*, members(*), events(*), combos(name)`)
+        .select(`*, members(*), events(*), combos(name, events_data)`)
         .eq('leader_email', email)
         .order('created_at', { ascending: false });
     if (error) { console.error('Error fetching registrations by email:', error); return []; }
@@ -388,12 +400,14 @@ async function deleteRegistration(id) {
 /**
  * Checks if a leader email or leader mobile is already registered for a specific event
  */
-async function checkRegistrationDuplicate(eventId, email, mobile) {
+async function checkRegistrationDuplicate(eventId, email, mobile, isCombo = false) {
     let query = supabaseClient
         .from('registrations')
         .select('id, leader_email, leader_mobile');
         
-    if (Array.isArray(eventId)) {
+    if (isCombo) {
+        query = query.eq('combo_id', eventId);
+    } else if (Array.isArray(eventId)) {
         query = query.in('event_id', eventId);
     } else {
         query = query.eq('event_id', eventId);

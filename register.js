@@ -99,6 +99,8 @@ function saveFormState() {
         leaderEmail: document.getElementById('leaderEmail')?.value,
         leaderMobile: document.getElementById('leaderMobile')?.value,
         leaderCollege: document.getElementById('leaderCollege')?.value,
+        leaderOtherCollege: document.getElementById('leaderOtherCollege')?.value,
+        leaderGender: document.getElementById('leaderGender')?.value,
         leaderEnrollment: document.getElementById('leaderEnrollment')?.value,
         leaderSemester: document.getElementById('leaderSemester')?.value,
     };
@@ -111,6 +113,8 @@ function saveFormState() {
             email: card.querySelector('.member-email').value,
             mobile: card.querySelector('.member-mobile').value,
             college: card.querySelector('.member-college').value,
+            otherCollege: card.querySelector('.member-other-college').value,
+            gender: card.querySelector('.member-gender').value,
             enrollment: card.querySelector('.member-enrollment').value,
             semester: card.querySelector('.member-semester').value,
         });
@@ -143,7 +147,14 @@ function loadFormState() {
         }
     }
     if (document.getElementById('leaderMobile')) document.getElementById('leaderMobile').value = data.leaderMobile || '';
-    if (document.getElementById('leaderCollege')) document.getElementById('leaderCollege').value = data.leaderCollege || '';
+    if (document.getElementById('leaderCollege')) {
+        document.getElementById('leaderCollege').value = data.leaderCollege || '';
+        if (data.leaderCollege === 'Other' && document.getElementById('leaderOtherCollege')) {
+            document.getElementById('leaderOtherCollege').style.display = 'block';
+            document.getElementById('leaderOtherCollege').value = data.leaderOtherCollege || '';
+        }
+    }
+    if (document.getElementById('leaderGender')) document.getElementById('leaderGender').value = data.leaderGender || '';
     if (document.getElementById('leaderEnrollment')) document.getElementById('leaderEnrollment').value = data.leaderEnrollment || '';
     if (document.getElementById('leaderSemester')) document.getElementById('leaderSemester').value = data.leaderSemester || '';
 
@@ -160,6 +171,11 @@ function loadFormState() {
                 card.querySelector('.member-email').value = m.email;
                 card.querySelector('.member-mobile').value = m.mobile;
                 card.querySelector('.member-college').value = m.college;
+                if (m.college === 'Other') {
+                    card.querySelector('.member-other-college').style.display = 'block';
+                    card.querySelector('.member-other-college').value = m.otherCollege || '';
+                }
+                card.querySelector('.member-gender').value = m.gender || '';
                 card.querySelector('.member-enrollment').value = m.enrollment;
                 card.querySelector('.member-semester').value = m.semester;
             });
@@ -307,14 +323,24 @@ function renderRegistrationForm(ev) {
                         <input type="tel" class="form-input" id="leaderMobile" placeholder="Enter 10-digit mobile number" pattern="[0-9]{10}" maxlength="10" required>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <select class="form-input" id="leaderGender" required>
+                            <option value="" disabled selected>Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">College</label>
-                        <select class="form-input" id="leaderCollege" required>
+                        <select class="form-input" id="leaderCollege" required onchange="this.value === 'Other' ? document.getElementById('leaderOtherCollege').style.display = 'block' : document.getElementById('leaderOtherCollege').style.display = 'none';">
                             <option value="" disabled selected>Select your college</option>
                             <option value="Government Engineering College, Dahod">Government Engineering College, Dahod</option>
                             <option value="Government Polytechnic, Dahod">Government Polytechnic, Dahod</option>
                             <option value="Navjivan Science College, Dahod">Navjivan Science College, Dahod</option>
                             <option value="Navjivan Arts and Commerce College, Dahod">Navjivan Arts and Commerce College, Dahod</option>
+                            <option value="Other">Other (Please specify)</option>
                         </select>
+                        <input type="text" class="form-input" id="leaderOtherCollege" placeholder="Enter your college name" style="display:none; margin-top:0.5rem;">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Enrollment Number</label>
@@ -380,14 +406,24 @@ function addMember() {
             <input type="tel" class="form-input member-mobile" placeholder="Enter 10-digit mobile" pattern="[0-9]{10}" maxlength="10" required>
         </div>
         <div class="form-group">
+            <label class="form-label">Gender</label>
+            <select class="form-input member-gender" required>
+                <option value="" disabled selected>Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label class="form-label">College</label>
-            <select class="form-input member-college" required>
+            <select class="form-input member-college" required onchange="this.value === 'Other' ? this.nextElementSibling.style.display = 'block' : this.nextElementSibling.style.display = 'none';">
                 <option value="" disabled selected>Select college</option>
                 <option value="Government Engineering College, Dahod">Government Engineering College, Dahod</option>
                 <option value="Government Polytechnic, Dahod">Government Polytechnic, Dahod</option>
                 <option value="Navjivan Science College, Dahod">Navjivan Science College, Dahod</option>
                 <option value="Navjivan Arts and Commerce College, Dahod">Navjivan Arts and Commerce College, Dahod</option>
+                <option value="Other">Other (Please specify)</option>
             </select>
+            <input type="text" class="form-input member-other-college" placeholder="Enter your college name" style="display:none; margin-top:0.5rem;">
         </div>
         <div class="form-group">
             <label class="form-label">Enrollment Number</label>
@@ -444,7 +480,10 @@ async function handleRegistration(e) {
     const leaderName = document.getElementById('leaderName').value.trim();
     const leaderEmail = document.getElementById('leaderEmail').value.trim();
     const leaderMobile = document.getElementById('leaderMobile').value.trim();
-    const leaderCollege = document.getElementById('leaderCollege').value.trim();
+    let leaderCollege = document.getElementById('leaderCollege').value.trim();
+    const leaderOtherCollege = document.getElementById('leaderOtherCollege').value.trim();
+    if (leaderCollege === 'Other') leaderCollege = leaderOtherCollege;
+    const leaderGender = document.getElementById('leaderGender').value.trim();
     const leaderEnrollment = document.getElementById('leaderEnrollment').value.trim();
     const leaderSemester = parseInt(document.getElementById('leaderSemester').value, 10);
 
@@ -462,11 +501,14 @@ async function handleRegistration(e) {
         const name = card.querySelector('.member-name').value.trim();
         const email = card.querySelector('.member-email').value.trim();
         const mobile = card.querySelector('.member-mobile').value.trim();
-        const college = card.querySelector('.member-college').value.trim();
+        let college = card.querySelector('.member-college').value.trim();
+        const otherCollege = card.querySelector('.member-other-college').value.trim();
+        if (college === 'Other') college = otherCollege;
+        const gender = card.querySelector('.member-gender').value.trim();
         const enrollment = card.querySelector('.member-enrollment').value.trim();
         const semester = parseInt(card.querySelector('.member-semester').value, 10);
 
-        if (!name || !email || !mobile || !college || !enrollment || isNaN(semester)) {
+        if (!name || !email || !mobile || !college || !gender || !enrollment || isNaN(semester)) {
             errEl.textContent = 'Please fill all member details';
             errEl.style.display = 'block';
             submitBtn.disabled = false;
@@ -481,7 +523,7 @@ async function handleRegistration(e) {
             submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
             return;
         }
-        membersData.push({ name, email, mobile, college, enrollment, semester });
+        membersData.push({ name, email, mobile, gender, college, enrollment, semester });
     }
 
     // MINIMUM PARTICIPANTS FULFILLMENT CHECK (FOR GROUP EVENTS)
@@ -499,10 +541,10 @@ async function handleRegistration(e) {
     }
 
     // FINAL DUPLICATE CHECK (MOBILE)
-    const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.events_data.map(e => e.event_id) : currentEvent.id;
-    const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, null, leaderMobile);
+    const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.id : currentEvent.id;
+    const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, null, leaderMobile, currentEvent.is_combo);
     if (existing) {
-        errEl.textContent = `This mobile number (${leaderMobile}) is already registered for ${currentEvent.is_combo ? 'one of the events in this combo' : 'this event'}.`;
+        errEl.textContent = `This mobile number (${leaderMobile}) is already registered for ${currentEvent.is_combo ? 'this combo' : 'this event'}.`;
         errEl.style.display = 'block';
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
@@ -521,6 +563,7 @@ async function handleRegistration(e) {
         leader_name: leaderName,
         leader_email: leaderEmail,
         leader_mobile: leaderMobile,
+        leader_gender: leaderGender,
         college: leaderCollege,
         enrollment: leaderEnrollment,
         semester: leaderSemester,
@@ -567,11 +610,11 @@ async function sendOtp() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking email...';
 
-    const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.events_data.map(e => e.event_id) : currentEvent.id;
-    const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, email, null);
+    const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.id : currentEvent.id;
+    const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, email, null, currentEvent.is_combo);
     if (existing) {
         otpSection.style.display = 'block';
-        otpMsg.textContent = `This email (${email}) is already registered for ${currentEvent.is_combo ? 'one of the events in this combo' : 'this event'}. Please use a different email.`;
+        otpMsg.textContent = `This email (${email}) is already registered for ${currentEvent.is_combo ? 'this combo' : 'this event'}. Please use a different email.`;
         otpMsg.style.color = '#ff4757';
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';

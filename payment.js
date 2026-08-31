@@ -174,41 +174,25 @@ async function processRegistration(mode, status, isApproved, transactionId = nul
     try { if (comboDataStr) comboData = JSON.parse(comboDataStr); } catch(e){}
 
     if (comboData && comboData.events_data && comboData.events_data.length > 0) {
-        // Handle Combo Registration: Insert multiple rows, one for each event
-        let hasError = false;
-        let lastErrorMsg = '';
+        // Handle Combo Registration: Insert a single row for the entire combo
+        regData.event_id = null; // No specific event, it's a combo
+        regData.payment_mode = mode;
+        regData.payment_status = status;
+        regData.is_approved = isApproved;
+        regData.amount = comboData.total_fee;
+        regData.is_combo = true;
+        regData.combo_id = comboData.id;
         
-        for (let i = 0; i < comboData.events_data.length; i++) {
-            const ev = comboData.events_data[i];
-            
-            // Clone regData for this specific event
-            const specificRegData = { ...regData };
-            specificRegData.event_id = ev.event_id;
-            specificRegData.payment_mode = mode;
-            specificRegData.payment_status = status;
-            specificRegData.is_approved = isApproved;
-            specificRegData.amount = ev.allocation;
-            specificRegData.is_combo = true;
-            specificRegData.combo_id = comboData.id;
-            
-            // Append suffix to transaction ID to keep it unique per row
-            if (transactionId) {
-                specificRegData.transaction_id = `${transactionId}-C${i+1}`;
-            }
-
-            const { data, error } = await createRegistration(specificRegData, membersData);
-            if (error) {
-                console.error(`Registration failed for event ${ev.event_id}:`, error);
-                hasError = true;
-                lastErrorMsg = error.message;
-            }
+        if (transactionId) {
+            regData.transaction_id = transactionId;
         }
 
-        if (hasError) {
-            showError(lastErrorMsg || 'Some registrations in the combo failed to process. Please contact support.');
+        const { data, error } = await createRegistration(regData, membersData);
+        if (error) {
+            console.error(`Registration failed for combo ${comboData.id}:`, error);
+            showError(error.message || 'Combo registration failed to process. Please contact support.');
             return;
         }
-
     } else {
         // Handle Single Event Registration
         regData.payment_mode = mode;

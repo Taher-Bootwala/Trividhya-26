@@ -386,13 +386,14 @@
                 </div>
                 
                 <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
-                    <label class="form-label">Select Events & Revenue Allocation *</label>
+                    <label class="form-label">Select Events *</label>
                     <input type="text" id="editComboEventSearch" class="form-input" placeholder="Search events..." onkeyup="filterEditComboEvents()" style="margin-bottom: 1rem;">
                     <div id="editComboEventsList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background: #fafafa;">
                         <!-- Populated dynamically -->
                     </div>
-                    <div style="margin-top: 1rem; text-align: right; font-weight: bold; font-size: 1.2rem;">
-                        Total Price: ₹<span id="editComboTotalPrice">0</span>
+                    <div style="margin-top: 1rem; display:flex; align-items:center; gap: 1rem;">
+                        <label class="form-label" style="margin-bottom:0;">Total Combo Price (₹) *</label>
+                        <input type="number" id="editComboTotalPrice" class="form-input" value="0" min="0" style="width:120px; font-weight:bold; color:var(--gold);">
                     </div>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
@@ -433,6 +434,7 @@
             <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-bar" style="margin-right:0.4rem;"></i>Dashboard</button>
             <button class="tab-btn" onclick="switchTab('events', this)"><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i>Events</button>
             <button class="tab-btn" onclick="switchTab('combos', this)"><i class="fas fa-layer-group" style="margin-right:0.4rem;"></i>Combos</button>
+            <button class="tab-btn" onclick="switchTab('combo-regs', this)"><i class="fas fa-boxes" style="margin-right:0.4rem;"></i>Combo Registrations</button>
             <button class="tab-btn" onclick="switchTab('archived', this)"><i class="fas fa-archive" style="margin-right:0.4rem;"></i>Archived Combos</button>
             <button class="tab-btn" onclick="switchTab('add', this)"><i class="fas fa-plus-circle" style="margin-right:0.4rem;"></i>Add Event</button>
             <button class="tab-btn" onclick="switchTab('game-details', this)"><i class="fas fa-gamepad" style="margin-right:0.4rem;"></i>Game Details</button>
@@ -564,21 +566,34 @@
                         </div>
                     </div>
                     <div class="form-group" style="grid-column: 1 / -1;">
-                        <label class="form-label">Select Events & Revenue Allocation *</label>
+                        <label class="form-label">Select Events *</label>
                         <input type="text" id="comboEventSearch" class="form-input" placeholder="Search events..." onkeyup="filterComboEvents()" style="margin-bottom: 1rem;">
                         <div id="comboEventsList" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; max-height: 250px; overflow-y: auto;">
                             <!-- Populated dynamically via JS -->
                         </div>
                     </div>
                     <div class="form-group" style="grid-column: 1 / -1; display:flex; align-items:center; gap: 1rem;">
-                        <label class="form-label" style="margin-bottom:0;">Total Combo Price (Calculated):</label>
-                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--gold);">₹<span id="comboTotalPrice">0</span></div>
+                        <label class="form-label" style="margin-bottom:0;">Total Combo Price (₹) *</label>
+                        <input type="number" id="comboTotalPrice" class="form-input" value="0" min="0" style="width:120px; font-size:1.2rem; font-weight:bold; color:var(--gold);">
                     </div>
                 </div>
                 
                 <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
                     <button class="action-btn" onclick="document.getElementById('addComboTitle').value=''; document.getElementById('addComboDesc').value='';"><i class="fas fa-eraser"></i> Clear</button>
                     <button class="action-btn primary" onclick="submitNewCombo()"><i class="fas fa-save"></i> Save Combo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: COMBO REGISTRATIONS -->
+        <div id="tab-combo-regs" class="tab-content">
+            <div class="admin-panel-card">
+                <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <h3 style="font-size: 1.2rem; margin:0;"><i class="fas fa-boxes" style="color:var(--accent);margin-right:0.5rem;"></i>Combo Registrations</h3>
+                    <input type="text" id="comboRegSearchInput" class="form-input" style="max-width:300px; padding:0.5rem 1rem;" placeholder="Search team, email, leader..." onkeyup="renderComboRegistrationsTab()">
+                </div>
+                <div id="comboRegDetailsContainer" style="margin-top: 1.5rem;">
+                    <div class="admin-loading"><i class="fas fa-spinner"></i> Loading combo details...</div>
                 </div>
             </div>
         </div>

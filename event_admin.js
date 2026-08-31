@@ -329,7 +329,7 @@ function renderTable() {
                 </td>
                 <td>
                     <div style="font-weight:600;color:#000000;">${r.leader_name} <i class="fas fa-crown" style="color:#000;font-size:0.65rem;margin-left:3px;"></i></div>
-                    <div style="font-size:0.72rem;color:#555;margin-top:2px;">${r.leader_email}</div>
+                    <div style="font-size:0.72rem;color:#555;margin-top:2px;">${r.leader_gender || 'N/A'} | ${r.leader_email}</div>
                     <div style="font-size:0.72rem;color:#555;">${r.leader_mobile}</div>
                 </td>
                 <td>${membersHtml}</td>
@@ -768,16 +768,17 @@ async function saveEventInfo() {
 function exportCSV() {
     if (registrations.length === 0) { showToast('No data to export', 'info'); return; }
     
-    let csv = "Group Name,Leader Name,Leader College,Leader Enrollment,Leader Semester,Leader Email,Leader Mobile,Payment Mode,Payment Status,Approved,Members\n";
+    let csv = "Group Name,Leader Name,Leader Gender,Leader College,Leader Enrollment,Leader Semester,Leader Email,Leader Mobile,Payment Mode,Payment Status,Approved,Members\n";
     
     registrations.forEach(r => {
         const mems = r.members && r.members.length > 0 
-            ? r.members.map(m => `${m.name} [${m.college}, Enr: ${m.enrollment}, Sem: ${m.semester}] (${m.mobile})`).join(' | ') 
+            ? r.members.map(m => `${m.name} [${m.gender || 'N/A'}, ${m.college}, Enr: ${m.enrollment}, Sem: ${m.semester}] (${m.mobile})`).join(' | ') 
             : 'None';
         
         csv += [
             `"${(r.group_name || '').replace(/"/g, '""')}"`,
             `"${(r.leader_name || '').replace(/"/g, '""')}"`,
+            `"${(r.leader_gender || '').replace(/"/g, '""')}"`,
             `"${(r.college || '').replace(/"/g, '""')}"`,
             `"${(r.enrollment || '').replace(/"/g, '""')}"`,
             `"${r.semester || ''}"`,

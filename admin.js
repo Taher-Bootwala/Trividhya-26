@@ -768,6 +768,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                     <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
                         <i class="fas fa-user" style="color:var(--muted); font-size:0.7rem;"></i>
                         <span style="font-size:0.82rem;">${m.name}</span>
+                        <span style="color:var(--muted); font-size:0.75rem;">${m.gender || 'N/A'}</span>
                         <span style="color:var(--muted); font-size:0.75rem;">${m.mobile || ''}</span>
                     </div>`).join('')
                 : '<p style="color:var(--muted); font-size:0.8rem; padding:0.5rem 0;">No additional members</p>';
@@ -806,6 +807,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                                 <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
                                     <i class="fas fa-crown" style="color:var(--gold); font-size:0.7rem;"></i>
                                     <span style="font-size:0.82rem; font-weight:600;">${r.leader_name}</span>
+                                    <span style="color:var(--muted); font-size:0.75rem;">${r.leader_gender || 'N/A'}</span>
                                     <span style="color:var(--muted); font-size:0.75rem;">${r.leader_phone || r.leader_mobile}</span>
                                     <span style="color:var(--muted); font-size:0.75rem;">${r.leader_email || ''}</span>
                                     <span style="color:var(--gold); font-size:0.68rem; font-weight:600;">LEADER</span>
@@ -1075,22 +1077,10 @@ function populateComboEventsList() {
         item.style.marginBottom = '0.8rem';
         item.innerHTML = `
             <label style="flex: 1; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" class="combo-ev-checkbox" value="${ev.id}" onchange="calculateComboTotal()">
+                <input type="checkbox" class="combo-ev-checkbox" value="${ev.id}">
                 <span>${ev.title}</span>
             </label>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.8rem; color: var(--muted);">Allocation (₹):</span>
-                <input type="number" class="combo-ev-allocation form-input" id="alloc_${ev.id}" min="0" value="0" style="width: 80px; padding: 0.3rem;" onkeyup="calculateComboTotal()" onchange="calculateComboTotal()" disabled>
-            </div>
         `;
-        // Enable input only if checkbox is checked
-        const cb = item.querySelector('.combo-ev-checkbox');
-        const input = item.querySelector('.combo-ev-allocation');
-        cb.addEventListener('change', () => {
-            input.disabled = !cb.checked;
-            if (!cb.checked) input.value = '0';
-            calculateComboTotal();
-        });
         container.appendChild(item);
     });
 }
@@ -1121,12 +1111,7 @@ function filterComboEvents() {
 }
 
 function calculateComboTotal() {
-    let total = 0;
-    document.querySelectorAll('.combo-ev-checkbox:checked').forEach(cb => {
-        const val = parseInt(document.getElementById(`alloc_${cb.value}`).value) || 0;
-        total += val;
-    });
-    document.getElementById('comboTotalPrice').textContent = total;
+    // Deprecated, no longer used as price is manually entered
 }
 
 async function submitNewCombo() {
@@ -1145,12 +1130,10 @@ async function submitNewCombo() {
     }
 
     const selectedEvents = [];
-    let totalFee = 0;
     document.querySelectorAll('.combo-ev-checkbox:checked').forEach(cb => {
-        const alloc = parseInt(document.getElementById(`alloc_${cb.value}`).value) || 0;
-        selectedEvents.push({ event_id: cb.value, allocation: alloc });
-        totalFee += alloc;
+        selectedEvents.push({ event_id: cb.value });
     });
+    const totalFee = parseInt(document.getElementById('comboTotalPrice').value) || 0;
 
     if (selectedEvents.length < 2) {
         showToast('A combo must have at least 2 events', 'error');
@@ -1230,8 +1213,7 @@ async function submitNewCombo() {
         if(document.getElementById('addComboLogo')) document.getElementById('addComboLogo').value = '';
         if(document.getElementById('comboLogoPreviewArea')) document.getElementById('comboLogoPreviewArea').style.display = 'none';
         document.querySelectorAll('.combo-ev-checkbox').forEach(cb => cb.checked = false);
-        document.querySelectorAll('.combo-ev-allocation').forEach(input => { input.disabled = true; input.value = '0'; });
-        calculateComboTotal();
+        document.getElementById('comboTotalPrice').value = '0';
         
         // Refresh combos
         allCombos = await getAllCombosAdmin();
@@ -1331,26 +1313,15 @@ async function openEditComboModal(id) {
             item.style.marginBottom = '0.8rem';
             item.innerHTML = `
                 <label style="flex: 1; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" class="edit-combo-ev-checkbox" value="${ev.id}" onchange="calculateEditComboTotal()" ${isSelected ? 'checked' : ''}>
+                    <input type="checkbox" class="edit-combo-ev-checkbox" value="${ev.id}" ${isSelected ? 'checked' : ''}>
                     <span>${ev.title}</span>
                 </label>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 0.8rem; color: var(--muted);">Allocation (₹):</span>
-                    <input type="number" class="edit-combo-ev-allocation form-input" id="edit_alloc_${ev.id}" min="0" value="${allocation}" style="width: 80px; padding: 0.3rem;" onkeyup="calculateEditComboTotal()" onchange="calculateEditComboTotal()" ${!isSelected ? 'disabled' : ''}>
-                </div>
             `;
-            const cb = item.querySelector('.edit-combo-ev-checkbox');
-            const input = item.querySelector('.edit-combo-ev-allocation');
-            cb.addEventListener('change', () => {
-                input.disabled = !cb.checked;
-                if (!cb.checked) input.value = '0';
-                calculateEditComboTotal();
-            });
             container.appendChild(item);
         });
     }
     
-    calculateEditComboTotal();
+    document.getElementById('editComboTotalPrice').value = combo.total_fee || 0;
     document.getElementById('editComboError').style.display = 'none';
     document.getElementById('editComboModal').classList.add('show');
 }
@@ -1372,12 +1343,7 @@ function filterEditComboEvents() {
 }
 
 function calculateEditComboTotal() {
-    let total = 0;
-    document.querySelectorAll('.edit-combo-ev-checkbox:checked').forEach(cb => {
-        const val = parseInt(document.getElementById(`edit_alloc_${cb.value}`).value) || 0;
-        total += val;
-    });
-    document.getElementById('editComboTotalPrice').textContent = total;
+    // Deprecated, no longer used
 }
 
 function previewEditComboLogo(input) {
@@ -1416,12 +1382,10 @@ async function submitComboEdit() {
     }
 
     const selectedEvents = [];
-    let totalFee = 0;
     document.querySelectorAll('.edit-combo-ev-checkbox:checked').forEach(cb => {
-        const alloc = parseInt(document.getElementById(`edit_alloc_${cb.value}`).value) || 0;
-        selectedEvents.push({ event_id: cb.value, allocation: alloc });
-        totalFee += alloc;
+        selectedEvents.push({ event_id: cb.value });
     });
+    const totalFee = parseInt(document.getElementById('editComboTotalPrice').value) || 0;
 
     if (selectedEvents.length < 2) {
         errEl.textContent = 'A combo must have at least 2 events';
@@ -1767,7 +1731,166 @@ switchTab = function(tabId, btn) {
     _origSwitchTabQRs(tabId, btn);
     if (tabId === 'payment-qrs') {
         loadPaymentQrsTab();
+    } else if (tabId === 'combo-regs') {
+        renderComboRegistrationsTab();
     }
 };
 
 initMainAdmin();
+
+// ═══════════════════════════════════════════════════
+// COMBO REGISTRATIONS TAB LOGIC
+// ═══════════════════════════════════════════════════
+async function renderComboRegistrationsTab() {
+    const container = document.getElementById('comboRegDetailsContainer');
+    const searchVal = (document.getElementById('comboRegSearchInput').value || '').toLowerCase().trim();
+    
+    // Ensure combos are loaded
+    if (!allCombos || allCombos.length === 0) {
+        allCombos = await getAllCombosAdmin();
+    }
+    
+    if (allCombos.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted); text-align:center; margin-top:2rem;">No combos found.</div>';
+        return;
+    }
+    
+    let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+    for (const combo of allCombos) {
+        html += `
+            <div class="combo-reg-group" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleComboRegs('${combo.id}')">
+                    <h4 style="margin:0; font-size:1.1rem; color:var(--accent);"><i class="fas fa-box-open" style="margin-right:0.5rem;"></i>${combo.name}</h4>
+                    <div>
+                        <span class="status-badge" style="background:var(--gold); color:#fff;">View Registrations <i class="fas fa-chevron-down"></i></span>
+                    </div>
+                </div>
+                <div id="combo-regs-${combo.id}" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1);">
+                    <div class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading registrations...</div>
+                </div>
+            </div>
+        `;
+    }
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+async function toggleComboRegs(comboId) {
+    const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
+    if (detailsDiv.style.display === 'none') {
+        detailsDiv.style.display = 'block';
+        
+        // Fetch registrations
+        const regs = await getComboRegistrations(comboId);
+        
+        if (regs.length === 0) {
+            detailsDiv.innerHTML = '<div style="color:var(--muted);">No registrations yet.</div>';
+            return;
+        }
+        
+        // Render regs (similar to event registrations)
+        let html = '<div style="display:flex; flex-direction:column; gap:1rem;">';
+        regs.forEach(reg => {
+            const isPaid = reg.payment_status === 'paid';
+            const isApproved = reg.is_approved;
+            const mCount = 1 + (reg.members ? reg.members.length : 0);
+            
+            let membersHtml = `
+                <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px;">
+                    <div style="font-weight:600; margin-bottom:0.5rem; color:var(--primary);">Leader</div>
+                    <div style="font-size:0.85rem; margin-bottom:0.5rem;">
+                        <strong>Name:</strong> ${reg.leader_name} (${reg.leader_gender || 'N/A'})<br>
+                        <strong>College:</strong> ${reg.college || 'N/A'}<br>
+                        <strong>Enrollment:</strong> ${reg.enrollment || 'N/A'} (Sem: ${reg.semester || 'N/A'})<br>
+                        <strong>Contact:</strong> ${reg.leader_mobile} | ${reg.leader_email}
+                    </div>
+            `;
+            
+            if (reg.members && reg.members.length > 0) {
+                membersHtml += `<div style="font-weight:600; margin-top:1rem; margin-bottom:0.5rem; color:var(--primary);">Team Members</div>`;
+                reg.members.forEach((m, idx) => {
+                    membersHtml += `
+                        <div style="font-size:0.85rem; margin-bottom:0.5rem; padding-bottom:0.5rem; border-bottom:1px dashed rgba(0,0,0,0.1);">
+                            <strong>Member ${idx + 1}:</strong> ${m.name} (${m.gender || 'N/A'})<br>
+                            <strong>College:</strong> ${m.college || 'N/A'}<br>
+                            <strong>Enrollment:</strong> ${m.enrollment || 'N/A'} (Sem: ${m.semester || 'N/A'})<br>
+                            <strong>Contact:</strong> ${m.mobile || 'N/A'}
+                        </div>
+                    `;
+                });
+            }
+            membersHtml += `</div>`;
+
+            html += `
+                <div class="reg-card">
+                    <div class="reg-header">
+                        <span class="reg-id">ID: ${reg.id.split('-')[0]}</span>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <div class="reg-status ${isPaid ? 'status-paid' : 'status-pending'}" style="font-size:0.75rem; padding:0.2rem 0.6rem;">
+                                ${isPaid ? '<i class="fas fa-check-circle"></i> Paid' : '<i class="fas fa-clock"></i> Pending Payment'}
+                            </div>
+                            <div class="reg-status ${isApproved ? 'status-paid' : 'status-pending'}" style="font-size:0.75rem; padding:0.2rem 0.6rem;">
+                                ${isApproved ? '<i class="fas fa-check-double"></i> Approved' : '<i class="fas fa-hourglass-half"></i> Pending Approval'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reg-info">
+                        <div><i class="fas fa-users"></i> ${reg.group_name || 'Individual/Solo'}</div>
+                        <div><i class="fas fa-user-shield"></i> L: ${reg.leader_name} (${reg.leader_mobile})</div>
+                        <div><i class="fas fa-envelope"></i> ${reg.leader_email}</div>
+                        <div><i class="fas fa-user-friends"></i> Total Members: ${mCount}</div>
+                        <div><i class="fas fa-money-bill-wave"></i> ₹${reg.amount} (${reg.payment_mode})</div>
+                    </div>
+                    
+                    <div id="team-info-${reg.id}" style="display:none;">
+                        ${membersHtml}
+                    </div>
+
+                    <div class="reg-actions" style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        ${!isApproved ? `<button class="btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="approveComboRegistration('${reg.id}', '${comboId}')"><i class="fas fa-check"></i> Approve</button>` : ''}
+                        <button class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="document.getElementById('team-info-${reg.id}').style.display = document.getElementById('team-info-${reg.id}').style.display === 'none' ? 'block' : 'none'"><i class="fas fa-info-circle"></i> Team Info</button>
+                        <button class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="deleteComboRegistration('${reg.id}', '${comboId}')"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        detailsDiv.innerHTML = html;
+        
+    } else {
+        detailsDiv.style.display = 'none';
+    }
+}
+
+async function approveComboRegistration(regId, comboId) {
+    const c = confirm('Mark this combo registration as Paid/Approved?');
+    if (!c) return;
+    
+    const res = await approveRegistration(regId);
+    if (res.success) {
+        showToast('Combo registration approved', 'success');
+        // Refresh the specific combo div
+        const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
+        detailsDiv.style.display = 'none';
+        toggleComboRegs(comboId);
+    } else {
+        showToast('Error approving registration', 'error');
+    }
+}
+
+async function deleteComboRegistration(regId, comboId) {
+    const c = confirm('Are you sure you want to delete this combo registration? This cannot be undone.');
+    if (!c) return;
+    
+    const res = await deleteRegistration(regId);
+    if (res.success) {
+        showToast('Combo registration deleted', 'success');
+        const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
+        detailsDiv.style.display = 'none';
+        toggleComboRegs(comboId);
+    } else {
+        showToast('Error deleting registration', 'error');
+    }
+}

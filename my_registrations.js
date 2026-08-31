@@ -160,6 +160,7 @@ async function logoutUser() {
 }
 
 /* ── LOAD REGISTRATIONS ── */
+let globalEventMap = {};
 async function loadUserRegistrations(email) {
     const grid = document.getElementById('regGrid');
     const loader = document.getElementById('loadingRegs');
@@ -168,7 +169,12 @@ async function loadUserRegistrations(email) {
     loader.style.display = 'block';
     
     try {
-        const regs = await getRegistrationsByEmail(email);
+        const [regs, allEvs] = await Promise.all([
+            getRegistrationsByEmail(email),
+            getAllEvents()
+        ]);
+        
+        allEvs.forEach(e => globalEventMap[e.id] = e.title);
         
         loader.style.display = 'none';
         
@@ -208,11 +214,13 @@ function renderRegistrations(regs) {
         }
 
         // Combo/Event info
-        let eventName = r.events ? r.events.title : 'Unknown Event';
+        let eventName = r.is_combo 
+            ? (r.combos && r.combos.name ? r.combos.name : 'Combo Registration')
+            : (r.events ? r.events.title : 'Unknown Event');
+            
         let comboBadge = '';
         if (r.is_combo) {
-            const cName = r.combos && r.combos.name ? r.combos.name : 'Combo Deal';
-            comboBadge = `<div class="combo-badge"><i class="fas fa-layer-group"></i> ${cName}</div>`;
+            comboBadge = `<div class="combo-badge"><i class="fas fa-layer-group"></i> ${eventName}</div>`;
         } else {
             comboBadge = `<div class="combo-badge" style="background:rgba(41,128,185,0.15); color:#2980b9; border-color:rgba(41,128,185,0.3);"><i class="fas fa-calendar-check"></i> Single Event</div>`;
         }
@@ -220,7 +228,7 @@ function renderRegistrations(regs) {
         // Members
         let membersHtml = '';
         if (r.members && r.members.length > 0) {
-            const lis = r.members.map(m => `<li>${m.name}</li>`).join('');
+            const lis = r.members.map(m => `<li>${m.name} <span style="color:#777; font-size:0.8em;">(${m.gender || 'N/A'})</span></li>`).join('');
             membersHtml = `
                 <div class="reg-members">
                     <h4>Team Members</h4>
@@ -232,6 +240,20 @@ function renderRegistrations(regs) {
                 <div class="reg-members">
                     <div style="font-size:0.85rem; color:#555; font-style:italic;">Individual Registration</div>
                 </div>
+            `;
+        }
+        
+        let comboDetailsHtml = '';
+        if (r.is_combo && r.combos && r.combos.events_data) {
+            const evTitles = r.combos.events_data.map(ed => globalEventMap[ed.event_id] || 'Unknown Event');
+            const lis = evTitles.map(t => `<li style="margin-bottom:4px;"><i class="fas fa-check" style="color:var(--primary); margin-right:5px;"></i>${t}</li>`).join('');
+            comboDetailsHtml = `
+                <details style="margin-top:1rem; font-size:0.85rem; color:#555; background:rgba(0,0,0,0.02); padding:0.5rem 1rem; border-radius:8px; border:1px solid rgba(0,0,0,0.05);">
+                    <summary style="cursor:pointer; font-weight:bold; color:var(--primary); outline:none; user-select:none;">View Combo Events</summary>
+                    <ul style="margin-top:0.5rem; padding-left:0; list-style:none;">
+                        ${lis}
+                    </ul>
+                </details>
             `;
         }
 
@@ -250,7 +272,7 @@ function renderRegistrations(regs) {
                 
                 <div class="reg-leader">
                     <div class="leader-name"><i class="fas fa-crown"></i> ${r.group_name || r.leader_name}</div>
-                    ${r.group_name ? `<div><i class="fas fa-user"></i> ${r.leader_name} (Leader)</div>` : ''}
+                    ${r.group_name ? `<div><i class="fas fa-user"></i> ${r.leader_name} (Leader) <span style="color:#777; font-size:0.85em;">(${r.leader_gender || 'N/A'})</span></div>` : `<div style="color:#777; font-size:0.85em;">Gender: ${r.leader_gender || 'N/A'}</div>`}
                     <div><i class="fas fa-envelope"></i> ${r.leader_email}</div>
                     <div><i class="fas fa-phone"></i> ${r.leader_mobile}</div>
                     <div style="margin-top:10px; font-weight:600; color:#000;">
@@ -260,6 +282,7 @@ function renderRegistrations(regs) {
                 </div>
                 
                 ${membersHtml}
+                ${comboDetailsHtml}
             </div>
         `;
     }).join('');

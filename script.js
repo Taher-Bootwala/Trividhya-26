@@ -344,7 +344,7 @@ function renderCombosSection() {
         <div class="event-card" style="border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.05);" ${isMobile ? '' : `data-aos="zoom-in" data-aos-delay="${Math.min(i*50, 400)}"`} onclick="window.location.href='register.html?combo_id=${combo.id}'">
             <div class="card-img" style="height: 120px; display:flex; justify-content:center; align-items:center; background: ${combo.image_url ? 'url(' + combo.image_url + ') center/cover' : 'rgba(0,0,0,0.5)'};">
                 ${!combo.image_url ? '<i class="fas fa-layer-group" style="font-size: 3rem; color: var(--gold);"></i>' : ''}
-                <span class="card-badge" style="color:#000; background: var(--gold); border:none; font-weight:bold;">COMBO DEAL</span>
+                <span class="card-badge" style="color:#fff; background: var(--gold); border:none; font-weight:bold;">COMBO DEAL</span>
             </div>
             <div class="card-body">
                 <div class="card-title" style="color: var(--gold);">${combo.name}</div>
