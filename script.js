@@ -328,15 +328,58 @@ function renderCombosSection() {
     const grid = document.getElementById('combosGrid');
     
     const heroExploreCombosBtn = document.getElementById('heroExploreCombosBtn');
+    const navCombosLink = document.getElementById('navCombosLink');
+    const heroInner = document.getElementById('heroInner');
+    const heroCombosContainer = document.getElementById('heroCombosContainer');
+    const comboSlider = document.getElementById('comboSlider');
     
+    // 1. Manage existing Combos section visibility
     if (ALL_COMBOS.length === 0) {
         section.style.display = 'none';
         if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'none';
+        if (navCombosLink) navCombosLink.style.display = 'none';
+        
+        // Hide slider and reset hero inner
+        if (heroInner && heroCombosContainer) {
+            heroCombosContainer.style.display = 'none';
+            heroInner.classList.remove('has-slider');
+        }
         return;
     }
     
     section.style.display = 'block';
     if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'inline-flex';
+    if (navCombosLink) navCombosLink.style.display = 'block';
+
+    // 2. Manage Hero Slider
+    const combosWithImages = ALL_COMBOS.filter(c => c.image_url);
+    if (combosWithImages.length > 0 && heroInner && heroCombosContainer && comboSlider) {
+        // Show slider container and add layout class
+        heroCombosContainer.style.display = 'flex';
+        heroInner.classList.add('has-slider');
+        
+        // Build slides
+        comboSlider.innerHTML = combosWithImages.map(combo => `
+            <div class="combo-slide" style="background-image: url('${combo.image_url}');" onclick="window.location.href='#combosSection'"></div>
+        `).join('');
+        
+        // Auto-slider logic
+        if (!window.comboSliderInterval && combosWithImages.length > 1) {
+            let currentSlide = 0;
+            window.comboSliderInterval = setInterval(() => {
+                currentSlide = (currentSlide + 1) % combosWithImages.length;
+                const slideWidth = comboSlider.clientWidth;
+                comboSlider.scrollTo({
+                    left: currentSlide * slideWidth,
+                    behavior: 'smooth'
+                });
+            }, 4000);
+        }
+    } else if (heroInner && heroCombosContainer) {
+        // Hide slider if no images
+        heroCombosContainer.style.display = 'none';
+        heroInner.classList.remove('has-slider');
+    }
     
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
     

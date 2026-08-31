@@ -40,7 +40,7 @@ function closeConfirm(result) {
 /* ── Init ── */
 async function initMainAdmin() {
     const { data: { session } } = await supabaseClient.auth.getSession();
-    
+
     if (!session) {
         window.location.href = 'index.html';
         return;
@@ -63,7 +63,7 @@ async function initMainAdmin() {
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tabId}`).classList.add('active');
-    
+
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     if (btnElement) {
         btnElement.classList.add('active');
@@ -86,7 +86,7 @@ async function loadDashboard() {
     // Sort events alphabetically
     allEvents.sort((a, b) => a.title.localeCompare(b.title));
     renderEventsTable();
-    
+
     allCombos = await getAllCombosAdmin();
     renderCombosTable();
     populateComboEventsList();
@@ -104,16 +104,16 @@ async function updateGlobalStats() {
     const { data, error } = await supabaseClient
         .from('registrations')
         .select('*, events(fee, title)');
-        
+
     if (error) { console.error('Stats error:', error); return; }
     allRegs = data || [];
 
     document.getElementById('stRegs').textContent = allRegs.length;
-    
+
     const paidRegs = allRegs.filter(r => r.payment_status === 'paid');
     const pendingRegs = allRegs.filter(r => r.payment_status === 'pending');
     const totalRev = paidRegs.reduce((sum, r) => sum + (r.amount !== undefined && r.amount !== null ? r.amount : (r.events?.fee || 0)), 0);
-    
+
     document.getElementById('stRev').textContent = '₹' + totalRev;
     document.getElementById('stPending').textContent = pendingRegs.length;
 }
@@ -151,7 +151,7 @@ function renderRegsPerEventChart() {
 
     // Filter to only show events with at least 1 registration
     const filteredData = labelsFull.map((label, i) => ({ label, count: dataFull[i] }))
-                                   .filter(item => item.count > 0);
+        .filter(item => item.count > 0);
 
     const labels = filteredData.map(item => item.label);
     const data = filteredData.map(item => item.count);
@@ -304,7 +304,7 @@ function renderTrendsChart() {
 
 function renderEventsTable() {
     const tbody = document.getElementById('evTableBody');
-    
+
     if (allEvents.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted);">No events found. Create one!</td></tr>';
         return;
@@ -314,10 +314,10 @@ function renderEventsTable() {
     const filtered = allEvents.filter(ev => ev.title.toLowerCase().includes(term) || ev.category.includes(term));
 
     tbody.innerHTML = filtered.map((ev) => {
-        const logo = ev.logo_url 
+        const logo = ev.logo_url
             ? `<img src="${ev.logo_url}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;">`
             : `<div style="width:40px;height:40px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;"><i class="fas fa-trophy"></i></div>`;
-            
+
         const fee = ev.fee > 0 ? '₹' + ev.fee : 'Free';
         let team = 'Solo';
         if (ev.max_members > 1) {
@@ -329,8 +329,8 @@ function renderEventsTable() {
                 team = `${ev.max_members} Members`;
             }
         }
-        const active = ev.is_active 
-            ? `<span style="color:#2ed573;"><i class="fas fa-eye"></i> Active</span>` 
+        const active = ev.is_active
+            ? `<span style="color:#2ed573;"><i class="fas fa-eye"></i> Active</span>`
             : `<span style="color:#ff4757;"><i class="fas fa-eye-slash"></i> Hidden</span>`;
 
         const coordText = ev.coordinators ? `<div style="font-size:0.72rem;color:#555;font-weight:normal;margin-top:2px;"><i class="fas fa-user-tie" style="margin-right:3px;"></i>Coordinators: ${ev.coordinators}</div>` : '';
@@ -369,10 +369,10 @@ async function toggleVisibility(id, currentStatus) {
         okText: currentStatus ? 'Hide' : 'Show',
     });
     if (!confirmed) return;
-    
+
     const { error } = await updateEvent(id, { is_active: !currentStatus });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    
+
     showToast(`Event ${currentStatus ? 'hidden' : 'shown'} on main page`, 'success');
     await loadDashboard();
 }
@@ -380,10 +380,10 @@ async function toggleVisibility(id, currentStatus) {
 async function changePassword(id, title) {
     const newPass = prompt(`Enter NEW password for event: ${title}`);
     if (!newPass) return;
-    
+
     const { error } = await updateEventPassword(id, newPass);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    
+
     showToast(`Password for "${title}" updated!`, 'success');
 }
 
@@ -396,10 +396,10 @@ async function deleteEv(id, title) {
         danger: true,
     });
     if (!confirmed) return;
-    
+
     const { error } = await deleteEvent(id);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    
+
     showToast(`"${title}" deleted successfully`, 'success');
     await loadDashboard();
 }
@@ -420,6 +420,8 @@ function openEditEventModal(id) {
     document.getElementById('editEvCoordinators').value = ev.coordinators || '';
     document.getElementById('editEvVolunteers').value = ev.volunteers || '';
     document.getElementById('editEvDesc').value = ev.description || '';
+    document.getElementById('editEvRules').value = ev.rules_text || '';
+    document.getElementById('editEvTermsLabel').value = ev.terms_checkbox_label || '';
     document.getElementById('editEvPass').value = ev.password || '';
     document.getElementById('editEvPaymentQr').value = ev.payment_qr_id || '';
     document.getElementById('editEvLogo').value = '';
@@ -472,6 +474,8 @@ async function submitEventEdit() {
     const color = document.getElementById('editEvColor').value;
     const logoFile = document.getElementById('editEvLogo').files[0];
     const desc = document.getElementById('editEvDesc').value.trim();
+    const rules = document.getElementById('editEvRules').value.trim();
+    const termsLabel = document.getElementById('editEvTermsLabel').value.trim();
     const pass = document.getElementById('editEvPass').value.trim();
 
     if (!title || isNaN(max) || isNaN(fee)) {
@@ -535,7 +539,7 @@ async function submitEventEdit() {
     const paymentQr = document.getElementById('editEvPaymentQr').value || null;
 
     const updates = {
-        title, description: desc, category: cat, type, fee,
+        title, description: desc, rules_text: rules, terms_checkbox_label: termsLabel, category: cat, type, fee,
         max_members: max, min_members: min, logo_url: logoUrl, color, badge,
         coordinators, volunteers, payment_qr_id: paymentQr
     };
@@ -599,6 +603,8 @@ async function submitNewEvent() {
     const color = document.getElementById('addColor').value;
     const logoFile = document.getElementById('addLogo').files[0];
     const desc = document.getElementById('addDesc').value.trim();
+    const rules = document.getElementById('addRules').value.trim();
+    const termsLabel = document.getElementById('addTermsLabel').value.trim();
     const pass = document.getElementById('addPass').value.trim();
 
     if (!title || !pass || isNaN(max) || isNaN(fee)) {
@@ -665,7 +671,7 @@ async function submitNewEvent() {
     const paymentQr = document.getElementById('addPaymentQr').value || null;
 
     const newEvent = {
-        title, description: desc, category: cat, type, fee,
+        title, description: desc, rules_text: rules, terms_checkbox_label: termsLabel, category: cat, type, fee,
         max_members: max, min_members: min, logo_url: logoUrl, color, badge,
         password: pass, is_active: true,
         coordinators, volunteers, payment_qr_id: paymentQr
@@ -691,17 +697,19 @@ async function submitNewEvent() {
     }
 
     showToast(`Event "${title}" created successfully! 🎉`, 'success');
-    
+
     // Clear form
     document.getElementById('addTitle').value = '';
     document.getElementById('addPass').value = '';
     document.getElementById('addDesc').value = '';
+    document.getElementById('addRules').value = '';
+    document.getElementById('addTermsLabel').value = '';
     document.getElementById('addCoordinators').value = '';
     document.getElementById('addVolunteers').value = '';
     document.getElementById('addPaymentQr').value = '';
     document.getElementById('addLogo').value = '';
     document.getElementById('logoPreview').style.display = 'none';
-    
+
     // Refresh & switch tab
     await loadDashboard();
     switchTab('events', document.querySelectorAll('.tab-btn')[1]);
@@ -731,7 +739,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
 
     for (const ev of events) {
         let regs = await getRegistrationsByEvent(ev.id);
-        
+
         // Filter by search term
         if (term) {
             regs = regs.filter(r => {
@@ -778,13 +786,13 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                 : '<span style="background:rgba(255,165,2,0.15); color:#ffa502; padding:0.2rem 0.6rem; border-radius:50px; font-size:0.72rem; font-weight:600;">PENDING</span>';
 
             const comboNameText = r.combos && r.combos.name ? `Combo Deal: ${r.combos.name}` : 'Combo Deal';
-            const regTypeBadge = r.is_combo 
-                ? `<span style="background:rgba(142,68,173,0.15); color:#8e44ad; border: 1px solid rgba(142,68,173,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">${comboNameText}</span>` 
+            const regTypeBadge = r.is_combo
+                ? `<span style="background:rgba(142,68,173,0.15); color:#8e44ad; border: 1px solid rgba(142,68,173,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">${comboNameText}</span>`
                 : '<span style="background:rgba(41,128,185,0.15); color:#2980b9; border: 1px solid rgba(41,128,185,0.3); padding:0.2rem 0.5rem; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-left:0.5rem;">Single Event</span>';
 
             const priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${event.fee}`;
 
-            const approveBtnHtml = r.payment_status !== 'paid' ? 
+            const approveBtnHtml = r.payment_status !== 'paid' ?
                 `<button class="action-btn success" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="approveRegPrompt('${r.id}')"><i class="fas fa-check"></i> Approve</button>` : '';
             const deleteBtnHtml = `<button class="action-btn danger" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="deleteRegPrompt('${r.id}')"><i class="fas fa-trash"></i> Delete</button>`;
 
@@ -901,7 +909,7 @@ async function deleteRegPrompt(id) {
 async function loadSiteSettingsAdmin() {
     const settings = await getSiteSettings();
     if (!settings) return;
-    
+
     document.getElementById('setNavbarTitle').value = settings.navbar_title || '';
     document.getElementById('setHeroTitle').value = settings.hero_title || '';
     document.getElementById('setEventDates').value = settings.event_dates || '';
@@ -933,7 +941,7 @@ function previewQrCode(input) {
 async function updateSiteSettings() {
     const btn = document.getElementById('saveSettingsBtn');
     const msgEl = document.getElementById('settingsMsg');
-    
+
     const navbarTitle = document.getElementById('setNavbarTitle').value.trim();
     const heroTitle = document.getElementById('setHeroTitle').value.trim();
     const eventDates = document.getElementById('setEventDates').value.trim();
@@ -1009,10 +1017,10 @@ async function updateSiteSettings() {
         msgEl.style.color = '#2ed573';
         msgEl.style.display = 'block';
         showToast('Homepage settings updated! 🎉', 'success');
-        
+
         // Clear file input so it doesn't re-upload on next save
-        if(qrFileInput) qrFileInput.value = '';
-        
+        if (qrFileInput) qrFileInput.value = '';
+
         setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
     }
 }
@@ -1024,7 +1032,7 @@ async function updateSiteSettings() {
 function renderCombosTable() {
     const tbody = document.getElementById('cbTableBody');
     if (!tbody) return;
-    
+
     if (allCombos.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--muted);">No combos found. Create one above!</td></tr>';
         return;
@@ -1060,7 +1068,7 @@ function renderCombosTable() {
 function populateComboEventsList() {
     const container = document.getElementById('comboEventsList');
     if (!container) return;
-    
+
     if (allEvents.length === 0) {
         container.innerHTML = '<div style="color: var(--muted);">No events available to create a combo.</div>';
         return;
@@ -1119,7 +1127,7 @@ async function submitNewCombo() {
     const desc = document.getElementById('addComboDesc').value.trim();
     const minM = parseInt(document.getElementById('addComboMin').value) || 1;
     const maxM = parseInt(document.getElementById('addComboMax').value) || 1;
-    
+
     if (!title) {
         showToast('Combo Title is required', 'error');
         return;
@@ -1134,6 +1142,7 @@ async function submitNewCombo() {
         selectedEvents.push({ event_id: cb.value });
     });
     const totalFee = parseInt(document.getElementById('comboTotalPrice').value) || 0;
+    const paymentQrId = document.getElementById('addComboPaymentQr') ? document.getElementById('addComboPaymentQr').value : null;
 
     if (selectedEvents.length < 2) {
         showToast('A combo must have at least 2 events', 'error');
@@ -1152,7 +1161,7 @@ async function submitNewCombo() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compressing logo...';
         const logoFile = logoInput.files[0];
         try {
-            const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+            const compressedLogo = await compressImageFile(logoFile, 2000, 2000, 0.95);
             const safeName = title.toLowerCase().replace(/[^a-z0-9]+/g, '_');
             const filePath = `combo_logos/${safeName}_${Date.now()}.webp`;
 
@@ -1195,12 +1204,13 @@ async function submitNewCombo() {
         events_data: selectedEvents,
         total_fee: totalFee,
         image_url: imageUrl,
+        payment_qr_id: paymentQrId || null,
         is_active: true
     };
 
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Combo...';
     const result = await createCombo(newCombo);
-    
+
     btn.innerHTML = originalText;
     btn.disabled = false;
 
@@ -1210,11 +1220,12 @@ async function submitNewCombo() {
         showToast('Combo created successfully!', 'success');
         document.getElementById('addComboTitle').value = '';
         document.getElementById('addComboDesc').value = '';
-        if(document.getElementById('addComboLogo')) document.getElementById('addComboLogo').value = '';
-        if(document.getElementById('comboLogoPreviewArea')) document.getElementById('comboLogoPreviewArea').style.display = 'none';
+        if (document.getElementById('addComboLogo')) document.getElementById('addComboLogo').value = '';
+        if (document.getElementById('comboLogoPreviewArea')) document.getElementById('comboLogoPreviewArea').style.display = 'none';
         document.querySelectorAll('.combo-ev-checkbox').forEach(cb => cb.checked = false);
         document.getElementById('comboTotalPrice').value = '0';
-        
+        if (document.getElementById('addComboPaymentQr')) document.getElementById('addComboPaymentQr').value = '';
+
         // Refresh combos
         allCombos = await getAllCombosAdmin();
         renderCombosTable();
@@ -1280,7 +1291,10 @@ async function openEditComboModal(id) {
     document.getElementById('editComboMin').value = combo.min_members || 1;
     document.getElementById('editComboDesc').value = combo.description || '';
     document.getElementById('editComboActive').value = combo.is_active ? 'true' : 'false';
-    
+    if (document.getElementById('editComboPaymentQr')) {
+        document.getElementById('editComboPaymentQr').value = combo.payment_qr_id || '';
+    }
+
     // Logo preview
     const logoArea = document.getElementById('editComboLogoPreviewArea');
     const logoImg = document.getElementById('editComboLogoPreviewImg');
@@ -1296,14 +1310,15 @@ async function openEditComboModal(id) {
     // Events list
     const container = document.getElementById('editComboEventsList');
     container.innerHTML = '';
-    
+
     if (allEvents.length === 0) {
         container.innerHTML = '<div style="color: var(--muted);">No events available.</div>';
     } else {
         allEvents.forEach(ev => {
-            const isSelected = combo.events_data.find(e => e.event_id === ev.id);
+            const eventsData = combo.events_data || [];
+            const isSelected = eventsData.find(e => e.event_id === ev.id);
             const allocation = isSelected ? isSelected.allocation : 0;
-            
+
             const item = document.createElement('div');
             item.className = 'edit-combo-ev-item';
             item.dataset.title = ev.title.toLowerCase();
@@ -1320,14 +1335,14 @@ async function openEditComboModal(id) {
             container.appendChild(item);
         });
     }
-    
+
     document.getElementById('editComboTotalPrice').value = combo.total_fee || 0;
     document.getElementById('editComboError').style.display = 'none';
-    document.getElementById('editComboModal').classList.add('show');
+    document.getElementById('editComboModal').classList.add('open');
 }
 
 function closeEditComboModal() {
-    document.getElementById('editComboModal').classList.remove('show');
+    document.getElementById('editComboModal').classList.remove('open');
 }
 
 function filterEditComboEvents() {
@@ -1367,7 +1382,7 @@ async function submitComboEdit() {
     const maxM = parseInt(document.getElementById('editComboMax').value) || 1;
     const isActive = document.getElementById('editComboActive').value === 'true';
     const errEl = document.getElementById('editComboError');
-    
+
     errEl.style.display = 'none';
 
     if (!name) {
@@ -1400,13 +1415,13 @@ async function submitComboEdit() {
 
     let imageUrl = null;
     const logoInput = document.getElementById('editComboLogo');
-    
+
     // Check if new image was uploaded
     if (logoInput && logoInput.files && logoInput.files[0]) {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing image...';
         const logoFile = logoInput.files[0];
         try {
-            const compressedLogo = await compressImageFile(logoFile, 500, 500, 0.8);
+            const compressedLogo = await compressImageFile(logoFile, 2000, 2000, 0.95);
             const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
             const filePath = `combo_logos/${safeName}_${Date.now()}.webp`;
 
@@ -1433,6 +1448,8 @@ async function submitComboEdit() {
         }
     }
 
+    const paymentQrId = document.getElementById('editComboPaymentQr') ? document.getElementById('editComboPaymentQr').value : null;
+
     const updates = {
         name,
         description: desc,
@@ -1440,17 +1457,18 @@ async function submitComboEdit() {
         max_members: maxM,
         events_data: selectedEvents,
         total_fee: totalFee,
+        payment_qr_id: paymentQrId || null,
         is_active: isActive
     };
-    
+
     if (imageUrl) {
         updates.image_url = imageUrl;
     }
 
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating combo...';
-    
+
     const { data, error } = await updateCombo(id, updates);
-    
+
     btn.innerHTML = oldHtml;
     btn.disabled = false;
 
@@ -1469,7 +1487,7 @@ async function submitComboEdit() {
 
 /* Override switchTab to load game details and settings on tab switch */
 const _origSwitchTab = switchTab;
-switchTab = function(tabId, btn) {
+switchTab = function (tabId, btn) {
     _origSwitchTab(tabId, btn);
     if (tabId === 'game-details') {
         renderGameDetailsTab();
@@ -1484,7 +1502,7 @@ switchTab = function(tabId, btn) {
 
 /* Load settings on dashboard init */
 const _origLoadDashboard = loadDashboard;
-loadDashboard = async function() {
+loadDashboard = async function () {
     await _origLoadDashboard();
     // Pre-load settings form
     loadSiteSettingsAdmin();
@@ -1494,11 +1512,11 @@ loadDashboard = async function() {
 async function renderArchivedTab() {
     const container = document.getElementById('archivedList');
     if (!container) return;
-    
+
     container.innerHTML = '<div class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading archived combos...</div>';
-    
+
     allArchivedCombos = await getArchivedRegistrations();
-    
+
     if (allArchivedCombos.length === 0) {
         container.innerHTML = `
             <div style="text-align:center; padding:3rem; color:var(--muted);">
@@ -1507,7 +1525,7 @@ async function renderArchivedTab() {
             </div>`;
         return;
     }
-    
+
     // Group by combo_id (and format date)
     const grouped = {};
     allArchivedCombos.forEach(item => {
@@ -1525,10 +1543,10 @@ async function renderArchivedTab() {
 
     const groupsHtml = Object.values(grouped).map(group => {
         const regsHtml = group.regs.map(r => {
-            const membersHtml = (r.members && r.members.length > 0) 
+            const membersHtml = (r.members && r.members.length > 0)
                 ? r.members.map(m => `<div style="font-size:0.8rem; color:var(--muted); padding:2px 0;">• ${m.name} ${m.mobile ? `(${m.mobile})` : ''}</div>`).join('')
                 : '<div style="font-size:0.8rem; color:var(--muted);">No additional members</div>';
-                
+
             return `
                 <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:1rem; margin-bottom:0.5rem;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
@@ -1579,12 +1597,12 @@ async function loadPaymentQrsTab() {
 function renderPaymentQrsTable() {
     const tbody = document.getElementById('paymentQrsBody');
     if (!tbody) return;
-    
+
     if (allPaymentQrs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--muted);">No Payment QRs uploaded yet.</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = allPaymentQrs.map(qr => {
         return `
             <tr>
@@ -1602,19 +1620,28 @@ function renderPaymentQrsTable() {
 function populatePaymentQrDropdowns() {
     const addDropdown = document.getElementById('addPaymentQr');
     const editDropdown = document.getElementById('editEvPaymentQr');
-    
-    if (!addDropdown || !editDropdown) return;
-    
+    const addComboDropdown = document.getElementById('addComboPaymentQr');
+    const editComboDropdown = document.getElementById('editComboPaymentQr');
+
     let optionsHtml = '<option value="">Default (Global QR)</option>';
     allPaymentQrs.forEach(qr => {
         optionsHtml += `<option value="${qr.id}">₹${qr.amount} QR</option>`;
     });
+
+    if (addDropdown) addDropdown.innerHTML = optionsHtml;
+    if (addComboDropdown) addComboDropdown.innerHTML = optionsHtml;
+
+    if (editDropdown) {
+        const currentEditVal = editDropdown.value;
+        editDropdown.innerHTML = optionsHtml;
+        if (currentEditVal) editDropdown.value = currentEditVal;
+    }
     
-    addDropdown.innerHTML = optionsHtml;
-    // Don't overwrite the selected value of the edit dropdown immediately if it's already set
-    const currentEditVal = editDropdown.value;
-    editDropdown.innerHTML = optionsHtml;
-    if (currentEditVal) editDropdown.value = currentEditVal;
+    if (editComboDropdown) {
+        const currentEditComboVal = editComboDropdown.value;
+        editComboDropdown.innerHTML = optionsHtml;
+        if (currentEditComboVal) editComboDropdown.value = currentEditComboVal;
+    }
 }
 
 function previewNewQr(input) {
@@ -1636,27 +1663,27 @@ async function submitNewPaymentQr() {
     const btn = document.getElementById('saveNewQrBtn');
     const errEl = document.getElementById('addQrError');
     errEl.style.display = 'none';
-    
+
     const amount = parseInt(document.getElementById('addQrAmount').value, 10);
     const upi = document.getElementById('addQrUpi').value.trim();
     const file = document.getElementById('addQrImg').files[0];
-    
+
     if (isNaN(amount) || amount < 0 || !file) {
         errEl.textContent = 'Please provide a valid Amount and select a QR Image.';
         errEl.style.display = 'block';
         return;
     }
-    
+
     const oldHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
     btn.disabled = true;
-    
+
     let qrUrl = '';
-    
+
     try {
         const compressedLogo = await compressImageFile(file, 600, 600, 0.9);
         const filePath = `payment_qrs/${amount}_${Date.now()}.webp`;
-        
+
         const { data: uploadData, error: uploadError } = await supabaseClient
             .storage
             .from('trividhya_images')
@@ -1665,30 +1692,30 @@ async function submitNewPaymentQr() {
                 contentType: 'image/webp',
                 upsert: false
             });
-            
+
         if (uploadError) throw uploadError;
-        
+
         const { data: urlData } = supabaseClient.storage.from('trividhya_images').getPublicUrl(filePath);
         qrUrl = urlData.publicUrl;
-        
+
         const { data: dbData, error: dbError } = await createPaymentQr({
             amount: amount,
             upi_id: upi || null,
             qr_url: qrUrl
         });
-        
+
         if (dbError) throw dbError;
-        
+
         showToast('Payment QR added successfully!', 'success');
-        
+
         // Reset form
         document.getElementById('addQrAmount').value = '';
         document.getElementById('addQrUpi').value = '';
         document.getElementById('addQrImg').value = '';
         document.getElementById('newQrPreviewArea').style.display = 'none';
-        
+
         await loadPaymentQrsTab();
-        
+
     } catch (e) {
         errEl.textContent = 'Error: ' + e.message;
         errEl.style.display = 'block';
@@ -1706,28 +1733,28 @@ async function deleteQrPrompt(id, amount) {
         okText: 'Delete',
         danger: true
     });
-    
+
     if (!confirmed) return;
-    
+
     const { error } = await deletePaymentQr(id);
     if (error) {
         showToast('Error deleting QR: ' + error.message, 'error');
         return;
     }
-    
+
     showToast(`₹${amount} QR deleted successfully.`, 'success');
     await loadPaymentQrsTab();
 }
 
 // Hook into dashboard load and tab switches to load QRs
 const _origLoadDashboardQRs = loadDashboard;
-loadDashboard = async function() {
+loadDashboard = async function () {
     await _origLoadDashboardQRs();
     await loadPaymentQrsTab();
 };
 
 const _origSwitchTabQRs = switchTab;
-switchTab = function(tabId, btn) {
+switchTab = function (tabId, btn) {
     _origSwitchTabQRs(tabId, btn);
     if (tabId === 'payment-qrs') {
         loadPaymentQrsTab();
@@ -1744,17 +1771,17 @@ initMainAdmin();
 async function renderComboRegistrationsTab() {
     const container = document.getElementById('comboRegDetailsContainer');
     const searchVal = (document.getElementById('comboRegSearchInput').value || '').toLowerCase().trim();
-    
+
     // Ensure combos are loaded
     if (!allCombos || allCombos.length === 0) {
         allCombos = await getAllCombosAdmin();
     }
-    
+
     if (allCombos.length === 0) {
         container.innerHTML = '<div style="color:var(--muted); text-align:center; margin-top:2rem;">No combos found.</div>';
         return;
     }
-    
+
     let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
     for (const combo of allCombos) {
         html += `
@@ -1772,7 +1799,7 @@ async function renderComboRegistrationsTab() {
         `;
     }
     html += '</div>';
-    
+
     container.innerHTML = html;
 }
 
@@ -1780,22 +1807,22 @@ async function toggleComboRegs(comboId) {
     const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
     if (detailsDiv.style.display === 'none') {
         detailsDiv.style.display = 'block';
-        
+
         // Fetch registrations
         const regs = await getComboRegistrations(comboId);
-        
+
         if (regs.length === 0) {
             detailsDiv.innerHTML = '<div style="color:var(--muted);">No registrations yet.</div>';
             return;
         }
-        
+
         // Render regs (similar to event registrations)
         let html = '<div style="display:flex; flex-direction:column; gap:1rem;">';
         regs.forEach(reg => {
             const isPaid = reg.payment_status === 'paid';
             const isApproved = reg.is_approved;
             const mCount = 1 + (reg.members ? reg.members.length : 0);
-            
+
             let membersHtml = `
                 <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px;">
                     <div style="font-weight:600; margin-bottom:0.5rem; color:var(--primary);">Leader</div>
@@ -1806,7 +1833,7 @@ async function toggleComboRegs(comboId) {
                         <strong>Contact:</strong> ${reg.leader_mobile} | ${reg.leader_email}
                     </div>
             `;
-            
+
             if (reg.members && reg.members.length > 0) {
                 membersHtml += `<div style="font-weight:600; margin-top:1rem; margin-bottom:0.5rem; color:var(--primary);">Team Members</div>`;
                 reg.members.forEach((m, idx) => {
@@ -1856,9 +1883,9 @@ async function toggleComboRegs(comboId) {
             `;
         });
         html += '</div>';
-        
+
         detailsDiv.innerHTML = html;
-        
+
     } else {
         detailsDiv.style.display = 'none';
     }
@@ -1867,7 +1894,7 @@ async function toggleComboRegs(comboId) {
 async function approveComboRegistration(regId, comboId) {
     const c = confirm('Mark this combo registration as Paid/Approved?');
     if (!c) return;
-    
+
     const res = await approveRegistration(regId);
     if (res.success) {
         showToast('Combo registration approved', 'success');
@@ -1883,7 +1910,7 @@ async function approveComboRegistration(regId, comboId) {
 async function deleteComboRegistration(regId, comboId) {
     const c = confirm('Are you sure you want to delete this combo registration? This cannot be undone.');
     if (!c) return;
-    
+
     const res = await deleteRegistration(regId);
     if (res.success) {
         showToast('Combo registration deleted', 'success');
@@ -1901,7 +1928,7 @@ async function openComboCsvModal() {
     if (!allCombos || allCombos.length === 0) {
         allCombos = await getAllCombosAdmin();
     }
-    
+
     const container = document.getElementById('downloadComboCheckboxes');
     if (allCombos.length === 0) {
         container.innerHTML = '<div style="color:var(--muted); padding:1rem; text-align:center;">No combos available.</div>';
@@ -1913,7 +1940,7 @@ async function openComboCsvModal() {
             </label>
         `).join('');
     }
-    
+
     document.getElementById('downloadComboCsvModal').classList.add('show');
 }
 
@@ -1926,13 +1953,13 @@ async function downloadAllComboCsv() {
     const ogHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     btn.disabled = true;
-    
+
     if (!allCombos || allCombos.length === 0) {
         allCombos = await getAllCombosAdmin();
     }
     const comboIds = allCombos.map(c => c.id);
     await exportComboRegistrationsToCsv(comboIds, 'All_Combo_Registrations.csv');
-    
+
     btn.innerHTML = ogHtml;
     btn.disabled = false;
     closeComboCsvModal();
@@ -1941,19 +1968,19 @@ async function downloadAllComboCsv() {
 async function downloadSelectedComboCsv() {
     const checkboxes = document.querySelectorAll('.combo-csv-checkbox:checked');
     const comboIds = Array.from(checkboxes).map(cb => cb.value);
-    
+
     if (comboIds.length === 0) {
         showToast('Please select at least one combo', 'error');
         return;
     }
-    
+
     const btn = document.querySelectorAll('#downloadComboCsvModal .btn-primary')[1];
     const ogHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     btn.disabled = true;
-    
+
     await exportComboRegistrationsToCsv(comboIds, 'Selected_Combos_Registrations.csv');
-    
+
     btn.innerHTML = ogHtml;
     btn.disabled = false;
     closeComboCsvModal();
@@ -1966,12 +1993,12 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
         const regs = await getComboRegistrations(id);
         allRegs = allRegs.concat(regs);
     }
-    
+
     if (allRegs.length === 0) {
         showToast('No registrations found for the selected combos.', 'error');
         return;
     }
-    
+
     // Sort registrations by Group Name, then Leader Name
     allRegs.sort((a, b) => {
         const nameA = (a.group_name || a.leader_name || '').toLowerCase();
@@ -1980,10 +2007,10 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
         if (nameA > nameB) return 1;
         return 0;
     });
-    
+
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += "Combo Name,Group Name,Leader Name,Leader Gender,Leader College,Leader Enrollment,Leader Sem,Leader Mobile,Leader Email,Payment Mode,Payment Status,Approval Status,Amount Paid,Transaction ID,Registration Date,Team Members\n";
-    
+
     allRegs.forEach(reg => {
         const comboName = `"${(reg.combos && reg.combos.name) ? reg.combos.name.replace(/"/g, '""') : 'Unknown Combo'}"`;
         const groupName = `"${(reg.group_name || 'Individual').replace(/"/g, '""')}"`;
@@ -1999,22 +2026,22 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
         const appStatus = `"${reg.is_approved ? 'APPROVED' : 'PENDING'}"`;
         const amount = `"${reg.amount || ''}"`;
         const txnId = `"${(reg.transaction_id || 'N/A').replace(/"/g, '""')}"`;
-        
+
         const date = new Date(reg.created_at).toLocaleString('en-IN');
         const regDate = `"${date}"`;
-        
+
         let membersStr = '';
         if (reg.members && reg.members.length > 0) {
-            membersStr = reg.members.map(m => 
+            membersStr = reg.members.map(m =>
                 `${m.name} [${m.gender || 'N/A'}, ${m.college || 'N/A'}, ${m.enrollment || 'N/A'}, ${m.mobile || 'N/A'}]`
             ).join(' | ');
         }
         const membersFormatted = `"${membersStr.replace(/"/g, '""')}"`;
-        
+
         const row = [comboName, groupName, leaderName, leaderGender, leaderCollege, leaderEnroll, leaderSem, leaderMobile, leaderEmail, payMode, payStatus, appStatus, amount, txnId, regDate, membersFormatted].join(",");
         csvContent += row + "\n";
     });
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -2023,15 +2050,9 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
     link.click();
     document.body.removeChild(link);
 }
-/ *  
-  % % 
- U s e r  
- R e g i s t r a t i o n s  
- T a b  
- L o g i c  
-  % % 
- * /  
- let allGroupedUsers = [];
+
+/* ── User Registrations Tab Logic ── */
+let allGroupedUsers = [];
 
 async function fetchGroupedUserRegistrations() {
     const { data, error } = await supabaseClient
@@ -2043,21 +2064,21 @@ async function fetchGroupedUserRegistrations() {
             members(*)
         `)
         .order('created_at', { ascending: true });
-        
+
     if (error) {
         console.error('Error fetching registrations for grouping:', error);
         return [];
     }
-    
+
     // Group by email (fallback to mobile)
     const usersMap = {};
-    
+
     data.forEach(reg => {
         const email = (reg.leader_email || '').trim().toLowerCase();
         const mobile = (reg.leader_mobile || '').trim();
         const key = email || mobile;
         if (!key) return; // Skip if somehow no email or mobile
-        
+
         if (!usersMap[key]) {
             usersMap[key] = {
                 name: reg.leader_name || 'Unknown',
@@ -2068,29 +2089,29 @@ async function fetchGroupedUserRegistrations() {
                 events: []
             };
         }
-        
+
         let eventName = 'Unknown Event';
         if (reg.is_combo && reg.combos) {
             eventName = `Combo: ${reg.combos.name}`;
         } else if (!reg.is_combo && reg.events) {
             eventName = reg.events.title;
         }
-        
+
         // Prevent duplicate games (if they accidentally registered twice)
         if (!usersMap[key].events.includes(eventName)) {
             usersMap[key].events.push(eventName);
         }
     });
-    
+
     // Convert map to array
     let users = Object.values(usersMap);
-    
+
     // Sort events alphabetically within each user
     users.forEach(u => u.events.sort((a, b) => a.localeCompare(b)));
-    
+
     // Sort users alphabetically by name
     users.sort((a, b) => a.name.localeCompare(b.name));
-    
+
     allGroupedUsers = users;
     return users;
 }
@@ -2098,31 +2119,31 @@ async function fetchGroupedUserRegistrations() {
 async function renderUserRegistrationsTab() {
     const tbody = document.getElementById('userRegistrationsTableBody');
     const searchVal = (document.getElementById('userRegSearchInput').value || '').toLowerCase().trim();
-    
+
     if (allGroupedUsers.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading user data...</td></tr>';
         await fetchGroupedUserRegistrations();
     }
-    
+
     if (allGroupedUsers.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding: 2rem;">No users found.</td></tr>';
         return;
     }
-    
+
     let filteredUsers = allGroupedUsers;
     if (searchVal) {
-        filteredUsers = allGroupedUsers.filter(u => 
-            u.name.toLowerCase().includes(searchVal) || 
+        filteredUsers = allGroupedUsers.filter(u =>
+            u.name.toLowerCase().includes(searchVal) ||
             u.email.toLowerCase().includes(searchVal) ||
             u.mobile.toLowerCase().includes(searchVal)
         );
     }
-    
+
     if (filteredUsers.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding: 2rem;">No matching users found.</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = filteredUsers.map(u => {
         const eventsHtml = u.events.map(e => `<span style="display:inline-block; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:0.2rem 0.5rem; border-radius:4px; margin:2px; font-size:0.8rem;">${e}</span>`).join('');
         return `
@@ -2145,10 +2166,10 @@ function exportGroupedUsersCsv() {
         showToast('No user data to export', 'error');
         return;
     }
-    
+
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += "Name,Email,Mobile,College,Enrollment,Events Registered\n";
-    
+
     allGroupedUsers.forEach(u => {
         const name = `"${u.name.replace(/"/g, '""')}"`;
         const email = `"${u.email.replace(/"/g, '""')}"`;
@@ -2156,10 +2177,10 @@ function exportGroupedUsersCsv() {
         const college = `"${u.college.replace(/"/g, '""')}"`;
         const enroll = `"${u.enrollment.replace(/"/g, '""')}"`;
         const events = `"${u.events.join(", ").replace(/"/g, '""')}"`;
-        
+
         csvContent += [name, email, mobile, college, enroll, events].join(",") + "\n";
     });
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -2174,22 +2195,22 @@ function exportGroupedUsersPdf() {
         showToast('No user data to export', 'error');
         return;
     }
-    
+
     // jsPDF is loaded via CDN in admin.html
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('landscape');
-    
+
     doc.text("Trividhya'26 - User Registration Details", 14, 15);
-    
+
     const tableColumn = ["Name", "Contact (Email/Mobile)", "College", "Enrollment", "Events Registered"];
     const tableRows = [];
-    
+
     allGroupedUsers.forEach(u => {
         const contact = `${u.email}\n${u.mobile}`;
         const events = u.events.join("\n");
         tableRows.push([u.name, contact, u.college, u.enrollment, events]);
     });
-    
+
     doc.autoTable({
         head: [tableColumn],
         body: tableRows,
@@ -2199,6 +2220,6 @@ function exportGroupedUsersPdf() {
             4: { cellWidth: 100 } // Give events column more space
         }
     });
-    
+
     doc.save("User_Registrations_Details.pdf");
 }

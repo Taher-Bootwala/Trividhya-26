@@ -49,7 +49,7 @@
                     <span class="nav-label">Home</span>
                 </a>
             </li>
-            <li>
+            <li id="navCombosLink">
                 <a href="#combosSection" class="nav-icon-link" data-tooltip="Combos" aria-label="Combos">
                     <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -115,7 +115,8 @@
         <div class="hero-inner" id="heroInner">
             <div class="hero-text-container hero-content" id="heroTextContainer">
                 <h1>TECH<span>-FIESTA</span>'26</h1>
-                <p class="hero-sub">Where art meets energy, culture meets creativity.<br>The biggest college Technical
+                <p class="hero-sub" style="color: black">Where art meets energy, culture meets creativity.<br>The
+                    biggest college Technical
                     event
                     of the year.</p>
                 <div class="hero-date">
@@ -138,14 +139,19 @@
                     </div>
                 </div>
             </div>
+
+            <div class="hero-combos-container" id="heroCombosContainer" style="display:none;">
+                <div class="combo-slider" id="comboSlider">
+                    <!-- Slides injected via JS -->
+                </div>
+            </div>
         </div>
     </section>
 
 
 
     <!-- ═══════════ COMBOS ═══════════ -->
-    <section id="combosSection"
-        style="display: none; background: linear-gradient(135deg, rgba(123,47,190,0.1), rgba(46,213,115,0.05)); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <section id="combosSection" style="display: none;">
         <div class="sec-header" data-aos="fade-up" style="margin-bottom: 2rem;">
             <h2 class="sec-title">Event <span>Combos</span></h2>
         </div>
@@ -178,9 +184,8 @@
         </div>
         <div class="cards-grid" id="skelGrid"></div>
         <div class="cards-grid" id="evGrid" style="display:none;"></div>
+        <div class="pagination-container" id="evPagination" style="position: relative; z-index: 10;"></div>
     </section>
-
-    <div class="pagination-container" id="evPagination" style="position: relative; z-index: 10;"></div>
 
     <!-- ═══════════ GAMES ═══════════ -->
     <section id="games">
@@ -190,10 +195,8 @@
             <p class="sec-desc">Compete in thrilling games and sports tournaments. Glory and prizes await the brave.</p>
         </div>
         <div class="cards-grid" id="gmGrid"></div>
+        <div class="pagination-container" id="gmPagination" style="position: relative; z-index: 10;"></div>
     </section>
-
-    <div class="pagination-container" id="gmPagination" style="position: relative; z-index: 10;"></div>
-
     <!-- ═══════════ FOOTER ═══════════ -->
     <footer id="contact">
         <div class="footer-grid">

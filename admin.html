@@ -334,6 +334,14 @@
                     <textarea id="editEvDesc" class="form-input" rows="4"></textarea>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Rules & Regulations (Optional)</label>
+                    <textarea id="editEvRules" class="form-input" rows="4" placeholder="Enter rules for the event..."></textarea>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Terms & Conditions Checkbox Label (Optional)</label>
+                    <input type="text" id="editEvTermsLabel" class="form-input" placeholder="e.g. I agree to all terms and conditions">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
                     <label class="form-label">Event Admin Password</label>
                     <input type="text" id="editEvPass" class="form-input">
                 </div>
@@ -397,6 +405,12 @@
                         <label class="form-label" style="margin-bottom:0;">Total Combo Price (₹) *</label>
                         <input type="number" id="editComboTotalPrice" class="form-input" value="0" min="0" style="width:120px; font-weight:bold; color:var(--gold);">
                     </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Payment QR</label>
+                    <select id="editComboPaymentQr" class="form-select">
+                        <option value="">Default (Global QR)</option>
+                    </select>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label class="form-label">Is Active?</label>
@@ -636,6 +650,12 @@
                         <label class="form-label" style="margin-bottom:0;">Total Combo Price (₹) *</label>
                         <input type="number" id="comboTotalPrice" class="form-input" value="0" min="0" style="width:120px; font-size:1.2rem; font-weight:bold; color:var(--gold);">
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Payment QR</label>
+                        <select id="addComboPaymentQr" class="form-select">
+                            <option value="">Default (Global QR)</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
@@ -736,6 +756,14 @@
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label class="form-label">Description</label>
                         <textarea id="addDesc" class="form-input" rows="4" placeholder="Event description..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Rules & Regulations (Optional)</label>
+                        <textarea id="addRules" class="form-input" rows="4" placeholder="Enter rules for the event..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Terms & Conditions Checkbox Label (Optional)</label>
+                        <input type="text" id="addTermsLabel" class="form-input" placeholder="e.g. I agree to all terms and conditions">
                     </div>
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label class="form-label">Event Admin Password *</label>

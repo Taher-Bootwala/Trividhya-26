@@ -35,7 +35,7 @@ async function initRegisterPage() {
             const eventIds = combo.events_data.map(e => e.event_id);
             const { data: eventsList } = await supabaseClient
                 .from('events')
-                .select('title, coordinators, volunteers')
+                .select('title, coordinators, volunteers, logo_url')
                 .in('id', eventIds);
 
             let allCoords = [];
@@ -61,6 +61,7 @@ async function initRegisterPage() {
                 volunteers: allVols.join('<br>') || 'TBA',
                 is_combo: true,
                 combo_data: combo,
+                combo_events_details: eventsList,
                 logo_url: combo.image_url
             };
         }
@@ -248,16 +249,49 @@ function renderRegistrationForm(ev) {
                 </div>
             </div>
 
-            <div style="margin-top: 1.2rem; padding: 0.9rem 1.2rem; background: #f8f9fa; border-radius: 16px; border: 1.5px solid #000000; text-align: left; font-size: 0.85rem;">
-                <div style="margin-bottom: 0.4rem; color: #000000; font-weight: 600; display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
-                    <span style="white-space: nowrap;"><i class="fas fa-user-tie" style="margin-right: 0.4rem;"></i>Coordinators:</span>
-                    <span style="font-weight: 400; color: #333333;">${ev.coordinators || 'TBA'}</span>
-                </div>
-                <div style="color: #000000; font-weight: 600; display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
-                    <span style="white-space: nowrap;"><i class="fas fa-hands-helping" style="margin-right: 0.4rem;"></i>Volunteers:</span>
-                    <span style="font-weight: 400; color: #333333;">${ev.volunteers || 'TBA'}</span>
-                </div>
+            ${ev.is_combo && ev.combo_events_details ? 
+                `<div style="margin-top: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                    ${ev.combo_events_details.map(e => `
+                        <div style="display: flex; align-items: stretch; background: #f8f9fa; border-radius: 16px; border: 1.5px solid #000000; padding: 0.8rem; gap: 1rem; text-align: left;">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 75px; max-width: 75px;">
+                                ${e.logo_url 
+                                    ? `<img src="${e.logo_url}" alt="${e.title}" style="width: 50px; height: 50px; object-fit: contain; margin-bottom: 0.4rem; border-radius: 8px;">`
+                                    : `<div style="width: 50px; height: 50px; background: var(--primary, #7B2FBE); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; margin-bottom: 0.4rem; font-size: 1.2rem;">${e.title.charAt(0)}</div>`
+                                }
+                                <span style="font-size: 0.7rem; font-weight: 600; line-height: 1.1; text-align: center; word-wrap: break-word;">${e.title}</span>
+                            </div>
+                            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 0.5rem; font-size: 0.85rem; border-left: 1px solid #ddd; padding-left: 1rem;">
+                                <div style="display: flex; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap;">
+                                    <span style="white-space: nowrap; font-weight: 600; color: #000;"><i class="fas fa-user-tie" style="margin-right: 0.3rem;"></i>Coordinators:</span>
+                                    <span style="font-weight: 400; color: #333;">${e.coordinators || 'TBA'}</span>
+                                </div>
+                                <div style="display: flex; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap;">
+                                    <span style="white-space: nowrap; font-weight: 600; color: #000;"><i class="fas fa-hands-helping" style="margin-right: 0.3rem;"></i>Volunteers:</span>
+                                    <span style="font-weight: 400; color: #333;">${e.volunteers || 'TBA'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`
+            :
+                `<div style="margin-top: 1.2rem; padding: 0.9rem 1.2rem; background: #f8f9fa; border-radius: 16px; border: 1.5px solid #000000; text-align: left; font-size: 0.85rem;">
+                    <div style="margin-bottom: 0.4rem; color: #000000; font-weight: 600; display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+                        <span style="white-space: nowrap;"><i class="fas fa-user-tie" style="margin-right: 0.4rem;"></i>Coordinators:</span>
+                        <span style="font-weight: 400; color: #333333;">${ev.coordinators || 'TBA'}</span>
+                    </div>
+                    <div style="color: #000000; font-weight: 600; display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+                        <span style="white-space: nowrap;"><i class="fas fa-hands-helping" style="margin-right: 0.4rem;"></i>Volunteers:</span>
+                        <span style="font-weight: 400; color: #333333;">${ev.volunteers || 'TBA'}</span>
+                    </div>
+                </div>`
+            }
+            
+            ${ev.rules_text ? `
+            <div style="margin-top: 1.5rem; padding: 1.5rem; background: #ffffff; border-radius: 16px; border: 1.5px solid #000000; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <h3 style="font-size: 1rem; margin-bottom: 0.8rem; color: #000000; font-family: var(--font-heading);"><i class="fas fa-scroll" style="margin-right: 0.4rem; color: var(--accent);"></i> Rules & Regulations</h3>
+                <div style="font-size: 0.85rem; color: #333333; line-height: 1.6; white-space: pre-wrap; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">${ev.rules_text}</div>
             </div>
+            ` : ''}
         </div>
 
         <!-- Registration Form -->
@@ -363,6 +397,13 @@ function renderRegistrationForm(ev) {
                         <button type="button" class="add-member-btn" id="addMemberBtn" onclick="addMember()">
                             <i class="fas fa-plus-circle"></i> Add Team Member
                         </button>
+                    </div>
+                    ` : ''}
+
+                    ${ev.terms_checkbox_label ? `
+                    <div style="margin-top: 1.5rem; margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border: 1.5px solid #000000; border-radius: 12px; display: flex; align-items: flex-start; gap: 0.8rem;">
+                        <input type="checkbox" id="termsCheckbox" required style="margin-top: 0.2rem; width: 18px; height: 18px; cursor: pointer; accent-color: #000000;">
+                        <label for="termsCheckbox" style="font-size: 0.85rem; color: #000000; cursor: pointer; line-height: 1.4;">${ev.terms_checkbox_label}</label>
                     </div>
                     ` : ''}
 
@@ -490,6 +531,13 @@ async function handleRegistration(e) {
     // Validate email verified
     if (!leaderEmailVerified) {
         errEl.textContent = 'Please verify your email address first';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    const termsCb = document.getElementById('termsCheckbox');
+    if (termsCb && !termsCb.checked) {
+        errEl.textContent = 'You must agree to the terms and conditions before proceeding.';
         errEl.style.display = 'block';
         return;
     }

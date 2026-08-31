@@ -27,7 +27,7 @@
     --font-body: 'Poppins', Arial, sans-serif;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
     font-family: var(--font-body);
@@ -35,6 +35,7 @@ body {
     background: #ffffff;
     color: #000000;
     overflow-x: hidden;
+    width: 100%;
 }
 
 h1, h2, h3, h4, h5, h6, .logo, .sec-title, .admin-title, .pay-title, .modal-title, .reg-event-header h2, .admin-login-title, .sec-title span, .hero h1, .reg-event-title {
@@ -291,13 +292,13 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             text-align: center; padding: 6rem 2rem 2rem;
             position: relative;
             z-index: 1;
-            background: transparent;
+            background-color: #000000;
         }
 
         .hero::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             z-index: -1;
-            background: url('homebg_compressed.png') center/cover no-repeat;
+            background: url('newhomebg.jpg') center/cover no-repeat;
             -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 150px), transparent 100%);
             mask-image: linear-gradient(to bottom, black calc(100% - 150px), transparent 100%);
         }
@@ -324,6 +325,23 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             margin: 0 auto;
             z-index: 2;
             position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .hero-inner.has-slider {
+            flex-direction: row;
+            max-width: 95%;
+            width: 100%;
+            gap: 2rem;
+            align-items: stretch;
+        }
+
+        @media (max-width: 992px) {
+            .hero-inner.has-slider {
+                flex-direction: column;
+                max-width: 1000px;
+                gap: 1.5rem;
+            }
         }
 
         /* Glassmorphism Text Container */
@@ -331,11 +349,56 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(16px);
             border-radius: 30px;
-            padding: 3rem 2rem;
+            padding: 2rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             width: 100%;
             text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .hero-combos-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            min-height: 250px;
+            min-width: 0;
+        }
+
+        .combo-slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            flex: 1;
+            height: 100%;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .combo-slider::-webkit-scrollbar {
+            display: none;
+        }
+
+        .combo-slide {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+            cursor: pointer;
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
         }
 
         .hero-badge {
@@ -374,7 +437,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         .hero-date {
             color: #000000; font-size: 0.95rem;
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.5rem;
             animation: fadeUp 0.8s ease 0.45s both;
             font-family: var(--font-body);
         }
@@ -428,7 +491,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         .hero-stats {
             display: flex; gap: 2rem; justify-content: center;
-            margin-top: 4rem; flex-wrap: wrap;
+            margin-top: 2.5rem; flex-wrap: wrap;
             animation: fadeUp 0.8s ease 0.7s both;
         }
 
@@ -530,11 +593,25 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         #events {
             position: relative;
+            background-color: #000000;
         }
         #events::before {
             content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
             z-index: -1;
-            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/events_bg.jpg') center/cover no-repeat;
+            background: linear-gradient(rgba(10, 10, 26, 0.75), rgba(10, 10, 26, 0.75)), url('eventsbg.png') center/cover no-repeat;
+            background-attachment: fixed;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
+        }
+
+        #combosSection {
+            position: relative;
+            background-color: #000000;
+        }
+        #combosSection::before {
+            content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: linear-gradient(rgba(10, 10, 26, 0.75), rgba(10, 10, 26, 0.75)), url('combosbg.png') center/cover no-repeat;
             background-attachment: fixed;
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
@@ -542,6 +619,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         #games {
             position: relative;
+            background-color: #000000;
         }
         #games::before {
             content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
@@ -552,6 +630,10 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
         }
 
+        #events .sec-title,
+        #events .sec-title span,
+        #combosSection .sec-title,
+        #combosSection .sec-title span,
         #games .sec-title,
         #games .sec-title span {
             color: #ffffff !important;
@@ -917,7 +999,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
 
         /* ───── FOOTER ───── */
         footer {
-            background: transparent;
+            background-color: #000000;
             position: relative;
             z-index: 1;
             padding: 4rem 2rem 2rem;
@@ -926,7 +1008,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         footer::before {
             content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
             z-index: -1;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('homebg_compressed.png') center/cover no-repeat;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('newhomebg.jpg') center/cover no-repeat;
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black 100%);
         }

@@ -8,11 +8,13 @@ CREATE TABLE IF NOT EXISTS public.combos (
     events_data JSONB NOT NULL,
     total_fee INTEGER DEFAULT 0,
     image_url TEXT,
+    payment_qr_id UUID REFERENCES public.payment_qrs(id) ON DELETE SET NULL,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Add amount column to registrations
+ALTER TABLE public.combos ADD COLUMN IF NOT EXISTS payment_qr_id UUID REFERENCES public.payment_qrs(id) ON DELETE SET NULL;
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS amount INTEGER;
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS is_combo BOOLEAN DEFAULT false;
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS combo_id UUID REFERENCES public.combos(id);

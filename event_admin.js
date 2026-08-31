@@ -143,6 +143,14 @@ function renderEventInfo() {
                 <label class="form-label">Description</label>
                 <textarea id="evDesc" class="form-input" rows="4">${currentEvent.description || ''}</textarea>
             </div>
+            <div class="form-group">
+                <label class="form-label">Rules & Regulations (Optional)</label>
+                <textarea id="evRules" class="form-input" rows="4" placeholder="Enter rules for the event...">${currentEvent.rules_text || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Terms & Conditions Checkbox Label (Optional)</label>
+                <input type="text" id="evTermsLabel" class="form-input" placeholder="e.g. I agree to all terms and conditions" value="${currentEvent.terms_checkbox_label || ''}">
+            </div>
             <button class="btn-primary" id="saveInfoBtn" style="width:100%;border-radius:10px;justify-content:center;padding:0.6rem;" onclick="saveEventInfo()">
                 <i class="fas fa-save"></i> Save Changes
             </button>
@@ -651,6 +659,8 @@ async function saveEventInfo() {
     const title = document.getElementById('evTitle').value.trim();
     const fee = parseInt(document.getElementById('evFee').value, 10);
     const desc = document.getElementById('evDesc').value.trim();
+    const rules = document.getElementById('evRules').value.trim();
+    const termsLabel = document.getElementById('evTermsLabel').value.trim();
     const coordinators = document.getElementById('evCoordinators').value.trim();
     const volunteers = document.getElementById('evVolunteers').value.trim();
     const paymentQr = document.getElementById('evPaymentQr').value || null;
@@ -714,7 +724,7 @@ async function saveEventInfo() {
     
 
     const updates = {
-        title, fee, description: desc, logo_url: newLogoUrl, coordinators, volunteers, payment_qr_id: paymentQr
+        title, fee, description: desc, rules_text: rules, terms_checkbox_label: termsLabel, logo_url: newLogoUrl, coordinators, volunteers, payment_qr_id: paymentQr
     };
     if (minMembersEl) {
         updates.min_members = minMembers;

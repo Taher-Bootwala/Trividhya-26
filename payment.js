@@ -133,11 +133,11 @@ async function submitOnlinePayment() {
             .from('registrations')
             .select('id')
             .eq('transaction_id', txnInput)
-            .maybeSingle();
+            .limit(1);
 
         if (checkError) throw checkError;
 
-        if (existing) {
+        if (existing && existing.length > 0) {
             btn.innerHTML = originalText;
             btn.disabled = false;
             document.querySelector('#payOnlineSection .pay-cash-btn').disabled = false;
@@ -146,7 +146,11 @@ async function submitOnlinePayment() {
         }
     } catch (err) {
         console.error('Error checking transaction ID:', err);
-        // Fallback: If check fails, we'll let the database unique constraint handle it during insert
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        document.querySelector('#payOnlineSection .pay-cash-btn').disabled = false;
+        showError('Could not verify transaction ID. Please try again.', true);
+        return;
     }
 
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
