@@ -1894,3 +1894,132 @@ async function deleteComboRegistration(regId, comboId) {
         showToast('Error deleting registration', 'error');
     }
 }
+
+/* ── Combo Registrations CSV Export ── */
+async function openComboCsvModal() {
+    // Ensure combos are loaded
+    if (!allCombos || allCombos.length === 0) {
+        allCombos = await getAllCombosAdmin();
+    }
+    
+    const container = document.getElementById('downloadComboCheckboxes');
+    if (allCombos.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted); padding:1rem; text-align:center;">No combos available.</div>';
+    } else {
+        container.innerHTML = allCombos.map(combo => `
+            <label style="display:flex; align-items:center; gap:0.8rem; cursor:pointer; padding:0.5rem; border-radius:6px; background:rgba(0,0,0,0.03);">
+                <input type="checkbox" class="combo-csv-checkbox" value="${combo.id}" checked>
+                <span style="font-weight:600;">${combo.name}</span>
+            </label>
+        `).join('');
+    }
+    
+    document.getElementById('downloadComboCsvModal').classList.add('show');
+}
+
+function closeComboCsvModal() {
+    document.getElementById('downloadComboCsvModal').classList.remove('show');
+}
+
+async function downloadAllComboCsv() {
+    const btn = document.querySelector('#downloadComboCsvModal .btn-primary');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    btn.disabled = true;
+    
+    if (!allCombos || allCombos.length === 0) {
+        allCombos = await getAllCombosAdmin();
+    }
+    const comboIds = allCombos.map(c => c.id);
+    await exportComboRegistrationsToCsv(comboIds, 'All_Combo_Registrations.csv');
+    
+    btn.innerHTML = ogHtml;
+    btn.disabled = false;
+    closeComboCsvModal();
+}
+
+async function downloadSelectedComboCsv() {
+    const checkboxes = document.querySelectorAll('.combo-csv-checkbox:checked');
+    const comboIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (comboIds.length === 0) {
+        showToast('Please select at least one combo', 'error');
+        return;
+    }
+    
+    const btn = document.querySelectorAll('#downloadComboCsvModal .btn-primary')[1];
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    btn.disabled = true;
+    
+    await exportComboRegistrationsToCsv(comboIds, 'Selected_Combos_Registrations.csv');
+    
+    btn.innerHTML = ogHtml;
+    btn.disabled = false;
+    closeComboCsvModal();
+}
+
+async function exportComboRegistrationsToCsv(comboIds, filename) {
+    let allRegs = [];
+    // Fetch registrations for each selected combo
+    for (const id of comboIds) {
+        const regs = await getComboRegistrations(id);
+        allRegs = allRegs.concat(regs);
+    }
+    
+    if (allRegs.length === 0) {
+        showToast('No registrations found for the selected combos.', 'error');
+        return;
+    }
+    
+    // Sort registrations by Group Name, then Leader Name
+    allRegs.sort((a, b) => {
+        const nameA = (a.group_name || a.leader_name || '').toLowerCase();
+        const nameB = (b.group_name || b.leader_name || '').toLowerCase();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        return 0;
+    });
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Combo Name,Group Name,Leader Name,Leader Gender,Leader College,Leader Enrollment,Leader Sem,Leader Mobile,Leader Email,Payment Mode,Payment Status,Approval Status,Amount Paid,Transaction ID,Registration Date,Team Members\n";
+    
+    allRegs.forEach(reg => {
+        const comboName = `"${(reg.combos && reg.combos.name) ? reg.combos.name.replace(/"/g, '""') : 'Unknown Combo'}"`;
+        const groupName = `"${(reg.group_name || 'Individual').replace(/"/g, '""')}"`;
+        const leaderName = `"${(reg.leader_name || '').replace(/"/g, '""')}"`;
+        const leaderGender = `"${(reg.leader_gender || '').replace(/"/g, '""')}"`;
+        const leaderCollege = `"${(reg.college || '').replace(/"/g, '""')}"`;
+        const leaderEnroll = `"${(reg.enrollment || '').replace(/"/g, '""')}"`;
+        const leaderSem = `"${(reg.semester || '').replace(/"/g, '""')}"`;
+        const leaderMobile = `"${(reg.leader_mobile || '').replace(/"/g, '""')}"`;
+        const leaderEmail = `"${(reg.leader_email || '').replace(/"/g, '""')}"`;
+        const payMode = `"${(reg.payment_mode || '').toUpperCase().replace(/"/g, '""')}"`;
+        const payStatus = `"${(reg.payment_status || '').toUpperCase().replace(/"/g, '""')}"`;
+        const appStatus = `"${reg.is_approved ? 'APPROVED' : 'PENDING'}"`;
+        const amount = `"${reg.amount || ''}"`;
+        const txnId = `"${(reg.transaction_id || 'N/A').replace(/"/g, '""')}"`;
+        
+        const date = new Date(reg.created_at).toLocaleString('en-IN');
+        const regDate = `"${date}"`;
+        
+        let membersStr = '';
+        if (reg.members && reg.members.length > 0) {
+            membersStr = reg.members.map(m => 
+                `${m.name} [${m.gender || 'N/A'}, ${m.college || 'N/A'}, ${m.enrollment || 'N/A'}, ${m.mobile || 'N/A'}]`
+            ).join(' | ');
+        }
+        const membersFormatted = `"${membersStr.replace(/"/g, '""')}"`;
+        
+        const row = [comboName, groupName, leaderName, leaderGender, leaderCollege, leaderEnroll, leaderSem, leaderMobile, leaderEmail, payMode, payStatus, appStatus, amount, txnId, regDate, membersFormatted].join(",");
+        csvContent += row + "\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
