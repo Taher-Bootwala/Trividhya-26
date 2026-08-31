@@ -384,6 +384,16 @@ function renderRegistrationForm(ev) {
                         <label class="form-label">Current Semester</label>
                         <input type="number" class="form-input" id="leaderSemester" placeholder="e.g. 6" min="1" max="10" required>
                     </div>
+                    ${ev.category === 'game' ? `
+                    <div class="form-group">
+                        <label class="form-label">In-Game ID (with Clan Tag)</label>
+                        <input type="text" class="form-input" id="leaderInGameId" placeholder="e.g. OGxItachi" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">UID (Numbers only)</label>
+                        <input type="text" class="form-input" id="leaderUid" placeholder="e.g. 524312345" pattern="[0-9]+" required>
+                    </div>
+                    ` : ''}
 
                     ${isGroup ? `
                     <div class="member-section">
@@ -470,10 +480,20 @@ function addMember() {
             <label class="form-label">Enrollment Number</label>
             <input type="text" class="form-input member-enrollment" placeholder="Enter enrollment number" required>
         </div>
-        <div class="form-group" style="margin-bottom:0;">
+        <div class="form-group" ${currentEvent.category === 'game' ? '' : 'style="margin-bottom:0;"'}>
             <label class="form-label">Current Semester</label>
             <input type="number" class="form-input member-semester" placeholder="e.g. 6" min="1" max="10" required>
         </div>
+        ${currentEvent.category === 'game' ? `
+        <div class="form-group">
+            <label class="form-label">In-Game ID (with Clan Tag)</label>
+            <input type="text" class="form-input member-in-game-id" placeholder="e.g. OGxItachi" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">UID (Numbers only)</label>
+            <input type="text" class="form-input member-in-game-uid" placeholder="e.g. 524312345" pattern="[0-9]+" required>
+        </div>
+        ` : ''}
     `;
     container.appendChild(card);
     updateAddButton();
@@ -555,6 +575,12 @@ async function handleRegistration(e) {
         const gender = card.querySelector('.member-gender').value.trim();
         const enrollment = card.querySelector('.member-enrollment').value.trim();
         const semester = parseInt(card.querySelector('.member-semester').value, 10);
+        let in_game_id = null;
+        let in_game_uid = null;
+        if (currentEvent.category === 'game') {
+            in_game_id = card.querySelector('.member-in-game-id').value.trim();
+            in_game_uid = card.querySelector('.member-in-game-uid').value.trim();
+        }
 
         if (!name || !email || !mobile || !college || !gender || !enrollment || isNaN(semester)) {
             errEl.textContent = 'Please fill all member details';
@@ -571,7 +597,18 @@ async function handleRegistration(e) {
             submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
             return;
         }
-        membersData.push({ name, email, mobile, gender, college, enrollment, semester });
+
+        if (currentEvent.category === 'game') {
+            if (!in_game_id || !in_game_uid) {
+                errEl.textContent = `Please fill In-Game ID and UID for member "${name}"`;
+                errEl.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
+                return;
+            }
+        }
+
+        membersData.push({ name, email, mobile, gender, college, enrollment, semester, in_game_id, in_game_uid });
     }
 
     // MINIMUM PARTICIPANTS FULFILLMENT CHECK (FOR GROUP EVENTS)
@@ -604,6 +641,21 @@ async function handleRegistration(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
     errEl.style.display = 'none';
 
+    let leaderInGameId = null;
+    let leaderUid = null;
+    if (currentEvent.category === 'game') {
+        leaderInGameId = document.getElementById('leaderInGameId').value.trim();
+        leaderUid = document.getElementById('leaderUid').value.trim();
+
+        if (!leaderInGameId || !leaderUid) {
+            errEl.textContent = 'Please fill In-Game ID and UID for the Leader';
+            errEl.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
+            return;
+        }
+    }
+
     // Store data in session and go to payment
     const regData = {
         event_id: currentEvent.id, // For combos, this is a placeholder 'COMBO_uuid' string
@@ -615,6 +667,8 @@ async function handleRegistration(e) {
         college: leaderCollege,
         enrollment: leaderEnrollment,
         semester: leaderSemester,
+        leader_in_game_id: leaderInGameId,
+        leader_in_game_uid: leaderUid,
         payment_mode: 'pending', // will be set on payment page
         payment_status: 'pending'
     };

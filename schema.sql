@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS events (
   fee INTEGER DEFAULT 0,
   max_members INTEGER DEFAULT 1,
   min_members INTEGER DEFAULT 1,
+  rules_text TEXT,
+  terms_checkbox_label TEXT,
   logo_url TEXT,
   color TEXT DEFAULT '#7B2FBE',
   badge TEXT DEFAULT 'Tech',
@@ -45,6 +47,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   college TEXT,
   enrollment TEXT,
   semester INTEGER,
+  leader_in_game_id TEXT,
+  leader_in_game_uid TEXT,
   payment_mode TEXT NOT NULL CHECK (payment_mode IN ('online','cash')),
   payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN ('pending','paid','cancelled','deleted')),
   transaction_id TEXT,
@@ -64,7 +68,9 @@ CREATE TABLE IF NOT EXISTS members (
   mobile TEXT NOT NULL,
   college TEXT,
   enrollment TEXT,
-  semester INTEGER
+  semester INTEGER,
+  in_game_id TEXT,
+  in_game_uid TEXT
 );
 
 -- 4) ADMIN CONFIG TABLE
