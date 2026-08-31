@@ -297,7 +297,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         .hero::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             z-index: -1;
-            background: url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/homebg.png') center/cover no-repeat;
+            background: url('homebg_compressed.png') center/cover no-repeat;
             -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 150px), transparent 100%);
             mask-image: linear-gradient(to bottom, black calc(100% - 150px), transparent 100%);
         }
@@ -926,7 +926,7 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         footer::before {
             content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
             z-index: -1;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://cwjxzhshujlujhproenn.supabase.co/storage/v1/object/public/trividhya_images/homebg.png') center/cover no-repeat;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('homebg_compressed.png') center/cover no-repeat;
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black 100%);
         }

@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         .admin-page {
             min-height: 100vh;
@@ -459,6 +461,7 @@
         <!-- TABS -->
         <div class="admin-tabs">
             <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-bar" style="margin-right:0.4rem;"></i>Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('user-registrations', this); renderUserRegistrationsTab();"><i class="fas fa-users" style="margin-right:0.4rem;"></i>User Details</button>
             <button class="tab-btn" onclick="switchTab('events', this)"><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i>Events</button>
             <button class="tab-btn" onclick="switchTab('combos', this)"><i class="fas fa-layer-group" style="margin-right:0.4rem;"></i>Combos</button>
             <button class="tab-btn" onclick="switchTab('combo-regs', this)"><i class="fas fa-boxes" style="margin-right:0.4rem;"></i>Combo Registrations</button>
@@ -512,6 +515,36 @@
                     <div style="position: relative; height: 180px; width: 100%;">
                         <canvas id="chartTrends"></canvas>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: USER REGISTRATIONS -->
+        <div id="tab-user-registrations" class="tab-content">
+            <div class="admin-panel-card">
+                <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <h3 style="font-size: 1.2rem; margin:0;"><i class="fas fa-users" style="color:var(--accent);margin-right:0.5rem;"></i>User Registration Details</h3>
+                    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+                        <input type="text" id="userRegSearchInput" class="form-input" style="max-width:300px; padding:0.5rem 1rem;" placeholder="Search user by name or email..." onkeyup="renderUserRegistrationsTab()">
+                        <button class="action-btn" onclick="exportGroupedUsersCsv()" style="background:var(--accent); color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer;"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="action-btn" onclick="exportGroupedUsersPdf()" style="background:#e74c3c; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer;"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto; margin-top: 1.5rem;">
+                    <table id="userRegistrationsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact (Email / Mobile)</th>
+                                <th>College</th>
+                                <th>Enrollment</th>
+                                <th>Events Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userRegistrationsTableBody">
+                            <tr><td colspan="5" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Click 'User Details' to load data...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

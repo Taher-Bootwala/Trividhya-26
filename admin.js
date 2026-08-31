@@ -2023,3 +2023,182 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
     link.click();
     document.body.removeChild(link);
 }
+/ *  
+  % % 
+ U s e r  
+ R e g i s t r a t i o n s  
+ T a b  
+ L o g i c  
+  % % 
+ * /  
+ let allGroupedUsers = [];
+
+async function fetchGroupedUserRegistrations() {
+    const { data, error } = await supabaseClient
+        .from('registrations')
+        .select(`
+            *,
+            events(title),
+            combos(name),
+            members(*)
+        `)
+        .order('created_at', { ascending: true });
+        
+    if (error) {
+        console.error('Error fetching registrations for grouping:', error);
+        return [];
+    }
+    
+    // Group by email (fallback to mobile)
+    const usersMap = {};
+    
+    data.forEach(reg => {
+        const email = (reg.leader_email || '').trim().toLowerCase();
+        const mobile = (reg.leader_mobile || '').trim();
+        const key = email || mobile;
+        if (!key) return; // Skip if somehow no email or mobile
+        
+        if (!usersMap[key]) {
+            usersMap[key] = {
+                name: reg.leader_name || 'Unknown',
+                email: email,
+                mobile: mobile,
+                college: reg.college || 'N/A',
+                enrollment: reg.enrollment || 'N/A',
+                events: []
+            };
+        }
+        
+        let eventName = 'Unknown Event';
+        if (reg.is_combo && reg.combos) {
+            eventName = `Combo: ${reg.combos.name}`;
+        } else if (!reg.is_combo && reg.events) {
+            eventName = reg.events.title;
+        }
+        
+        // Prevent duplicate games (if they accidentally registered twice)
+        if (!usersMap[key].events.includes(eventName)) {
+            usersMap[key].events.push(eventName);
+        }
+    });
+    
+    // Convert map to array
+    let users = Object.values(usersMap);
+    
+    // Sort events alphabetically within each user
+    users.forEach(u => u.events.sort((a, b) => a.localeCompare(b)));
+    
+    // Sort users alphabetically by name
+    users.sort((a, b) => a.name.localeCompare(b.name));
+    
+    allGroupedUsers = users;
+    return users;
+}
+
+async function renderUserRegistrationsTab() {
+    const tbody = document.getElementById('userRegistrationsTableBody');
+    const searchVal = (document.getElementById('userRegSearchInput').value || '').toLowerCase().trim();
+    
+    if (allGroupedUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading user data...</td></tr>';
+        await fetchGroupedUserRegistrations();
+    }
+    
+    if (allGroupedUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding: 2rem;">No users found.</td></tr>';
+        return;
+    }
+    
+    let filteredUsers = allGroupedUsers;
+    if (searchVal) {
+        filteredUsers = allGroupedUsers.filter(u => 
+            u.name.toLowerCase().includes(searchVal) || 
+            u.email.toLowerCase().includes(searchVal) ||
+            u.mobile.toLowerCase().includes(searchVal)
+        );
+    }
+    
+    if (filteredUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding: 2rem;">No matching users found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filteredUsers.map(u => {
+        const eventsHtml = u.events.map(e => `<span style="display:inline-block; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:0.2rem 0.5rem; border-radius:4px; margin:2px; font-size:0.8rem;">${e}</span>`).join('');
+        return `
+            <tr>
+                <td style="font-weight:600; color:var(--accent);">${u.name}</td>
+                <td>
+                    <div><i class="fas fa-envelope" style="color:var(--muted); font-size:0.8rem; width:16px;"></i> ${u.email || 'N/A'}</div>
+                    <div><i class="fas fa-phone" style="color:var(--muted); font-size:0.8rem; width:16px;"></i> ${u.mobile || 'N/A'}</div>
+                </td>
+                <td>${u.college}</td>
+                <td>${u.enrollment}</td>
+                <td>${eventsHtml}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function exportGroupedUsersCsv() {
+    if (allGroupedUsers.length === 0) {
+        showToast('No user data to export', 'error');
+        return;
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Name,Email,Mobile,College,Enrollment,Events Registered\n";
+    
+    allGroupedUsers.forEach(u => {
+        const name = `"${u.name.replace(/"/g, '""')}"`;
+        const email = `"${u.email.replace(/"/g, '""')}"`;
+        const mobile = `"${u.mobile.replace(/"/g, '""')}"`;
+        const college = `"${u.college.replace(/"/g, '""')}"`;
+        const enroll = `"${u.enrollment.replace(/"/g, '""')}"`;
+        const events = `"${u.events.join(", ").replace(/"/g, '""')}"`;
+        
+        csvContent += [name, email, mobile, college, enroll, events].join(",") + "\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "User_Registrations_Details.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportGroupedUsersPdf() {
+    if (allGroupedUsers.length === 0) {
+        showToast('No user data to export', 'error');
+        return;
+    }
+    
+    // jsPDF is loaded via CDN in admin.html
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('landscape');
+    
+    doc.text("Trividhya'26 - User Registration Details", 14, 15);
+    
+    const tableColumn = ["Name", "Contact (Email/Mobile)", "College", "Enrollment", "Events Registered"];
+    const tableRows = [];
+    
+    allGroupedUsers.forEach(u => {
+        const contact = `${u.email}\n${u.mobile}`;
+        const events = u.events.join("\n");
+        tableRows.push([u.name, contact, u.college, u.enrollment, events]);
+    });
+    
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { fontSize: 8 },
+        columnStyles: {
+            4: { cellWidth: 100 } // Give events column more space
+        }
+    });
+    
+    doc.save("User_Registrations_Details.pdf");
+}
