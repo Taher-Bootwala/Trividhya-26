@@ -323,27 +323,154 @@ async function loadCombos() {
     renderCombosSection();
 }
 
+let heroCycleTimer = null;
+let currentHeroStep = 0; // 0 = Left Text Container, 1 = Combo Image 1, 2 = Combo Image 2, etc.
+let totalHeroSteps = 1;
+
+function setupHeroCycle(comboImages) {
+    if (heroCycleTimer) clearInterval(heroCycleTimer);
+
+    const textContainer = document.getElementById('heroTextContainer');
+    const combosContainer = document.getElementById('heroCombosContainer');
+    const comboSlider = document.getElementById('comboSlider');
+    const dotsContainer = document.getElementById('heroSlideDots');
+
+    if (!comboImages || comboImages.length === 0) {
+        // No combo images -> Only show left text container
+        if (textContainer) {
+            textContainer.style.display = 'flex';
+            textContainer.style.opacity = '1';
+        }
+        if (combosContainer) combosContainer.style.display = 'none';
+        if (dotsContainer) dotsContainer.style.display = 'none';
+        return;
+    }
+
+    // Total steps: 1 (Text Container) + Combo Images
+    totalHeroSteps = 1 + comboImages.length;
+    currentHeroStep = 0;
+
+    // Render combo slides
+    if (comboSlider) {
+        comboSlider.innerHTML = comboImages.map((combo, idx) => `
+            <div class="combo-slide ${idx === 0 ? 'active' : ''}" 
+                 style="background-image: url('${combo.image_url}');" 
+                 onclick="window.location.href='#combosSection'"
+                 title="Click to explore ${combo.name}">
+            </div>
+        `).join('');
+    }
+
+    // Render indicator dots
+    if (dotsContainer) {
+        dotsContainer.style.display = 'flex';
+        dotsContainer.innerHTML = Array.from({ length: totalHeroSteps }).map((_, idx) => `
+            <button class="dot ${idx === 0 ? 'active' : ''}" onclick="goToHeroStep(${idx})" aria-label="Slide ${idx + 1}">
+                <span class="dot-fill"></span>
+            </button>
+        `).join('');
+    }
+
+    // Show initial state: Left text container first!
+    showHeroStep(0);
+
+    // Start 5-second rotation
+    startHeroCycleTimer();
+}
+
+function showHeroStep(stepIndex) {
+    const textContainer = document.getElementById('heroTextContainer');
+    const combosContainer = document.getElementById('heroCombosContainer');
+    const comboSlides = document.querySelectorAll('#comboSlider .combo-slide');
+    const dots = document.querySelectorAll('#heroSlideDots .dot');
+
+    currentHeroStep = stepIndex;
+
+    // Reset animation classes
+    if (textContainer) textContainer.classList.remove('hero-popup-anim');
+    if (combosContainer) combosContainer.classList.remove('hero-popup-anim');
+    comboSlides.forEach(s => s.classList.remove('hero-popup-anim'));
+
+    if (stepIndex === 0) {
+        // STEP 0: Show Left Text Container with Popup Animation, Hide Combos Container
+        if (textContainer) {
+            textContainer.style.display = 'flex';
+            textContainer.style.opacity = '1';
+            void textContainer.offsetWidth; // Force reflow
+            textContainer.classList.add('hero-popup-anim');
+        }
+        if (combosContainer) {
+            combosContainer.style.display = 'none';
+        }
+    } else {
+        // STEP 1+: Hide Left Text Container, Show Combos Container with Popup Animation
+        if (textContainer) {
+            textContainer.style.display = 'none';
+        }
+        if (combosContainer) {
+            combosContainer.style.display = 'flex';
+            combosContainer.style.opacity = '1';
+            void combosContainer.offsetWidth; // Force reflow
+            combosContainer.classList.add('hero-popup-anim');
+        }
+
+        const comboIdx = stepIndex - 1;
+        comboSlides.forEach((slide, idx) => {
+            const isActive = (idx === comboIdx);
+            slide.classList.toggle('active', isActive);
+            if (isActive) {
+                void slide.offsetWidth; // Force reflow
+                slide.classList.add('hero-popup-anim');
+            }
+        });
+    }
+
+    // Update dots with 5-second progress animation
+    dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentHeroStep);
+        const fill = dot.querySelector('.dot-fill');
+        if (fill) {
+            fill.style.animation = 'none';
+            void fill.offsetWidth;
+            if (idx === currentHeroStep) {
+                fill.style.animation = 'dotProgress 5s linear forwards';
+            }
+        }
+    });
+}
+
+function nextHeroStep() {
+    let next = (currentHeroStep + 1) % totalHeroSteps;
+    showHeroStep(next);
+}
+
+function goToHeroStep(stepIndex) {
+    showHeroStep(stepIndex);
+    startHeroCycleTimer();
+}
+
+function startHeroCycleTimer() {
+    if (heroCycleTimer) clearInterval(heroCycleTimer);
+    if (totalHeroSteps > 1) {
+        heroCycleTimer = setInterval(() => {
+            nextHeroStep();
+        }, 5000); // Change to next slide after 5 seconds
+    }
+}
+
 function renderCombosSection() {
     const section = document.getElementById('combosSection');
     const grid = document.getElementById('combosGrid');
     
     const heroExploreCombosBtn = document.getElementById('heroExploreCombosBtn');
     const navCombosLink = document.getElementById('navCombosLink');
-    const heroInner = document.getElementById('heroInner');
-    const heroCombosContainer = document.getElementById('heroCombosContainer');
-    const comboSlider = document.getElementById('comboSlider');
     
-    // 1. Manage existing Combos section visibility
+    // 1. Manage Combos Section visibility
     if (ALL_COMBOS.length === 0) {
         section.style.display = 'none';
         if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'none';
         if (navCombosLink) navCombosLink.style.display = 'none';
-        
-        // Hide slider and reset hero inner
-        if (heroInner && heroCombosContainer) {
-            heroCombosContainer.style.display = 'none';
-            heroInner.classList.remove('has-slider');
-        }
+        setupHeroCycle([]);
         return;
     }
     
@@ -351,62 +478,46 @@ function renderCombosSection() {
     if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'inline-flex';
     if (navCombosLink) navCombosLink.style.display = 'block';
 
-    // 2. Manage Hero Slider
+    // 2. Setup Single Container 5-Second Hero Cycle (Left container first, then combos every 5s)
     const combosWithImages = ALL_COMBOS.filter(c => c.image_url);
-    if (combosWithImages.length > 0 && heroInner && heroCombosContainer && comboSlider) {
-        // Show slider container and add layout class
-        heroCombosContainer.style.display = 'flex';
-        heroInner.classList.add('has-slider');
-        
-        // Build slides
-        comboSlider.innerHTML = combosWithImages.map(combo => `
-            <div class="combo-slide" style="background-image: url('${combo.image_url}');" onclick="window.location.href='#combosSection'"></div>
-        `).join('');
-        
-        // Auto-slider logic
-        if (!window.comboSliderInterval && combosWithImages.length > 1) {
-            let currentSlide = 0;
-            window.comboSliderInterval = setInterval(() => {
-                currentSlide = (currentSlide + 1) % combosWithImages.length;
-                const slideWidth = comboSlider.clientWidth;
-                comboSlider.scrollTo({
-                    left: currentSlide * slideWidth,
-                    behavior: 'smooth'
-                });
-            }, 4000);
-        }
-    } else if (heroInner && heroCombosContainer) {
-        // Hide slider if no images
-        heroCombosContainer.style.display = 'none';
-        heroInner.classList.remove('has-slider');
-    }
+    setupHeroCycle(combosWithImages);
     
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
     
-    grid.innerHTML = ALL_COMBOS.map((combo, i) => `
-        <div class="event-card" style="border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.05);" ${isMobile ? '' : `data-aos="zoom-in" data-aos-delay="${Math.min(i*50, 400)}"`} onclick="window.location.href='register.html?combo_id=${combo.id}'">
-            <div class="card-img" style="height: 120px; display:flex; justify-content:center; align-items:center; background: ${combo.image_url ? 'url(' + combo.image_url + ') center/cover' : 'rgba(0,0,0,0.5)'};">
-                ${!combo.image_url ? '<i class="fas fa-layer-group" style="font-size: 3rem; color: var(--gold);"></i>' : ''}
-                <span class="card-badge" style="color:#fff; background: var(--gold); border:none; font-weight:bold;">COMBO DEAL</span>
-            </div>
-            <div class="card-body">
-                <div class="card-title" style="color: var(--gold);">${combo.name}</div>
-                <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.8rem; line-height: 1.4;">${combo.description || 'Special multi-event package'}</div>
-                <div class="card-meta">
-                    <span><i class="fas fa-users"></i>${combo.min_members === combo.max_members ? combo.max_members : combo.min_members + '-' + combo.max_members} Members</span>
-                    <span style="color: #2ed573; font-weight: bold;"><i class="fas fa-ticket-alt"></i>₹${combo.total_fee}</span>
+    grid.innerHTML = ALL_COMBOS.map((combo, i) => {
+        if (combo.image_url) {
+            return `
+                <div class="combo-full-banner-card" ${isMobile ? '' : `data-aos="fade-up" data-aos-delay="${Math.min(i*100, 300)}"`} onclick="window.location.href='register.html?combo_id=${combo.id}'" role="button" tabindex="0" title="Click to Register for ${combo.name}">
+                    <img src="${combo.image_url}" alt="${combo.name}" class="combo-banner-full-img" />
+                    <div class="combo-banner-action-overlay">
+                        <a href="register.html?combo_id=${combo.id}" class="combo-banner-register-btn" onclick="event.stopPropagation();">
+                            <i class="fas fa-bolt"></i> Register Now <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="card-btn" style="background: var(--gold); color: #000; border-radius: 8px; border:none; font-weight:bold;">
-                    <i class="fas fa-bolt"></i> Register Combo
+            `;
+        } else {
+            return `
+                <div class="combo-full-banner-card combo-text-card" ${isMobile ? '' : `data-aos="fade-up" data-aos-delay="${Math.min(i*100, 300)}"`} onclick="window.location.href='register.html?combo_id=${combo.id}'" role="button" tabindex="0">
+                    <div class="combo-banner-content">
+                        <div class="combo-banner-badge"><i class="fas fa-layer-group"></i> MEGA COMBO</div>
+                        <h3 class="combo-banner-title">${combo.name}</h3>
+                        <p class="combo-banner-desc">${combo.description || 'Special multi-event package with discounted entry fee. Register and compete for the ultimate championship!'}</p>
+                        
+                        <div class="combo-banner-meta">
+                            <span class="meta-pill"><i class="fas fa-users"></i> ${combo.min_members === combo.max_members ? combo.max_members : combo.min_members + '-' + combo.max_members} Members</span>
+                            <span class="meta-pill price-pill"><i class="fas fa-ticket-alt"></i> ₹${combo.total_fee}</span>
+                        </div>
+                    </div>
+                    <div class="combo-banner-action-overlay">
+                        <a href="register.html?combo_id=${combo.id}" class="combo-banner-register-btn" onclick="event.stopPropagation();">
+                            <i class="fas fa-bolt"></i> Register Now <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </div>`).join('');
-        
-    if (typeof VanillaTilt !== 'undefined' && !isMobile) {
-        VanillaTilt.init(grid.querySelectorAll(".event-card"), {
-            max: 15, speed: 400, glare: true, "max-glare": 0.2,
-        });
-    }
+            `;
+        }
+    }).join('');
 }
 
 /* ── Filter ── */

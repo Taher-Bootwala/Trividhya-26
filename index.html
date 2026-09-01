@@ -12,7 +12,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=11">
 </head>
 
 <body>
@@ -145,6 +145,9 @@
                     <!-- Slides injected via JS -->
                 </div>
             </div>
+
+            <!-- 5-Second Slide Indicator Dots -->
+            <div class="hero-slide-dots" id="heroSlideDots" style="display:none;"></div>
         </div>
     </section>
 
@@ -152,11 +155,15 @@
 
     <!-- ═══════════ COMBOS ═══════════ -->
     <section id="combosSection" style="display: none;">
-        <div class="sec-header" data-aos="fade-up" style="margin-bottom: 2rem;">
-            <h2 class="sec-title">Event <span>Combos</span></h2>
-        </div>
-        <div class="cards-grid" id="combosGrid" data-aos="fade-up" data-aos-delay="100">
-            <!-- Combos injected via JS -->
+        <div class="combos-inner-container">
+            <div class="sec-header" data-aos="fade-up" style="margin-bottom: 2.5rem;">
+                <div class="sec-tag">Mega Value Packages</div>
+                <h2 class="sec-title">Event <span>Combos</span></h2>
+                <p class="sec-desc">Register for exclusive multi-event packages and unlock massive savings across all competitions.</p>
+            </div>
+            <div class="combos-banners-wrapper" id="combosGrid" data-aos="fade-up" data-aos-delay="100">
+                <!-- Combos full-size banners injected via JS -->
+            </div>
         </div>
     </section>
 
@@ -400,7 +407,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="supabase-config.js"></script>
-    <script src="script.js?v=2"></script>
+    <script src="script.js?v=11"></script>
 </body>
 
 </html>

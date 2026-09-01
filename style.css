@@ -314,91 +314,172 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             100% { transform: translateY(-150px) rotate(720deg); opacity: 0; }
         }
 
-        .hero-content { position: relative; z-index: 2; width: 100%; }
-
         .hero-inner {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
-            max-width: 1000px;
+            justify-content: center;
+            width: 95%;
+            max-width: 1080px;
             margin: 0 auto;
             z-index: 2;
             position: relative;
+            min-height: 490px;
             transition: all 0.3s ease;
         }
 
+        /* Never show 2 containers side-by-side */
         .hero-inner.has-slider {
-            flex-direction: row;
-            max-width: 95%;
-            width: 100%;
-            gap: 2rem;
-            align-items: stretch;
+            flex-direction: column;
+            max-width: 1080px;
+            width: 95%;
+            gap: 0;
+            align-items: center;
         }
 
-        @media (max-width: 992px) {
-            .hero-inner.has-slider {
-                flex-direction: column;
-                max-width: 1000px;
-                gap: 1.5rem;
+        @media (max-width: 1120px) {
+            .hero-inner, .hero-inner.has-slider {
+                max-width: 96%;
+                width: 96%;
             }
         }
 
-        /* Glassmorphism Text Container */
+        /* Glassmorphism Text Container (Slide 0) */
         .hero-text-container {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 30px;
-            padding: 2rem;
+            padding: 3rem 2.5rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.3);
             width: 100%;
             text-align: center;
-            flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            min-width: 0;
+            align-items: center;
+            min-height: 490px;
+            box-sizing: border-box;
+            transition: opacity 0.4s ease;
         }
 
+        /* Glassmorphism Combos Poster Container (Slide 1+) */
         .hero-combos-container {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.3);
             width: 100%;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
             position: relative;
-            min-height: 250px;
-            min-width: 0;
+            min-height: 490px;
+            height: 490px;
+            box-sizing: border-box;
+            display: none;
+            transition: opacity 0.4s ease;
         }
 
         .combo-slider {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            flex: 1;
+            width: 100%;
             height: 100%;
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-        .combo-slider::-webkit-scrollbar {
-            display: none;
+            position: relative;
+            overflow: hidden;
         }
 
         .combo-slide {
             flex: 0 0 100%;
-            scroll-snap-align: start;
+            width: 100%;
+            height: 100%;
             cursor: pointer;
-            background-size: 100% 100%;
+            background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+            background-color: #060913;
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            border-radius: 30px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            filter: contrast(1.05) brightness(1.02) saturate(1.06);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .combo-slide.active {
+            opacity: 1;
             position: relative;
+        }
+
+        /* Popup Animation when New Banner Arrives */
+        @keyframes heroPopupBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.88) translateY(20px);
+                filter: blur(6px);
+            }
+            60% {
+                opacity: 1;
+                transform: scale(1.02) translateY(-3px);
+                filter: blur(0px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0px);
+            }
+        }
+
+        .hero-popup-anim {
+            animation: heroPopupBounce 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+        }
+
+        /* 5-Second Slide Indicator Dots */
+        .hero-slide-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-top: 1.5rem;
+            z-index: 5;
+        }
+
+        .hero-slide-dots .dot {
+            width: 28px;
+            height: 5px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .hero-slide-dots .dot.active {
+            width: 48px;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .hero-slide-dots .dot .dot-fill {
+            position: absolute;
+            top: 0; left: 0; bottom: 0; width: 0;
+            background: var(--gold);
+            border-radius: 50px;
+        }
+
+        .hero-slide-dots .dot.active .dot-fill {
+            animation: dotProgress 5s linear forwards;
+        }
+
+        @keyframes dotProgress {
+            from { width: 0%; }
+            to { width: 100%; }
         }
 
         .hero-badge {
@@ -607,10 +688,12 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
         #combosSection {
             position: relative;
             background-color: #000000;
+            width: 100%;
+            padding: 4.5rem 0;
         }
         #combosSection::before {
             content: ''; position: absolute; top: -150px; left: 0; right: 0; bottom: 0;
-            z-index: -1;
+            z-index: 0;
             background: linear-gradient(rgba(10, 10, 26, 0.75), rgba(10, 10, 26, 0.75)), url('combosbg.png') center/cover no-repeat;
             background-attachment: fixed;
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
@@ -628,6 +711,208 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             background-attachment: fixed;
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 150px, black calc(100% - 150px), transparent 100%);
+        }
+
+        .combos-inner-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            box-sizing: border-box;
+        }
+
+        /* ───── FULL SIZE COMBOS BANNER DISPLAY ───── */
+        .combos-banners-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .combo-full-banner-card {
+            position: relative;
+            width: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 215, 0, 0.45);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 35px rgba(245, 158, 11, 0.2);
+            background: #0a0c1a;
+            box-sizing: border-box;
+            transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+        }
+
+        .combo-full-banner-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            border-color: rgba(255, 215, 0, 0.85);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 45px rgba(245, 158, 11, 0.35);
+        }
+
+        /* The full uploaded image - enhanced high clarity */
+        .combo-banner-full-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            border-radius: 26px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            filter: contrast(1.05) brightness(1.02) saturate(1.06);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        /* Fallback for combo text cards (when no image uploaded) */
+        .combo-text-card {
+            padding: 3.5rem 3rem;
+            min-height: 420px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: linear-gradient(135deg, #0e1224 0%, #060913 100%);
+        }
+
+        .combo-banner-content {
+            position: relative;
+            z-index: 2;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.85rem;
+        }
+
+        .combo-banner-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 1.1rem;
+            background: var(--gold);
+            color: #000000;
+            font-size: 0.82rem;
+            font-weight: 800;
+            border-radius: 50px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+            font-family: var(--font-body);
+        }
+
+        .combo-banner-title {
+            font-size: clamp(2rem, 4.5vw, 3rem);
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.15;
+            font-family: var(--font-heading);
+            text-transform: uppercase;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.85);
+        }
+
+        .combo-banner-desc {
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            max-width: 580px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+            font-family: var(--font-body);
+        }
+
+        .combo-banner-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.85rem;
+            margin-top: 0.4rem;
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.5rem 1.2rem;
+            background: rgba(12, 16, 34, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #ffffff;
+            font-family: var(--font-body);
+        }
+
+        .price-pill {
+            background: rgba(46, 213, 115, 0.25);
+            border-color: rgba(46, 213, 115, 0.6);
+            color: #2ed573;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        /* Bottom Right Register Overlay & Button */
+        .combo-banner-action-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            background: linear-gradient(0deg, rgba(6, 9, 19, 0.8) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        .combo-banner-register-btn {
+            pointer-events: auto;
+            position: relative;
+            z-index: 30;
+            padding: 1rem 2.4rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+            color: #000000 !important;
+            border-radius: 50px !important;
+            font-size: 1.08rem;
+            font-weight: 800;
+            font-family: var(--font-body) !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75), 0 0 25px rgba(245, 158, 11, 0.6);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+            cursor: pointer;
+        }
+
+        .combo-banner-register-btn:hover {
+            transform: translateY(-3px) scale(1.06);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 35px rgba(245, 158, 11, 0.9);
+            filter: brightness(1.15);
+        }
+
+        .combo-banner-register-btn i.fa-arrow-right {
+            transition: transform 0.25s ease;
+        }
+
+        .combo-banner-register-btn:hover i.fa-arrow-right {
+            transform: translateX(4px);
+        }
+
+        @media (max-width: 768px) {
+            .combo-banner-action-overlay {
+                position: relative;
+                background: #0a0c1a;
+                padding: 1rem 1.2rem;
+                justify-content: center;
+            }
+            .combo-banner-register-btn {
+                width: 100%;
+                justify-content: center;
+                font-size: 1rem;
+                padding: 0.85rem 1.8rem;
+            }
         }
 
         #events .sec-title,
