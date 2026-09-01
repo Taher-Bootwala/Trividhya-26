@@ -281,7 +281,7 @@ function renderTable() {
             : '<span class="badge pending">Pending</span>';
 
         let modeBadge = r.payment_mode === 'online' 
-            ? '<span class="badge online">Online</span>' 
+            ? `<span class="badge online">Online</span>${r.transaction_id ? `<div style="font-size:0.75rem; color:#555; margin-top:4px;"><b>Txn:</b> ${r.transaction_id}</div>` : ''}` 
             : '<span class="badge cash">Cash</span>';
             
         let comboNameText = r.combos && r.combos.name ? `Combo Deal: ${r.combos.name}` : 'Combo Deal';
@@ -302,9 +302,9 @@ function renderTable() {
         let actionHtml = '';
 
         if (currentTab === 'active') {
-            // Approve cash payment
-            if (r.payment_status === 'pending' && r.payment_mode === 'cash') {
-                actionHtml += `<button class="action-btn approve" onclick="approveCash('${r.id}')" title="Approve Cash Payment"><i class="fas fa-check-circle" style="font-size:1rem;"></i></button>`;
+            // Approve payment
+            if (!r.is_approved) {
+                actionHtml += `<button class="action-btn approve" onclick="approveCash('${r.id}')" title="Approve Registration"><i class="fas fa-check-circle" style="font-size:1rem;"></i></button>`;
             }
             // Cancel registration
             actionHtml += `<button class="action-btn reject" onclick="cancelReg('${r.id}')" title="Cancel Registration"><i class="fas fa-ban" style="font-size:0.9rem;"></i></button>`;

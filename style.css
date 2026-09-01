@@ -417,26 +417,26 @@ p, span, button, input, select, textarea, label, td, th, a, .btn, .btn-primary, 
             font-size: clamp(2.8rem, 9vw, 6.5rem);
             font-weight: 900; line-height: 1.05;
             margin-bottom: 1rem;
-            color: #000000 !important;
+            color: #ffffff !important;
             animation: fadeUp 0.8s ease 0.2s both;
         }
 
         .hero h1 span {
-            color: #000000;
+            color: #ffffff;
             background: none;
-            -webkit-text-fill-color: #000000;
+            -webkit-text-fill-color: #ffffff;
         }
 
         .hero-sub {
             font-size: clamp(1rem, 2.5vw, 1.25rem);
             font-family: var(--font-body);
-            color: #555555; max-width: 580px;
+            color: #eeeeee; max-width: 580px;
             margin: 0 auto 1.5rem; line-height: 1.7;
             animation: fadeUp 0.8s ease 0.35s both;
         }
 
         .hero-date {
-            color: #000000; font-size: 0.95rem;
+            color: #ffffff; font-size: 0.95rem;
             margin-bottom: 1.5rem;
             animation: fadeUp 0.8s ease 0.45s both;
             font-family: var(--font-body);

@@ -792,7 +792,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
 
             const priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${event.fee}`;
 
-            const approveBtnHtml = r.payment_status !== 'paid' ?
+            const approveBtnHtml = !r.is_approved ?
                 `<button class="action-btn success" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="approveRegPrompt('${r.id}')"><i class="fas fa-check"></i> Approve</button>` : '';
             const deleteBtnHtml = `<button class="action-btn danger" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="deleteRegPrompt('${r.id}')"><i class="fas fa-trash"></i> Delete</button>`;
 
@@ -807,6 +807,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                         <div style="display:flex; align-items:center; gap:0.8rem;">
                             <span style="color:var(--gold); font-weight:800; font-size:0.9rem;">${priceText}</span>
                             ${statusBadge}
+                            ${r.transaction_id ? `<span style="color:var(--muted); font-size:0.75rem; border-left:1px solid rgba(255,255,255,0.1); padding-left:0.8rem;"><b>Txn:</b> ${r.transaction_id}</span>` : ''}
                         </div>
                     </div>
                     <div style="padding-left:0.5rem;">
