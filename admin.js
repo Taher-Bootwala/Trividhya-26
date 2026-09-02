@@ -8,23 +8,49 @@ let allCombos = [];
 let allArchivedCombos = [];
 let allPaymentQrs = [];
 
+function getSvgIcon(type) {
+    const svgs = {
+        check: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+        warning: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        danger: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+        trash: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+        refresh: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>`,
+        ban: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+        mail: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`
+    };
+    if (typeof type === 'string' && svgs[type]) return svgs[type];
+    if (type === '✅') return svgs.check;
+    if (type === '🗑️') return svgs.trash;
+    if (type === '🚫') return svgs.ban;
+    if (type === '🔄') return svgs.refresh;
+    if (type === '⚠️') return svgs.warning;
+    return svgs.warning;
+}
+
 /* ── Toast & Confirm (standalone for admin pages) ── */
 function showToast(message, type = 'info', duration = 3500) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
-    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    const svgIcons = {
+        success: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+        error: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+        warning: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        info: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+    };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+    const cleanMsg = message.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
+    toast.innerHTML = `${svgIcons[type] || svgIcons.info}<span>${cleanMsg}</span>`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.add('out'); setTimeout(() => toast.remove(), 300); }, duration);
 }
 
 let confirmResolver = null;
-function showConfirmDialog({ title = 'Are you sure?', desc = '', icon = '⚠️', okText = 'Confirm', danger = false }) {
+function showConfirmDialog({ title = 'Are you sure?', desc = '', icon = 'warning', okText = 'Confirm', danger = false }) {
     return new Promise((resolve) => {
         confirmResolver = resolve;
-        document.getElementById('confirmIcon').textContent = icon;
+        const iconEl = document.getElementById('confirmIcon');
+        if (iconEl) iconEl.innerHTML = getSvgIcon(icon);
         document.getElementById('confirmTitle').textContent = title;
         document.getElementById('confirmDesc').textContent = desc;
         document.getElementById('confirmOk').textContent = okText;
@@ -794,6 +820,8 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
 
             const approveBtnHtml = !r.is_approved ?
                 `<button class="action-btn success" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="approveRegPrompt('${r.id}')"><i class="fas fa-check"></i> Approve</button>` : '';
+            const cancelBtnHtml = r.is_approved ?
+                `<button class="action-btn warning" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px;" onclick="cancelRegSuperAdminPrompt('${r.id}')"><i class="fas fa-ban"></i> Cancel</button>` : '';
             const deleteBtnHtml = `<button class="action-btn danger" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="deleteRegPrompt('${r.id}')"><i class="fas fa-trash"></i> Delete</button>`;
 
             return `
@@ -825,6 +853,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                             </div>
                             <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
                                 ${approveBtnHtml}
+                                ${cancelBtnHtml}
                                 ${deleteBtnHtml}
                             </div>
                         </div>
@@ -865,14 +894,18 @@ async function renderEventDetailsTab() {
 async function approveRegPrompt(id) {
     const confirm = await showConfirmDialog({
         title: 'Approve Registration?',
-        desc: 'Mark this registration as PAID? This will approve their participation.',
+        desc: 'Mark this registration as PAID? This will approve their participation and send a confirmation email.',
+        icon: 'check',
         okText: 'Approve'
     });
     if (confirm) {
         const res = await approveRegistration(id);
         if (res.success) {
-            showToast('Registration approved successfully', 'success');
-            // Re-render tabs to reflect changes
+            if (res.emailError) {
+                showToast(`Approved! Email notice: ${res.emailError}`, 'warning', 6000);
+            } else {
+                showToast('Registration approved & confirmation email sent!', 'success');
+            }
             renderGameDetailsTab();
             renderEventDetailsTab();
             updateGlobalStats();
@@ -885,20 +918,65 @@ async function approveRegPrompt(id) {
 async function deleteRegPrompt(id) {
     const confirm = await showConfirmDialog({
         title: 'Delete Registration?',
-        desc: 'Are you sure you want to permanently delete this registration?',
+        desc: 'Are you sure you want to permanently delete this registration? A cancellation/rejection notification email will be sent.',
+        icon: 'trash',
         danger: true,
         okText: 'Delete'
     });
     if (confirm) {
+        const reg = await getRegistrationById(id);
         const res = await deleteRegistration(id);
         if (res.success) {
-            showToast('Registration deleted', 'success');
+            if (reg && reg.leader_email) {
+                const emailRes = await sendStatusNotificationEmail(reg, 'rejected');
+                if (emailRes && emailRes.error) {
+                    showToast(`Deleted! Email notice: ${emailRes.error}`, 'warning', 6000);
+                } else {
+                    showToast(`Registration deleted & rejection email sent to ${reg.leader_email}!`, 'success');
+                }
+            } else {
+                showToast('Registration deleted', 'success');
+            }
             renderGameDetailsTab();
             renderEventDetailsTab();
             updateGlobalStats();
         } else {
             showToast('Failed to delete registration', 'error');
         }
+    }
+}
+
+async function cancelRegSuperAdminPrompt(id) {
+    const confirm = await showConfirmDialog({
+        title: 'Cancel Registration?',
+        desc: 'Mark this registration as CANCELLED? A cancellation notification email will be sent to the participant.',
+        icon: 'ban',
+        danger: true,
+        okText: 'Cancel Registration'
+    });
+    if (confirm) {
+        const reg = await getRegistrationById(id);
+        const { data, error } = await updateRegistration(id, {
+            payment_status: 'cancelled',
+            is_approved: false
+        });
+        if (error) {
+            showToast('Failed to cancel registration: ' + error.message, 'error');
+            return;
+        }
+        if (reg && reg.leader_email) {
+            const emailRes = await sendStatusNotificationEmail(reg, 'rejected');
+            if (emailRes && emailRes.error) {
+                showToast(`Cancelled! Email notice: ${emailRes.error}`, 'warning', 6000);
+            } else {
+                showToast(`Registration cancelled & cancellation email sent to ${reg.leader_email}!`, 'info');
+            }
+        } else {
+            showToast('Registration cancelled successfully', 'info');
+        }
+        renderGameDetailsTab();
+        renderEventDetailsTab();
+        updateGlobalStats();
     }
 }
 
@@ -1876,7 +1954,7 @@ async function toggleComboRegs(comboId) {
                     </div>
 
                     <div class="reg-actions" style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        ${!isApproved ? `<button class="btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="approveComboRegistration('${reg.id}', '${comboId}')"><i class="fas fa-check"></i> Approve</button>` : ''}
+                        ${!isApproved ? `<button class="btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="approveComboRegistration('${reg.id}', '${comboId}')"><i class="fas fa-check"></i> Approve</button>` : `<button class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.85rem; color:#ef4444; border-color:rgba(239,68,68,0.4);" onclick="cancelComboRegistration('${reg.id}', '${comboId}')"><i class="fas fa-ban"></i> Cancel</button>`}
                         <button class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="document.getElementById('team-info-${reg.id}').style.display = document.getElementById('team-info-${reg.id}').style.display === 'none' ? 'block' : 'none'"><i class="fas fa-info-circle"></i> Team Info</button>
                         <button class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="deleteComboRegistration('${reg.id}', '${comboId}')"><i class="fas fa-trash"></i> Delete</button>
                     </div>
@@ -1893,12 +1971,21 @@ async function toggleComboRegs(comboId) {
 }
 
 async function approveComboRegistration(regId, comboId) {
-    const c = confirm('Mark this combo registration as Paid/Approved?');
+    const c = await showConfirmDialog({
+        title: 'Approve Combo Registration?',
+        desc: 'Mark this combo registration as PAID and APPROVED? A confirmation email will be sent.',
+        icon: 'check',
+        okText: 'Approve'
+    });
     if (!c) return;
 
     const res = await approveRegistration(regId);
     if (res.success) {
-        showToast('Combo registration approved', 'success');
+        if (res.emailError) {
+            showToast(`Approved! Email notice: ${res.emailError}`, 'warning', 6000);
+        } else {
+            showToast('Combo registration approved & confirmation email sent!', 'success');
+        }
         // Refresh the specific combo div
         const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
         detailsDiv.style.display = 'none';
@@ -1908,13 +1995,63 @@ async function approveComboRegistration(regId, comboId) {
     }
 }
 
-async function deleteComboRegistration(regId, comboId) {
-    const c = confirm('Are you sure you want to delete this combo registration? This cannot be undone.');
+async function cancelComboRegistration(regId, comboId) {
+    const c = await showConfirmDialog({
+        title: 'Cancel Combo Registration?',
+        desc: 'Mark this combo registration as CANCELLED? A cancellation notification email will be sent.',
+        icon: 'ban',
+        danger: true,
+        okText: 'Cancel Registration'
+    });
     if (!c) return;
 
+    const reg = await getRegistrationById(regId);
+    const { data, error } = await updateRegistration(regId, {
+        payment_status: 'cancelled',
+        is_approved: false
+    });
+    if (error) {
+        showToast('Error cancelling registration: ' + error.message, 'error');
+        return;
+    }
+    if (reg && reg.leader_email) {
+        const emailRes = await sendStatusNotificationEmail(reg, 'rejected');
+        if (emailRes && emailRes.error) {
+            showToast(`Cancelled! Email notice: ${emailRes.error}`, 'warning', 6000);
+        } else {
+            showToast(`Combo registration cancelled & email sent to ${reg.leader_email}!`, 'info');
+        }
+    } else {
+        showToast('Combo registration cancelled', 'info');
+    }
+    const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
+    detailsDiv.style.display = 'none';
+    toggleComboRegs(comboId);
+}
+
+async function deleteComboRegistration(regId, comboId) {
+    const c = await showConfirmDialog({
+        title: 'Delete Combo Registration?',
+        desc: 'Are you sure you want to permanently delete this combo registration? A cancellation notification email will be sent.',
+        icon: 'trash',
+        danger: true,
+        okText: 'Delete'
+    });
+    if (!c) return;
+
+    const reg = await getRegistrationById(regId);
     const res = await deleteRegistration(regId);
     if (res.success) {
-        showToast('Combo registration deleted', 'success');
+        if (reg && reg.leader_email) {
+            const emailRes = await sendStatusNotificationEmail(reg, 'rejected');
+            if (emailRes && emailRes.error) {
+                showToast(`Deleted! Email notice: ${emailRes.error}`, 'warning', 6000);
+            } else {
+                showToast(`Combo registration deleted & rejection email sent to ${reg.leader_email}!`, 'success');
+            }
+        } else {
+            showToast('Combo registration deleted', 'success');
+        }
         const detailsDiv = document.getElementById(`combo-regs-${comboId}`);
         detailsDiv.style.display = 'none';
         toggleComboRegs(comboId);

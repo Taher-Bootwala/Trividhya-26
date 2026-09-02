@@ -9,23 +9,49 @@ let currentEvent = null;
 let registrations = [];
 let allPaymentQrs = [];
 
+function getSvgIcon(type) {
+    const svgs = {
+        check: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+        warning: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        danger: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+        trash: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+        refresh: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>`,
+        ban: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+        mail: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`
+    };
+    if (typeof type === 'string' && svgs[type]) return svgs[type];
+    if (type === '✅') return svgs.check;
+    if (type === '🗑️') return svgs.trash;
+    if (type === '🚫') return svgs.ban;
+    if (type === '🔄') return svgs.refresh;
+    if (type === '⚠️') return svgs.warning;
+    return svgs.warning;
+}
+
 /* ── Toast & Confirm (standalone) ── */
 function showToast(message, type = 'info', duration = 3500) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
-    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    const svgIcons = {
+        success: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+        error: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+        warning: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        info: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+    };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+    const cleanMsg = message.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
+    toast.innerHTML = `${svgIcons[type] || svgIcons.info}<span>${cleanMsg}</span>`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.add('out'); setTimeout(() => toast.remove(), 300); }, duration);
 }
 
 let confirmResolver = null;
-function showConfirmDialog({ title = 'Are you sure?', desc = '', icon = '⚠️', okText = 'Confirm', danger = false }) {
+function showConfirmDialog({ title = 'Are you sure?', desc = '', icon = 'warning', okText = 'Confirm', danger = false }) {
     return new Promise((resolve) => {
         confirmResolver = resolve;
-        document.getElementById('confirmIcon').textContent = icon;
+        const iconEl = document.getElementById('confirmIcon');
+        if (iconEl) iconEl.innerHTML = getSvgIcon(icon);
         document.getElementById('confirmTitle').textContent = title;
         document.getElementById('confirmDesc').textContent = desc;
         document.getElementById('confirmOk').textContent = okText;
@@ -313,8 +339,10 @@ function renderTable() {
             // Move to deleted
             actionHtml += `<button class="action-btn delete" onclick="moveToDeleted('${r.id}', '${r.group_name.replace(/'/g, "\\'")}')" title="Move to Recently Deleted"><i class="fas fa-trash-alt"></i></button>`;
         } else if (currentTab === 'cancelled') {
+            // Re-Approve directly from Cancelled
+            actionHtml += `<button class="action-btn approve" onclick="approveCash('${r.id}')" title="Re-Approve & Confirm"><i class="fas fa-check-circle" style="font-size:0.85rem;"></i> Approve</button>`;
             // Restore / Retrieve
-            actionHtml += `<button class="action-btn approve" onclick="restoreReg('${r.id}')" title="Retrieve / Restore Registration"><i class="fas fa-undo" style="font-size:0.9rem;"></i> Restore</button>`;
+            actionHtml += `<button class="action-btn edit" onclick="restoreReg('${r.id}')" title="Restore to Active Pending"><i class="fas fa-undo" style="font-size:0.85rem;"></i> Restore</button>`;
             // Move to deleted
             actionHtml += `<button class="action-btn delete" onclick="moveToDeleted('${r.id}', '${r.group_name.replace(/'/g, "\\'")}')" title="Move to Recently Deleted"><i class="fas fa-trash-alt"></i></button>`;
         } else if (currentTab === 'deleted') {
@@ -420,7 +448,7 @@ async function bulkApprove() {
     const confirmed = await showConfirmDialog({
         title: `Approve ${selectedRegIds.size} Registrations?`,
         desc: 'Selected registrations will be marked as PAID and CONFIRMED.',
-        icon: '✅',
+        icon: 'check',
         okText: 'Approve All'
     });
     if (!confirmed) return;
@@ -429,14 +457,18 @@ async function bulkApprove() {
     for (const id of ids) {
         await updateRegistration(id, { payment_status: 'paid', is_approved: true });
         const reg = registrations.find(r => r.id === id);
-        if (reg) { reg.payment_status = 'paid'; reg.is_approved = true; }
+        if (reg) { 
+            reg.payment_status = 'paid'; 
+            reg.is_approved = true; 
+            sendStatusNotificationEmail({ ...reg, events: currentEvent }, 'confirmed').catch(e => console.error(e));
+        }
     }
 
     selectedRegIds.clear();
     updateBulkBar();
     updateStats();
     renderTable();
-    showToast(`Approved ${ids.length} registration(s)! ✅`, 'success');
+    showToast(`Approved ${ids.length} registration(s)!`, 'success');
 }
 
 async function bulkRestore() {
@@ -444,7 +476,7 @@ async function bulkRestore() {
     const confirmed = await showConfirmDialog({
         title: `Restore ${selectedRegIds.size} Registrations?`,
         desc: 'Selected registrations will be retrieved and restored to Active Status.',
-        icon: '🔄',
+        icon: 'refresh',
         okText: 'Restore All'
     });
     if (!confirmed) return;
@@ -460,7 +492,7 @@ async function bulkRestore() {
     updateBulkBar();
     updateStats();
     renderTable();
-    showToast(`Restored ${ids.length} registration(s)! 🔄`, 'success');
+    showToast(`Restored ${ids.length} registration(s)!`, 'success');
 }
 
 async function bulkDelete() {
@@ -472,7 +504,7 @@ async function bulkDelete() {
         const confirmed = await showConfirmDialog({
             title: `Permanently Delete ${ids.length} Registrations?`,
             desc: 'This will remove the data permanently. This action cannot be undone.',
-            icon: '🗑️',
+            icon: 'trash',
             okText: 'Delete Permanently',
             danger: true
         });
@@ -488,7 +520,7 @@ async function bulkDelete() {
         const confirmed = await showConfirmDialog({
             title: `Move ${ids.length} Registrations to Deleted?`,
             desc: 'Items will be moved to Recently Deleted and can be restored anytime.',
-            icon: '🗑️',
+            icon: 'trash',
             okText: 'Move to Deleted',
             danger: true
         });
@@ -520,7 +552,7 @@ async function approveCash(regId) {
     const confirmed = await showConfirmDialog({
         title: 'Approve Cash Payment?',
         desc: 'This will mark this registration as PAID and APPROVED.',
-        icon: '✅',
+        icon: 'check',
         okText: 'Approve',
     });
     if (!confirmed) return;
@@ -536,23 +568,37 @@ async function approveCash(regId) {
     }
     
     const reg = registrations.find(r => r.id === regId);
-    if (reg) { reg.payment_status = 'paid'; reg.is_approved = true; }
-    updateStats();
-    renderTable();
-    showToast('Payment approved successfully! ✅', 'success');
+    if (reg) { 
+        reg.payment_status = 'paid'; 
+        reg.is_approved = true; 
+        updateStats();
+        renderTable();
+        const emailRes = await sendStatusNotificationEmail({ ...reg, events: currentEvent }, 'confirmed');
+        if (emailRes && emailRes.error) {
+            showToast(`Approved! Email notice: ${emailRes.error}`, 'warning', 6000);
+        } else {
+            showToast(`Payment approved & confirmation email sent to ${reg.leader_email}!`, 'success');
+        }
+    } else {
+        updateStats();
+        renderTable();
+        showToast('Payment approved successfully!', 'success');
+    }
 }
 
 /* ── Cancel Registration ── */
 async function cancelReg(regId) {
     const confirmed = await showConfirmDialog({
         title: 'Cancel Registration?',
-        desc: 'This will cancel this registration.',
-        icon: '🚫',
+        desc: 'This will cancel this registration and send a notification email to the participant.',
+        icon: 'ban',
         okText: 'Cancel Registration',
         danger: true,
     });
     if (!confirmed) return;
     
+    const reg = registrations.find(r => r.id === regId);
+
     const { error } = await updateRegistration(regId, {
         payment_status: 'cancelled',
         is_approved: false
@@ -568,15 +614,35 @@ async function cancelReg(regId) {
         registrations = registrations.filter(r => r.id !== regId);
         updateStats();
         renderTable();
-        showToast('Registration cancelled & deleted 🚫', 'info');
+        if (reg) {
+            const emailRes = await sendStatusNotificationEmail({ ...reg, events: currentEvent }, 'rejected');
+            if (emailRes && emailRes.error) {
+                showToast(`Cancelled! Email notice: ${emailRes.error}`, 'warning', 6000);
+            } else {
+                showToast(`Registration cancelled & deleted (Email sent to ${reg.leader_email})`, 'info');
+            }
+        } else {
+            showToast('Registration cancelled & deleted', 'info');
+        }
         return;
     }
     
-    const reg = registrations.find(r => r.id === regId);
-    if (reg) { reg.payment_status = 'cancelled'; reg.is_approved = false; }
-    updateStats();
-    renderTable();
-    showToast('Registration moved to Cancelled', 'info');
+    if (reg) { 
+        reg.payment_status = 'cancelled'; 
+        reg.is_approved = false; 
+        updateStats();
+        renderTable();
+        const emailRes = await sendStatusNotificationEmail({ ...reg, events: currentEvent }, 'rejected');
+        if (emailRes && emailRes.error) {
+            showToast(`Cancelled! Email notice: ${emailRes.error}`, 'warning', 6000);
+        } else {
+            showToast(`Registration cancelled & notification email sent to ${reg.leader_email}!`, 'info');
+        }
+    } else {
+        updateStats();
+        renderTable();
+        showToast('Registration moved to Cancelled', 'info');
+    }
 }
 
 /* ── Restore / Retrieve Registration ── */
@@ -595,19 +661,21 @@ async function restoreReg(regId) {
     if (reg) { reg.payment_status = 'pending'; reg.is_approved = false; }
     updateStats();
     renderTable();
-    showToast('Registration restored to Active! 🔄', 'success');
+    showToast('Registration restored to Active!', 'success');
 }
 
 /* ── Move to Recently Deleted ── */
 async function moveToDeleted(regId, groupName) {
     const confirmed = await showConfirmDialog({
         title: 'Delete Registration?',
-        desc: `Are you sure you want to delete registration for "${groupName}"?`,
-        icon: '🗑️',
+        desc: `Are you sure you want to delete registration for "${groupName}"? A cancellation notification will be sent.`,
+        icon: 'trash',
         okText: 'Delete',
         danger: true,
     });
     if (!confirmed) return;
+    
+    const reg = registrations.find(r => r.id === regId);
     
     const { error } = await updateRegistration(regId, { payment_status: 'deleted', is_approved: false });
     if (error) {
@@ -620,15 +688,35 @@ async function moveToDeleted(regId, groupName) {
         registrations = registrations.filter(r => r.id !== regId);
         updateStats();
         renderTable();
-        showToast('Registration deleted successfully 🗑️', 'info');
+        if (reg) {
+            const emailRes = await sendStatusNotificationEmail({ ...reg, events: currentEvent }, 'rejected');
+            if (emailRes && emailRes.error) {
+                showToast(`Deleted! Email notice: ${emailRes.error}`, 'warning', 6000);
+            } else {
+                showToast(`Registration deleted (Email sent to ${reg.leader_email})`, 'info');
+            }
+        } else {
+            showToast('Registration deleted successfully', 'info');
+        }
         return;
     }
     
-    const reg = registrations.find(r => r.id === regId);
-    if (reg) { reg.payment_status = 'deleted'; reg.is_approved = false; }
-    updateStats();
-    renderTable();
-    showToast('Moved to Recently Deleted 🗑️', 'info');
+    if (reg) { 
+        reg.payment_status = 'deleted'; 
+        reg.is_approved = false; 
+        updateStats();
+        renderTable();
+        const emailRes = await sendStatusNotificationEmail({ ...reg, events: currentEvent }, 'rejected');
+        if (emailRes && emailRes.error) {
+            showToast(`Moved to Deleted! Email notice: ${emailRes.error}`, 'warning', 6000);
+        } else {
+            showToast(`Moved to Recently Deleted & email sent to ${reg.leader_email}!`, 'info');
+        }
+    } else {
+        updateStats();
+        renderTable();
+        showToast('Moved to Recently Deleted', 'info');
+    }
 }
 
 /* ── Permanent Delete ── */
@@ -636,7 +724,7 @@ async function permanentDeleteReg(regId, groupName) {
     const confirmed = await showConfirmDialog({
         title: 'Permanently Delete?',
         desc: `Are you sure you want to permanently delete "${groupName}"? This cannot be undone.`,
-        icon: '⚠️',
+        icon: 'warning',
         okText: 'Permanent Delete',
         danger: true,
     });
@@ -761,7 +849,7 @@ async function saveEventInfo() {
     renderEventInfo();
     updateStats();
     
-    showToast('Event details & staff saved! ✅', 'success');
+    showToast('Event details & staff saved!', 'success');
     
     // Green glow effect on button
     btn.style.boxShadow = '0 0 15px #2ed573';
@@ -810,7 +898,7 @@ function exportCSV() {
     link.click();
     document.body.removeChild(link);
     
-    showToast('CSV exported successfully! 📥', 'success');
+    showToast('CSV exported successfully!', 'success');
 }
 
 function toggleInfoPanel() {

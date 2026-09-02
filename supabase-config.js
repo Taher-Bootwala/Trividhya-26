@@ -349,14 +349,74 @@ async function getRegistrationsByEmail(email) {
     return data;
 }
 
+async function sendStatusNotificationEmail(regOrId, status, reason = '') {
+    try {
+        let reg = regOrId;
+        if (typeof regOrId === 'string') {
+            reg = await getRegistrationById(regOrId);
+        }
+        if (!reg || !reg.leader_email) {
+            console.warn('[Email Notification] Registration or leader email not found:', regOrId);
+            return { error: 'No recipient email found' };
+        }
+
+        const toEmail = reg.leader_email;
+        const participantName = reg.leader_name || 'Participant';
+        const eventTitle = reg.events?.title || reg.combos?.name || (typeof currentEvent !== 'undefined' && currentEvent?.title) || 'Trividhya 2026 Event';
+        const groupName = reg.group_name || reg.team_name || '';
+
+        console.log(`[Email Notification] Sending ${status} email to ${toEmail} for "${eventTitle}"...`);
+        
+        const { data, error } = await supabaseClient.functions.invoke('quick-handler', {
+            body: {
+                toEmail,
+                participantName,
+                eventTitle,
+                groupName,
+                status,
+                reason
+            }
+        });
+
+        if (error) {
+            console.error('[Email Notification] Failed to invoke quick-handler:', error);
+            return { error: error.message || error };
+        }
+        if (data && (data.statusCode >= 400 || data.error)) {
+            const msg = data.message || data.error?.message || JSON.stringify(data);
+            console.error('[Email Notification] Resend API Error:', msg);
+            return { error: msg, isResendError: true };
+        }
+        console.log('[Email Notification] Email dispatched successfully:', data);
+        return { success: true, data };
+    } catch (err) {
+        console.error('[Email Notification] Error:', err);
+        return { error: err.message };
+    }
+}
+
 async function approveRegistration(regId) {
+    // Fetch details first so we have the email & event title
+    const reg = await getRegistrationById(regId);
+
     const { data, error } = await supabaseClient
         .from('registrations')
         .update({ payment_status: 'paid', is_approved: true })
         .eq('id', regId)
         .select();
-    if (error) { console.error('Error approving registration:', error); return { error }; }
-    return { data, success: true };
+
+    if (error) { 
+        console.error('Error approving registration:', error); 
+        return { error }; 
+    }
+
+    let emailError = null;
+    if (reg && reg.leader_email) {
+        const emailRes = await sendStatusNotificationEmail(reg, 'confirmed');
+        if (emailRes && emailRes.error) emailError = emailRes.error;
+    }
+
+    return { data, success: true, emailError };
 }
 
 async function deleteRegistration(regId) {
@@ -386,15 +446,6 @@ async function updateRegistration(id, updates) {
         .single();
     if (error) { console.error('Error updating registration:', error); return { error }; }
     return { data };
-}
-
-async function deleteRegistration(id) {
-    const { error } = await supabaseClient
-        .from('registrations')
-        .delete()
-        .eq('id', id);
-    if (error) { console.error('Error deleting registration:', error); return { error }; }
-    return { success: true };
 }
 
 /**
