@@ -53,49 +53,48 @@
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 600px;
+            max-width: 960px;
         }
 
         .reg-event-header {
             text-align: center;
             padding: 2rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            background: rgba(255, 255, 255, 0.7) !important;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.75) !important;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
-            border-radius: 24px;
+            border-radius: 20px;
             border: 2px solid #000000 !important;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
             color: #000000 !important;
         }
         .reg-event-logo {
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             object-fit: cover;
-            border-radius: 20px;
-            margin-bottom: 1rem;
+            border-radius: 18px;
+            margin-bottom: 0.8rem;
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
             border: 2px solid #000000;
         }
         .reg-event-logo-placeholder {
-            width: 120px;
-            height: 120px;
-            border-radius: 20px;
-            margin: 0 auto 1rem;
+            width: 110px;
+            height: 110px;
+            border-radius: 18px;
+            margin: 0 auto 0.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: 2.8rem;
             background: #f5f5f5;
             color: #000000;
             border: 2px solid #000000;
         }
         .reg-event-title {
             font-family: var(--font-heading) !important;
-            font-size: 1.5rem;
+            font-size: 1.45rem;
             font-weight: 800;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             color: #000000 !important;
             background: none;
             -webkit-text-fill-color: #000000 !important;
@@ -110,46 +109,47 @@
         .reg-event-meta {
             display: flex;
             justify-content: center;
-            gap: 2rem;
+            gap: 1.2rem;
             flex-wrap: wrap;
         }
         .reg-meta-item {
             background: #f8f9fa !important;
-            padding: 0.6rem 1.2rem;
+            padding: 0.5rem 1rem;
             border-radius: 12px;
             border: 1.5px solid #000000 !important;
             text-align: center;
             color: #000000 !important;
+            min-width: 110px;
         }
         .reg-meta-label {
             font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             color: #666666 !important;
             margin-bottom: 0.2rem;
             font-family: var(--font-body);
         }
         .reg-meta-value {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-family: var(--font-heading);
             color: #000000 !important;
         }
 
         .reg-form-card {
-            background: rgba(255, 255, 255, 0.7) !important;
+            background: rgba(255, 255, 255, 0.75) !important;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
-            border-radius: 24px;
+            border-radius: 20px;
             border: 2px solid #000000 !important;
             padding: 2rem;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
             color: #000000 !important;
         }
         .reg-form-title {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -158,44 +158,59 @@
         }
         .reg-form-title i { color: #000000 !important; }
 
-        .form-group {
+        .team-requirement-banner {
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.82rem;
+            color: #000000;
             margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .form-group {
+            margin-bottom: 0.7rem;
         }
         .form-label {
             display: block;
-            font-size: 0.82rem;
+            font-size: 0.72rem;
             font-weight: 600;
-            color: #333333 !important;
-            margin-bottom: 0.4rem;
+            color: #222222 !important;
+            margin-bottom: 0.25rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             font-family: var(--font-body);
         }
         .form-input {
             width: 100%;
-            padding: 0.85rem 1rem;
+            padding: 0.55rem 0.8rem;
             background: #ffffff !important;
-            border: 2px solid #000000 !important;
-            border-radius: 12px;
+            border: 1.5px solid #000000 !important;
+            border-radius: 8px;
             color: #000000 !important;
             font-family: var(--font-body) !important;
-            font-size: 0.92rem;
+            font-size: 0.85rem;
             transition: border-color 0.3s, box-shadow 0.3s;
             outline: none;
+            min-height: 38px;
         }
         .form-input:focus {
             border-color: #000000;
             box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
         }
-        .form-input::placeholder { color: #777777 !important; }
+        .form-input::placeholder { color: #888888 !important; }
 
         select.form-input {
             appearance: none;
             -webkit-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 1rem center;
-            padding-right: 2.5rem;
+            background-position: right 0.8rem center;
+            padding-right: 2.2rem;
             cursor: pointer;
         }
         select.form-input option {
@@ -206,13 +221,18 @@
 
         .form-error {
             color: #ff4757;
-            font-size: 0.8rem;
-            margin-top: 0.3rem;
+            font-size: 0.82rem;
+            margin-top: 0.5rem;
             font-family: var(--font-body);
+            font-weight: 500;
+            background: rgba(255, 71, 87, 0.08);
+            border: 1px solid #ff4757;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
         }
 
         .otp-send-btn, .otp-verify-btn {
-            padding: 0.7rem 1.2rem;
+            padding: 0.6rem 1.2rem;
             border: 2px solid #000000 !important;
             border-radius: 50px;
             font-family: var(--font-body) !important;
@@ -235,43 +255,97 @@
         .otp-verify-btn:hover { background: #ffffff !important; color: #000000 !important; }
         .otp-verify-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .member-section {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 2px dashed #000000;
+        /* ── Side-by-Side Members Grid ── */
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.2rem;
+            margin-top: 1rem;
+            margin-bottom: 1.2rem;
         }
+        .members-grid.solo-grid {
+            grid-template-columns: 1fr;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .card-fields-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        .col-span-2 {
+            grid-column: 1 / -1;
+        }
+
         .member-card {
-            background: #f8f9fa !important;
+            background: #ffffff !important;
             border: 1.5px solid #000000 !important;
             border-radius: 16px;
-            padding: 1.2rem;
-            margin-bottom: 1rem;
+            padding: 1.1rem;
             position: relative;
-            animation: fadeUp 0.4s ease;
+            animation: fadeUp 0.35s ease;
             color: #000000 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .member-card.leader-card {
+            background: #ffffff !important;
+            border: 2px solid #000000 !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
         }
         .member-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eeeeee;
         }
         .member-card-title {
-            font-weight: 600;
-            font-size: 0.9rem;
+            font-weight: 700;
+            font-size: 0.88rem;
             color: #000000 !important;
             font-family: var(--font-heading);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .member-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.25rem 0.65rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: var(--font-body);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .member-badge.leader-badge {
+            background: #000000;
+            color: #ffffff;
+        }
+        .member-badge.req-badge {
+            background: #f0f0f0;
+            color: #000000;
+            border: 1px solid #000000;
         }
         .member-remove-btn {
             background: rgba(255,71,87,0.1);
             border: 1px solid #ff4757;
             color: #ff4757;
             border-radius: 8px;
-            padding: 0.35rem 0.7rem;
-            font-size: 0.75rem;
+            padding: 0.3rem 0.65rem;
+            font-size: 0.72rem;
             cursor: pointer;
             transition: all 0.3s;
             font-family: var(--font-body);
+            font-weight: 600;
         }
         .member-remove-btn:hover { background: #ff4757; color: #ffffff; }
 
@@ -280,11 +354,11 @@
             padding: 0.8rem;
             background: #ffffff;
             border: 2px dashed #000000;
-            border-radius: 50px;
+            border-radius: 12px;
             color: #000000;
             font-family: var(--font-body) !important;
             font-weight: 600;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
@@ -294,24 +368,28 @@
             margin-top: 0.5rem;
         }
         .add-member-btn:hover {
-            background: #ffffff;
-            color: #000000;
+            background: #000000;
+            color: #ffffff;
+            border-style: solid;
         }
         .add-member-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
+            background: #f0f0f0;
+            color: #888888;
+            border-color: #cccccc;
         }
 
         .reg-submit-btn {
             width: 100%;
-            padding: 1rem;
+            padding: 0.95rem;
             background: #000000 !important;
             border: 2px solid #000000 !important;
             border-radius: 50px;
             color: #ffffff !important;
             font-family: var(--font-body) !important;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -327,11 +405,6 @@
             border-color: #000000 !important;
             transform: translateY(-2px);
             box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-        }
-        .reg-submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
         }
         .reg-submit-btn:disabled {
             opacity: 0.6;
@@ -364,9 +437,23 @@
             display: block;
         }
 
+        @media (max-width: 768px) {
+            .reg-container { max-width: 100%; }
+            .members-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .reg-form-card, .reg-event-header { padding: 1.25rem; }
+        }
         @media (max-width: 480px) {
             .reg-page { padding: 4.5rem 0.75rem 2rem; }
-            .reg-form-card, .reg-event-header { padding: 1.5rem; }
+            .card-fields-grid {
+                grid-template-columns: 1fr;
+                gap: 0.4rem;
+            }
+            .col-span-2 {
+                grid-column: auto;
+            }
         }
     </style>
 </head>
@@ -386,6 +473,6 @@
     <!-- Supabase Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="register.js?v=2"></script>
+    <script src="register.js?v=3"></script>
 </body>
 </html>

@@ -91,37 +91,49 @@ async function initRegisterPage() {
 }
 
 /**
- * Saves form data to localStorage so it persists after email link redirect
+ * Saves form data to localStorage so it persists after email link redirect or reload
  */
 function saveFormState() {
+    if (!currentEvent) return;
+    const leaderCollege = document.getElementById('leaderCollege')?.value || '';
+    const leaderOtherCollege = document.getElementById('leaderOtherCollege')?.value || '';
+    
     const data = {
-        groupName: document.getElementById('groupName')?.value,
-        leaderName: document.getElementById('leaderName')?.value,
-        leaderEmail: document.getElementById('leaderEmail')?.value,
-        leaderMobile: document.getElementById('leaderMobile')?.value,
-        leaderCollege: document.getElementById('leaderCollege')?.value,
-        leaderOtherCollege: document.getElementById('leaderOtherCollege')?.value,
-        leaderGender: document.getElementById('leaderGender')?.value,
-        leaderEnrollment: document.getElementById('leaderEnrollment')?.value,
-        leaderSemester: document.getElementById('leaderSemester')?.value,
+        groupName: document.getElementById('groupName')?.value || '',
+        leaderName: document.getElementById('leaderName')?.value || '',
+        leaderEmail: document.getElementById('leaderEmail')?.value || '',
+        leaderMobile: document.getElementById('leaderMobile')?.value || '',
+        leaderCollege: leaderCollege,
+        leaderOtherCollege: leaderOtherCollege,
+        leaderGender: document.getElementById('leaderGender')?.value || '',
+        leaderEnrollment: document.getElementById('leaderEnrollment')?.value || '',
+        leaderSemester: document.getElementById('leaderSemester')?.value || '',
+        leaderInGameId: document.getElementById('leaderInGameId')?.value || '',
+        leaderUid: document.getElementById('leaderUid')?.value || '',
     };
-    // Also save members
+
+    // Save extra members
     const members = [];
-    const memberCards = document.querySelectorAll('#membersContainer .member-card');
-    memberCards.forEach(card => {
-        members.push({
-            name: card.querySelector('.member-name').value,
-            email: card.querySelector('.member-email').value,
-            mobile: card.querySelector('.member-mobile').value,
-            college: card.querySelector('.member-college').value,
-            otherCollege: card.querySelector('.member-other-college').value,
-            gender: card.querySelector('.member-gender').value,
-            enrollment: card.querySelector('.member-enrollment').value,
-            semester: card.querySelector('.member-semester').value,
+    const grid = document.getElementById('allMembersGrid');
+    if (grid) {
+        const extraCards = grid.querySelectorAll('.member-card:not(#leaderMemberCard)');
+        extraCards.forEach(card => {
+            members.push({
+                name: card.querySelector('.member-name')?.value || '',
+                email: card.querySelector('.member-email')?.value || '',
+                mobile: card.querySelector('.member-mobile')?.value || '',
+                college: card.querySelector('.member-college')?.value || '',
+                otherCollege: card.querySelector('.member-other-college')?.value || '',
+                gender: card.querySelector('.member-gender')?.value || '',
+                enrollment: card.querySelector('.member-enrollment')?.value || '',
+                semester: card.querySelector('.member-semester')?.value || '',
+                in_game_id: card.querySelector('.member-in-game-id')?.value || '',
+                in_game_uid: card.querySelector('.member-in-game-uid')?.value || ''
+            });
         });
-    });
+    }
     data.members = members;
-    data.eventId = eventId; // Store the eventId to prevent data from showing in other events
+    data.eventId = eventId || comboId;
     localStorage.setItem('regFormState', JSON.stringify(data));
 }
 
@@ -130,11 +142,11 @@ function saveFormState() {
  */
 function loadFormState() {
     const saved = localStorage.getItem('regFormState');
-    if (!saved) return;
+    if (!saved || !currentEvent) return;
     const data = JSON.parse(saved);
 
-    // ONLY load if the data belongs to the CURRENT event
-    if (data.eventId !== eventId) {
+    const currentId = eventId || comboId;
+    if (data.eventId !== currentId) {
         localStorage.removeItem('regFormState');
         return;
     }
@@ -147,6 +159,7 @@ function loadFormState() {
             showDetailsSection();
         }
     }
+    if (document.getElementById('leaderEmailCard')) document.getElementById('leaderEmailCard').value = data.leaderEmail || '';
     if (document.getElementById('leaderMobile')) document.getElementById('leaderMobile').value = data.leaderMobile || '';
     if (document.getElementById('leaderCollege')) {
         document.getElementById('leaderCollege').value = data.leaderCollege || '';
@@ -158,49 +171,49 @@ function loadFormState() {
     if (document.getElementById('leaderGender')) document.getElementById('leaderGender').value = data.leaderGender || '';
     if (document.getElementById('leaderEnrollment')) document.getElementById('leaderEnrollment').value = data.leaderEnrollment || '';
     if (document.getElementById('leaderSemester')) document.getElementById('leaderSemester').value = data.leaderSemester || '';
+    if (document.getElementById('leaderInGameId')) document.getElementById('leaderInGameId').value = data.leaderInGameId || '';
+    if (document.getElementById('leaderUid')) document.getElementById('leaderUid').value = data.leaderUid || '';
 
-    // Restore members
-    if (data.members && data.members.length > 0) {
-        const container = document.getElementById('membersContainer');
-        if (container) {
-            container.innerHTML = '';
-            memberCount = 0;
-            data.members.forEach(m => {
-                addMember();
-                const card = document.getElementById(`member-${memberCount}`);
-                card.querySelector('.member-name').value = m.name;
-                card.querySelector('.member-email').value = m.email;
-                card.querySelector('.member-mobile').value = m.mobile;
-                card.querySelector('.member-college').value = m.college;
-                if (m.college === 'Other') {
-                    card.querySelector('.member-other-college').style.display = 'block';
-                    card.querySelector('.member-other-college').value = m.otherCollege || '';
-                }
-                card.querySelector('.member-gender').value = m.gender || '';
-                card.querySelector('.member-enrollment').value = m.enrollment;
-                card.querySelector('.member-semester').value = m.semester;
-            });
+    // Restore member cards
+    const minM = Math.max(1, currentEvent.min_members || 1);
+    const maxM = Math.max(minM, currentEvent.max_members || 1);
+    const grid = document.getElementById('allMembersGrid');
+    if (grid && maxM > 1) {
+        // Clear existing non-leader cards
+        const extraCards = grid.querySelectorAll('.member-card:not(#leaderMemberCard)');
+        extraCards.forEach(c => c.remove());
+
+        const savedMembers = data.members || [];
+        const requiredExtras = minM - 1;
+        const totalExtrasToRender = Math.max(requiredExtras, savedMembers.length);
+
+        for (let i = 0; i < totalExtrasToRender; i++) {
+            const memberIdx = i + 2;
+            const isReq = memberIdx <= minM;
+            const memberData = savedMembers[i] || null;
+            const cardEl = createMemberCardElement(memberIdx, isReq, memberData);
+            grid.appendChild(cardEl);
         }
+        updateAddButton();
     }
 }
 
 /**
  * Checks if the user is returning from a Firebase Email Link redirect
- * (KEEPING for potential session recovery, but mostly switching to on-page OTP)
  */
 async function checkFirebaseVerification() {
-    // We are switching away from Firebase, so this is now a legacy function
+    // Legacy placeholder
 }
 
 /**
  * Helper to show the details section and hide the initial verification view
  */
 function showDetailsSection() {
-    const vSec = document.getElementById('verificationSection');
     const dSec = document.getElementById('detailsSection');
     const badge = document.getElementById('emailVerifiedBadge');
     const emailInput = document.getElementById('leaderEmail');
     const sendBtn = document.getElementById('sendOtpBtn');
+    const leaderEmailCard = document.getElementById('leaderEmailCard');
 
     if (dSec) dSec.style.display = 'block';
     if (badge) badge.style.display = 'block';
@@ -209,20 +222,185 @@ function showDetailsSection() {
         emailInput.style.borderColor = '#2ed573';
         emailInput.style.boxShadow = '0 0 0 3px rgba(46,213,115,0.2)';
     }
+    if (leaderEmailCard && emailInput) {
+        leaderEmailCard.value = emailInput.value.trim();
+    }
     if (sendBtn) sendBtn.style.display = 'none';
     
     // Smooth scroll to the start of the form
     if (dSec) dSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function handleLeaderCollegeChange(selectEl) {
+    const otherEl = document.getElementById('leaderOtherCollege');
+    if (otherEl) {
+        otherEl.style.display = selectEl.value === 'Other' ? 'block' : 'none';
+        if (selectEl.value !== 'Other') otherEl.value = '';
+    }
+    saveFormState();
+}
+
+function handleMemberCollegeChange(selectEl) {
+    const otherEl = selectEl.parentElement.querySelector('.member-other-college');
+    if (otherEl) {
+        otherEl.style.display = selectEl.value === 'Other' ? 'block' : 'none';
+        if (selectEl.value !== 'Other') otherEl.value = '';
+    }
+    saveFormState();
+}
+
+function renderLeaderCard(isGroup) {
+    const isGame = currentEvent.category === 'game';
+    return `
+        <div class="member-card leader-card" id="leaderMemberCard">
+            <div class="member-card-header">
+                <span class="member-card-title">
+                    <i class="fas fa-crown" style="color:#d4af37;"></i> ${isGroup ? 'Member 1 (Leader)' : 'Your Details'}
+                </span>
+                <span class="member-badge leader-badge">
+                    <i class="fas fa-user-shield"></i> ${isGroup ? 'Team Leader' : 'Participant'}
+                </span>
+            </div>
+            <div class="card-fields-grid">
+                <div class="form-group col-span-2">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-input" id="leaderName" placeholder="Enter full name" required oninput="saveFormState()">
+                </div>
+                <div class="form-group col-span-2">
+                    <label class="form-label">Email Address (Verified) *</label>
+                    <input type="email" class="form-input" id="leaderEmailCard" placeholder="Verified email" readonly style="background:#f4f6f8 !important; cursor:not-allowed; border-color:#2ed573 !important;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mobile Number *</label>
+                    <input type="tel" class="form-input" id="leaderMobile" placeholder="10-digit mobile" pattern="[0-9]{10}" maxlength="10" required oninput="saveFormState()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender *</label>
+                    <select class="form-input" id="leaderGender" required onchange="saveFormState()">
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group col-span-2">
+                    <label class="form-label">College *</label>
+                    <select class="form-input" id="leaderCollege" required onchange="handleLeaderCollegeChange(this)">
+                        <option value="" disabled selected>Select college</option>
+                        <option value="Government Engineering College, Dahod">Government Engineering College, Dahod</option>
+                        <option value="Government Polytechnic, Dahod">Government Polytechnic, Dahod</option>
+                        <option value="Navjivan Science College, Dahod">Navjivan Science College, Dahod</option>
+                        <option value="Navjivan Arts and Commerce College, Dahod">Navjivan Arts and Commerce College, Dahod</option>
+                        <option value="Other">Other (Please specify)</option>
+                    </select>
+                    <input type="text" class="form-input" id="leaderOtherCollege" placeholder="Enter college name" style="display:none; margin-top:0.4rem;" oninput="saveFormState()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Enrollment No. *</label>
+                    <input type="text" class="form-input" id="leaderEnrollment" placeholder="Enrollment no." required oninput="saveFormState()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Semester *</label>
+                    <input type="number" class="form-input" id="leaderSemester" placeholder="e.g. 6" min="1" max="10" required oninput="saveFormState()">
+                </div>
+                ${isGame ? `
+                <div class="form-group">
+                    <label class="form-label">In-Game ID *</label>
+                    <input type="text" class="form-input" id="leaderInGameId" placeholder="e.g. OGxItachi" required oninput="saveFormState()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">UID *</label>
+                    <input type="text" class="form-input" id="leaderUid" placeholder="Numbers only" pattern="[0-9]+" required oninput="saveFormState()">
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function createMemberCardElement(memberIndex, isRequired = false, data = null) {
+    const isGame = currentEvent && currentEvent.category === 'game';
+    const card = document.createElement('div');
+    card.className = 'member-card';
+    card.id = `memberCard-${memberIndex}`;
+    card.dataset.memberIndex = memberIndex;
+    
+    card.innerHTML = `
+        <div class="member-card-header">
+            <span class="member-card-title">
+                <i class="fas fa-user"></i> Member ${memberIndex}
+            </span>
+            ${isRequired 
+                ? `<span class="member-badge req-badge"><i class="fas fa-lock"></i> Required</span>`
+                : `<button type="button" class="member-remove-btn" onclick="removeMemberCard(${memberIndex})">
+                    <i class="fas fa-trash-alt"></i> Remove
+                   </button>`
+            }
+        </div>
+        <div class="card-fields-grid">
+            <div class="form-group col-span-2">
+                <label class="form-label">Full Name *</label>
+                <input type="text" class="form-input member-name" placeholder="Enter member name" required oninput="saveFormState()" value="${data?.name ? data.name.replace(/"/g, '&quot;') : ''}">
+            </div>
+            <div class="form-group col-span-2">
+                <label class="form-label">Email Address *</label>
+                <input type="email" class="form-input member-email" placeholder="Enter member email" required oninput="saveFormState()" value="${data?.email ? data.email.replace(/"/g, '&quot;') : ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mobile Number *</label>
+                <input type="tel" class="form-input member-mobile" placeholder="10-digit mobile" pattern="[0-9]{10}" maxlength="10" required oninput="saveFormState()" value="${data?.mobile ? data.mobile.replace(/"/g, '&quot;') : ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gender *</label>
+                <select class="form-input member-gender" required onchange="saveFormState()">
+                    <option value="" disabled ${!data?.gender ? 'selected' : ''}>Select gender</option>
+                    <option value="Male" ${data?.gender === 'Male' ? 'selected' : ''}>Male</option>
+                    <option value="Female" ${data?.gender === 'Female' ? 'selected' : ''}>Female</option>
+                </select>
+            </div>
+            <div class="form-group col-span-2">
+                <label class="form-label">College *</label>
+                <select class="form-input member-college" required onchange="handleMemberCollegeChange(this)">
+                    <option value="" disabled ${!data?.college ? 'selected' : ''}>Select college</option>
+                    <option value="Government Engineering College, Dahod" ${data?.college === 'Government Engineering College, Dahod' ? 'selected' : ''}>Government Engineering College, Dahod</option>
+                    <option value="Government Polytechnic, Dahod" ${data?.college === 'Government Polytechnic, Dahod' ? 'selected' : ''}>Government Polytechnic, Dahod</option>
+                    <option value="Navjivan Science College, Dahod" ${data?.college === 'Navjivan Science College, Dahod' ? 'selected' : ''}>Navjivan Science College, Dahod</option>
+                    <option value="Navjivan Arts and Commerce College, Dahod" ${data?.college === 'Navjivan Arts and Commerce College, Dahod' ? 'selected' : ''}>Navjivan Arts and Commerce College, Dahod</option>
+                    <option value="Other" ${data?.college === 'Other' || (data?.college && !['Government Engineering College, Dahod','Government Polytechnic, Dahod','Navjivan Science College, Dahod','Navjivan Arts and Commerce College, Dahod'].includes(data.college)) ? 'selected' : ''}>Other (Please specify)</option>
+                </select>
+                <input type="text" class="form-input member-other-college" placeholder="Enter college name" style="display:${data?.otherCollege || (data?.college && !['Government Engineering College, Dahod','Government Polytechnic, Dahod','Navjivan Science College, Dahod','Navjivan Arts and Commerce College, Dahod'].includes(data.college)) ? 'block' : 'none'}; margin-top:0.4rem;" oninput="saveFormState()" value="${data?.otherCollege ? data.otherCollege.replace(/"/g, '&quot;') : (data?.college && !['Government Engineering College, Dahod','Government Polytechnic, Dahod','Navjivan Science College, Dahod','Navjivan Arts and Commerce College, Dahod'].includes(data.college) ? data.college.replace(/"/g, '&quot;') : '')}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Enrollment No. *</label>
+                <input type="text" class="form-input member-enrollment" placeholder="Enrollment no." required oninput="saveFormState()" value="${data?.enrollment ? data.enrollment.replace(/"/g, '&quot;') : ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Semester *</label>
+                <input type="number" class="form-input member-semester" placeholder="e.g. 6" min="1" max="10" required oninput="saveFormState()" value="${data?.semester || ''}">
+            </div>
+            ${isGame ? `
+            <div class="form-group">
+                <label class="form-label">In-Game ID *</label>
+                <input type="text" class="form-input member-in-game-id" placeholder="e.g. OGxItachi" required oninput="saveFormState()" value="${data?.in_game_id ? data.in_game_id.replace(/"/g, '&quot;') : ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">UID *</label>
+                <input type="text" class="form-input member-in-game-uid" placeholder="Numbers only" pattern="[0-9]+" required oninput="saveFormState()" value="${data?.in_game_uid ? data.in_game_uid.replace(/"/g, '&quot;') : ''}">
+            </div>
+            ` : ''}
+        </div>
+    `;
+    return card;
+}
+
 function renderRegistrationForm(ev) {
     const container = document.getElementById('regContainer');
-    const isGroup = ev.max_members > 1;
-    const minM = ev.min_members || 1;
+    const isGroup = (ev.max_members || 1) > 1;
+    const minM = Math.max(1, ev.min_members || 1);
+    const maxM = Math.max(minM, ev.max_members || 1);
     const feeStr = ev.fee > 0 ? '₹' + ev.fee : 'Free';
-    const teamStr = ev.max_members <= 1 
+    const teamStr = maxM <= 1 
         ? 'Solo' 
-        : (minM > 1 && minM < ev.max_members ? `Min ${minM} - Max ${ev.max_members} Members` : ev.max_members + ' Members');
+        : (minM > 1 && minM < maxM ? `Min ${minM} - Max ${maxM} Members` : `${maxM} Members`);
 
     const logoHtml = ev.logo_url
         ? `<img src="${ev.logo_url}" alt="${ev.title}" class="reg-event-logo">`
@@ -256,7 +434,7 @@ function renderRegistrationForm(ev) {
                             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 75px; max-width: 75px;">
                                 ${e.logo_url 
                                     ? `<img src="${e.logo_url}" alt="${e.title}" style="width: 50px; height: 50px; object-fit: contain; margin-bottom: 0.4rem; border-radius: 8px;">`
-                                    : `<div style="width: 50px; height: 50px; background: var(--primary, #7B2FBE); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; margin-bottom: 0.4rem; font-size: 1.2rem;">${e.title.charAt(0)}</div>`
+                                    : `<div style="width: 50px; height: 50px; background: var(--primary, #000000); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; margin-bottom: 0.4rem; font-size: 1.2rem;">${e.title.charAt(0)}</div>`
                                 }
                                 <span style="font-size: 0.7rem; font-weight: 600; line-height: 1.1; text-align: center; word-wrap: break-word;">${e.title}</span>
                             </div>
@@ -288,7 +466,7 @@ function renderRegistrationForm(ev) {
             
             ${ev.rules_text ? `
             <div style="margin-top: 1.5rem; padding: 1.5rem; background: #ffffff; border-radius: 16px; border: 1.5px solid #000000; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1rem; margin-bottom: 0.8rem; color: #000000; font-family: var(--font-heading);"><i class="fas fa-scroll" style="margin-right: 0.4rem; color: var(--accent);"></i> Rules & Regulations</h3>
+                <h3 style="font-size: 1rem; margin-bottom: 0.8rem; color: #000000; font-family: var(--font-heading);"><i class="fas fa-scroll" style="margin-right: 0.4rem;"></i> Rules & Regulations</h3>
                 <div style="font-size: 0.85rem; color: #333333; line-height: 1.6; white-space: pre-wrap; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">${ev.rules_text}</div>
             </div>
             ` : ''}
@@ -301,7 +479,7 @@ function renderRegistrationForm(ev) {
                 <!-- STEP 1: EMAIL VERIFICATION -->
                 <div id="verificationSection">
                     <div class="reg-form-title"><i class="fas fa-envelope-open-text"></i> Step 1: Verify Your Email</div>
-                    <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1.2rem;">Before you can register, please provide and verify your email address. We will send you a secure link.</p>
+                    <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1.2rem;">Before you can register, please provide and verify your email address. We will send you a secure verification code.</p>
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
                         <div style="display:flex;gap:0.5rem;">
@@ -313,101 +491,55 @@ function renderRegistrationForm(ev) {
                     </div>
 
                     <!-- 8-DIGIT OTP INPUT (HIDDEN INITIALLY) -->
-                    <div id="otpVerifySection" style="display:none; margin-top: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border-radius: 14px; border: 1px solid rgba(123,47,190,0.2);">
+                    <div id="otpVerifySection" style="display:none; margin-top: 1rem; padding: 1.2rem; background: #f8f9fa; border-radius: 14px; border: 1.5px solid #000000;">
                         <label class="form-label">Enter 8-Digit Verification Code</label>
                         <p style="font-size:0.75rem; color:var(--muted); margin-bottom:0.8rem;">We've sent a code to your email.</p>
                         <div style="display:flex;gap:0.5rem;">
                             <input type="text" class="form-input" id="otpInput" placeholder="00000000" maxlength="8" style="flex:1; text-align:center; font-size:1.2rem; font-weight:700; letter-spacing:4px;">
-                            <button type="button" class="otp-send-btn" id="verifyOtpBtn" onclick="verifyOtp()" style="background:var(--accent);">
+                            <button type="button" class="otp-verify-btn" id="verifyOtpBtn" onclick="verifyOtp()">
                                 <i class="fas fa-check"></i> Verify
                             </button>
                         </div>
                     </div>
 
                     <div id="emailVerifiedBadge" style="display:none;margin-bottom:1rem;">
-                        <span style="background:rgba(46,213,115,0.15);color:#2ed573;padding:0.4rem 0.8rem;border-radius:8px;font-size:0.8rem;font-weight:600;">
+                        <span style="background:rgba(46,213,115,0.15);color:#2ed573;padding:0.4rem 0.8rem;border-radius:8px;font-size:0.8rem;font-weight:600;display:inline-flex;align-items:center;gap:0.4rem;">
                             <i class="fas fa-check-circle"></i> Email Verified
                         </span>
                     </div>
                     <div class="form-group otp-section" id="otpSection" style="display:none;">
-                        <p id="otpMsg" style="font-size:0.9rem;margin-top:0.4rem;padding: 1rem; background: rgba(123,47,190,0.1); border-radius: 12px; border: 1px solid rgba(123,47,190,0.3); line-height: 1.5;"></p>
+                        <p id="otpMsg" style="font-size:0.88rem;margin-top:0.4rem;padding: 0.8rem 1rem; background: #f8f9fa; border-radius: 10px; border: 1.5px solid #000000; line-height: 1.5;"></p>
                     </div>
                 </div>
 
                 <!-- STEP 2: REGISTRATION DETAILS (HIDDEN UNTIL VERIFIED) -->
-                <div id="detailsSection" style="display: none; border-top: 1px solid rgba(123,47,190,0.2); padding-top: 1.5rem; margin-top: 0.5rem;">
-                    <div class="reg-form-title"><i class="fas fa-user-plus"></i> Step 2: Complete Registration</div>
+                <div id="detailsSection" style="display: none; border-top: 2px dashed #000000; padding-top: 1.5rem; margin-top: 1rem;">
+                    <div class="reg-form-title"><i class="fas fa-user-edit"></i> Step 2: Complete Registration Details</div>
                     
-                    <div class="form-group">
-                        <label class="form-label">${isGroup ? 'Team / Group Name' : 'Your Name (as group name)'}</label>
-                        <input type="text" class="form-input" id="groupName" placeholder="Enter ${isGroup ? 'team name' : 'your name'}" required>
-                    </div>
-
-                    <div class="reg-form-title" style="margin-top:1.5rem;margin-bottom:1rem;font-size:1rem;">
-                        <i class="fas fa-crown" style="color:var(--gold);"></i> ${isGroup ? 'Leader Details' : 'Your Details'}
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-input" id="leaderName" placeholder="Enter full name" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Mobile Number</label>
-                        <input type="tel" class="form-input" id="leaderMobile" placeholder="Enter 10-digit mobile number" pattern="[0-9]{10}" maxlength="10" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Gender</label>
-                        <select class="form-input" id="leaderGender" required>
-                            <option value="" disabled selected>Select gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">College</label>
-                        <select class="form-input" id="leaderCollege" required onchange="this.value === 'Other' ? document.getElementById('leaderOtherCollege').style.display = 'block' : document.getElementById('leaderOtherCollege').style.display = 'none';">
-                            <option value="" disabled selected>Select your college</option>
-                            <option value="Government Engineering College, Dahod">Government Engineering College, Dahod</option>
-                            <option value="Government Polytechnic, Dahod">Government Polytechnic, Dahod</option>
-                            <option value="Navjivan Science College, Dahod">Navjivan Science College, Dahod</option>
-                            <option value="Navjivan Arts and Commerce College, Dahod">Navjivan Arts and Commerce College, Dahod</option>
-                            <option value="Other">Other (Please specify)</option>
-                        </select>
-                        <input type="text" class="form-input" id="leaderOtherCollege" placeholder="Enter your college name" style="display:none; margin-top:0.5rem;">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Enrollment Number</label>
-                        <input type="text" class="form-input" id="leaderEnrollment" placeholder="Enter enrollment number" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Current Semester</label>
-                        <input type="number" class="form-input" id="leaderSemester" placeholder="e.g. 6" min="1" max="10" required>
-                    </div>
-                    ${ev.category === 'game' ? `
-                    <div class="form-group">
-                        <label class="form-label">In-Game ID (with Clan Tag)</label>
-                        <input type="text" class="form-input" id="leaderInGameId" placeholder="e.g. OGxItachi" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">UID (Numbers only)</label>
-                        <input type="text" class="form-input" id="leaderUid" placeholder="e.g. 524312345" pattern="[0-9]+" required>
-                    </div>
-                    ` : ''}
-
                     ${isGroup ? `
-                    <div class="member-section">
-                        <div class="reg-form-title" style="margin-bottom:1rem;font-size:1rem;">
-                            <i class="fas fa-users" style="color:var(--primary);"></i> Team Members
-                            <span style="font-size:0.75rem;color:var(--muted);font-weight:400;margin-left:auto;">
-                                Max ${ev.max_members - 1} member${ev.max_members - 1 > 1 ? 's' : ''}
-                            </span>
-                        </div>
-                        <div id="membersContainer"></div>
-                        <button type="button" class="add-member-btn" id="addMemberBtn" onclick="addMember()">
-                            <i class="fas fa-plus-circle"></i> Add Team Member
-                        </button>
+                    <div class="form-group" style="margin-bottom: 1.2rem;">
+                        <label class="form-label">Team / Group Name *</label>
+                        <input type="text" class="form-input" id="groupName" placeholder="Enter your team name" required oninput="saveFormState()">
                     </div>
+                    <div class="team-requirement-banner">
+                        <i class="fas fa-users" style="font-size: 1.1rem;"></i>
+                        <div>
+                            <strong>Team Size Requirement:</strong> Minimum <strong>${minM}</strong> member${minM > 1 ? 's' : ''} (including Leader) required, and up to <strong>${maxM}</strong> members allowed.
+                        </div>
+                    </div>
+                    ` : `
+                    <input type="hidden" id="groupName" value="">
+                    `}
+
+                    <!-- Side-by-side Members Grid: Member 1 (Leader) | Member 2 | Member 3 ... -->
+                    <div class="members-grid ${!isGroup ? 'solo-grid' : ''}" id="allMembersGrid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    ${isGroup && maxM > minM ? `
+                    <button type="button" class="add-member-btn" id="addMemberBtn" onclick="addMemberCard()">
+                        <i class="fas fa-plus-circle"></i> Add Team Member
+                    </button>
                     ` : ''}
 
                     ${ev.terms_checkbox_label ? `
@@ -425,109 +557,108 @@ function renderRegistrationForm(ev) {
             </form>
         </div>
     `;
-}
 
-function addMember() {
-    if (!currentEvent) return;
-    const maxExtra = currentEvent.max_members - 1;
-    if (memberCount >= maxExtra) return;
+    // Populate initial members grid
+    const membersGrid = document.getElementById('allMembersGrid');
+    if (membersGrid) {
+        // 1. Leader (Member 1)
+        membersGrid.innerHTML = renderLeaderCard(isGroup);
 
-    memberCount++;
-    const container = document.getElementById('membersContainer');
-    const card = document.createElement('div');
-    card.className = 'member-card';
-    card.id = `member-${memberCount}`;
-    card.innerHTML = `
-        <div class="member-card-header">
-            <span class="member-card-title"><i class="fas fa-user" style="margin-right:0.4rem;"></i> Member ${memberCount}</span>
-            <button type="button" class="member-remove-btn" onclick="removeMember('member-${memberCount}')">
-                <i class="fas fa-trash-alt"></i> Remove
-            </button>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-input member-name" placeholder="Enter member name" required>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input member-email" placeholder="Enter member email" required>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Mobile Number</label>
-            <input type="tel" class="form-input member-mobile" placeholder="Enter 10-digit mobile" pattern="[0-9]{10}" maxlength="10" required>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Gender</label>
-            <select class="form-input member-gender" required>
-                <option value="" disabled selected>Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label class="form-label">College</label>
-            <select class="form-input member-college" required onchange="this.value === 'Other' ? this.nextElementSibling.style.display = 'block' : this.nextElementSibling.style.display = 'none';">
-                <option value="" disabled selected>Select college</option>
-                <option value="Government Engineering College, Dahod">Government Engineering College, Dahod</option>
-                <option value="Government Polytechnic, Dahod">Government Polytechnic, Dahod</option>
-                <option value="Navjivan Science College, Dahod">Navjivan Science College, Dahod</option>
-                <option value="Navjivan Arts and Commerce College, Dahod">Navjivan Arts and Commerce College, Dahod</option>
-                <option value="Other">Other (Please specify)</option>
-            </select>
-            <input type="text" class="form-input member-other-college" placeholder="Enter your college name" style="display:none; margin-top:0.5rem;">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Enrollment Number</label>
-            <input type="text" class="form-input member-enrollment" placeholder="Enter enrollment number" required>
-        </div>
-        <div class="form-group" ${currentEvent.category === 'game' ? '' : 'style="margin-bottom:0;"'}>
-            <label class="form-label">Current Semester</label>
-            <input type="number" class="form-input member-semester" placeholder="e.g. 6" min="1" max="10" required>
-        </div>
-        ${currentEvent.category === 'game' ? `
-        <div class="form-group">
-            <label class="form-label">In-Game ID (with Clan Tag)</label>
-            <input type="text" class="form-input member-in-game-id" placeholder="e.g. OGxItachi" required>
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">UID (Numbers only)</label>
-            <input type="text" class="form-input member-in-game-uid" placeholder="e.g. 524312345" pattern="[0-9]+" required>
-        </div>
-        ` : ''}
-    `;
-    container.appendChild(card);
+        // 2. Pre-render required additional members according to min_members (e.g. if min is 3, render Member 2 and Member 3)
+        if (isGroup && minM > 1) {
+            for (let i = 2; i <= minM; i++) {
+                const memberCardEl = createMemberCardElement(i, true);
+                membersGrid.appendChild(memberCardEl);
+            }
+        }
+    }
+
     updateAddButton();
 }
 
-function removeMember(id) {
-    const el = document.getElementById(id);
-    if (el) {
-        el.style.animation = 'fadeOut 0.3s ease forwards';
+function addMemberCard() {
+    if (!currentEvent) return;
+    const minM = Math.max(1, currentEvent.min_members || 1);
+    const maxM = Math.max(minM, currentEvent.max_members || 1);
+    const grid = document.getElementById('allMembersGrid');
+    if (!grid) return;
+
+    const currentTotal = grid.querySelectorAll('.member-card').length;
+    if (currentTotal >= maxM) return;
+
+    const nextIndex = currentTotal + 1;
+    const isReq = nextIndex <= minM;
+    const newCard = createMemberCardElement(nextIndex, isReq);
+    grid.appendChild(newCard);
+    
+    updateAddButton();
+    saveFormState();
+
+    // Smooth scroll into view
+    newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function removeMemberCard(index) {
+    if (!currentEvent) return;
+    const minM = Math.max(1, currentEvent.min_members || 1);
+    if (index <= minM) {
+        return;
+    }
+
+    const card = document.getElementById(`memberCard-${index}`);
+    if (card) {
+        card.style.animation = 'fadeOut 0.3s ease forwards';
         setTimeout(() => {
-            el.remove();
+            card.remove();
             reindexMembers();
             updateAddButton();
-        }, 300);
+            saveFormState();
+        }, 250);
     }
 }
 
 function reindexMembers() {
-    const cards = document.querySelectorAll('#membersContainer .member-card');
-    memberCount = cards.length;
-    cards.forEach((card, i) => {
-        card.querySelector('.member-card-title').innerHTML = `<i class="fas fa-user" style="margin-right:0.4rem;"></i> Member ${i + 1}`;
+    if (!currentEvent) return;
+    const minM = Math.max(1, currentEvent.min_members || 1);
+    const grid = document.getElementById('allMembersGrid');
+    if (!grid) return;
+
+    const extraCards = grid.querySelectorAll('.member-card:not(#leaderMemberCard)');
+    extraCards.forEach((card, idx) => {
+        const newIndex = idx + 2;
+        card.id = `memberCard-${newIndex}`;
+        card.dataset.memberIndex = newIndex;
+        const isReq = newIndex <= minM;
+        const header = card.querySelector('.member-card-header');
+        if (header) {
+            header.innerHTML = `
+                <span class="member-card-title">
+                    <i class="fas fa-user"></i> Member ${newIndex}
+                </span>
+                ${isReq 
+                    ? `<span class="member-badge req-badge"><i class="fas fa-lock"></i> Required</span>`
+                    : `<button type="button" class="member-remove-btn" onclick="removeMemberCard(${newIndex})">
+                        <i class="fas fa-trash-alt"></i> Remove
+                       </button>`
+                }
+            `;
+        }
     });
 }
 
 function updateAddButton() {
     const btn = document.getElementById('addMemberBtn');
     if (!btn || !currentEvent) return;
-    const maxExtra = currentEvent.max_members - 1;
-    btn.disabled = memberCount >= maxExtra;
-    if (memberCount >= maxExtra) {
-        btn.innerHTML = '<i class="fas fa-check-circle"></i> Maximum members reached';
+    const minM = Math.max(1, currentEvent.min_members || 1);
+    const maxM = Math.max(minM, currentEvent.max_members || 1);
+    const grid = document.getElementById('allMembersGrid');
+    const totalCards = grid ? grid.querySelectorAll('.member-card').length : 1;
+
+    btn.disabled = totalCards >= maxM;
+    if (totalCards >= maxM) {
+        btn.innerHTML = `<i class="fas fa-check-circle"></i> Maximum team size reached (${totalCards}/${maxM})`;
     } else {
-        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Team Member';
+        btn.innerHTML = `<i class="fas fa-plus-circle"></i> Add Team Member (Member ${totalCards + 1})`;
     }
 }
 
@@ -537,22 +668,59 @@ async function handleRegistration(e) {
     const errEl = document.getElementById('formError');
     const submitBtn = document.getElementById('submitBtn');
 
-    const groupName = document.getElementById('groupName').value.trim();
-    const leaderName = document.getElementById('leaderName').value.trim();
-    const leaderEmail = document.getElementById('leaderEmail').value.trim();
-    const leaderMobile = document.getElementById('leaderMobile').value.trim();
-    let leaderCollege = document.getElementById('leaderCollege').value.trim();
-    const leaderOtherCollege = document.getElementById('leaderOtherCollege').value.trim();
-    if (leaderCollege === 'Other') leaderCollege = leaderOtherCollege;
-    const leaderGender = document.getElementById('leaderGender').value.trim();
-    const leaderEnrollment = document.getElementById('leaderEnrollment').value.trim();
-    const leaderSemester = parseInt(document.getElementById('leaderSemester').value, 10);
-
-    // Validate email verified
+    // Email verification check
     if (!leaderEmailVerified) {
         errEl.textContent = 'Please verify your email address first';
         errEl.style.display = 'block';
         return;
+    }
+
+    const isGroup = (currentEvent.max_members || 1) > 1;
+    let groupName = isGroup ? (document.getElementById('groupName')?.value || '').trim() : '';
+    const leaderName = (document.getElementById('leaderName')?.value || '').trim();
+    const leaderEmail = (document.getElementById('leaderEmail')?.value || '').trim();
+    const leaderMobile = (document.getElementById('leaderMobile')?.value || '').trim();
+    let leaderCollege = (document.getElementById('leaderCollege')?.value || '').trim();
+    const leaderOtherCollege = (document.getElementById('leaderOtherCollege')?.value || '').trim();
+    if (leaderCollege === 'Other') leaderCollege = leaderOtherCollege;
+    const leaderGender = (document.getElementById('leaderGender')?.value || '').trim();
+    const leaderEnrollment = (document.getElementById('leaderEnrollment')?.value || '').trim();
+    const leaderSemester = parseInt(document.getElementById('leaderSemester')?.value, 10);
+
+    if (!groupName && !isGroup) {
+        groupName = leaderName;
+    }
+
+    if (isGroup && !groupName) {
+        errEl.textContent = 'Please enter a Team / Group Name';
+        errEl.style.display = 'block';
+        document.getElementById('groupName')?.focus();
+        return;
+    }
+
+    if (!leaderName || !leaderMobile || !leaderCollege || !leaderGender || !leaderEnrollment || isNaN(leaderSemester)) {
+        errEl.textContent = 'Please fill all required details for Member 1 (Leader)';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    if (!/^[0-9]{10}$/.test(leaderMobile)) {
+        errEl.textContent = 'Member 1 (Leader) has an invalid 10-digit mobile number';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    let leaderInGameId = null;
+    let leaderUid = null;
+    if (currentEvent.category === 'game') {
+        leaderInGameId = (document.getElementById('leaderInGameId')?.value || '').trim();
+        leaderUid = (document.getElementById('leaderUid')?.value || '').trim();
+
+        if (!leaderInGameId || !leaderUid) {
+            errEl.textContent = 'Please fill In-Game ID and UID for Member 1 (Leader)';
+            errEl.style.display = 'block';
+            return;
+        }
     }
 
     const termsCb = document.getElementById('termsCheckbox');
@@ -562,48 +730,56 @@ async function handleRegistration(e) {
         return;
     }
 
-    // Collect members
+    // Collect and validate all additional members
     const membersData = [];
-    const memberCards = document.querySelectorAll('#membersContainer .member-card');
-    for (const card of memberCards) {
-        const name = card.querySelector('.member-name').value.trim();
-        const email = card.querySelector('.member-email').value.trim();
-        const mobile = card.querySelector('.member-mobile').value.trim();
-        let college = card.querySelector('.member-college').value.trim();
-        const otherCollege = card.querySelector('.member-other-college').value.trim();
+    const grid = document.getElementById('allMembersGrid');
+    const extraCards = grid ? grid.querySelectorAll('.member-card:not(#leaderMemberCard)') : [];
+
+    for (let i = 0; i < extraCards.length; i++) {
+        const card = extraCards[i];
+        const memberNum = i + 2;
+        const name = (card.querySelector('.member-name')?.value || '').trim();
+        const email = (card.querySelector('.member-email')?.value || '').trim();
+        const mobile = (card.querySelector('.member-mobile')?.value || '').trim();
+        let college = (card.querySelector('.member-college')?.value || '').trim();
+        const otherCollege = (card.querySelector('.member-other-college')?.value || '').trim();
         if (college === 'Other') college = otherCollege;
-        const gender = card.querySelector('.member-gender').value.trim();
-        const enrollment = card.querySelector('.member-enrollment').value.trim();
-        const semester = parseInt(card.querySelector('.member-semester').value, 10);
+        const gender = (card.querySelector('.member-gender')?.value || '').trim();
+        const enrollment = (card.querySelector('.member-enrollment')?.value || '').trim();
+        const semester = parseInt(card.querySelector('.member-semester')?.value, 10);
         let in_game_id = null;
         let in_game_uid = null;
         if (currentEvent.category === 'game') {
-            in_game_id = card.querySelector('.member-in-game-id').value.trim();
-            in_game_uid = card.querySelector('.member-in-game-uid').value.trim();
+            in_game_id = (card.querySelector('.member-in-game-id')?.value || '').trim();
+            in_game_uid = (card.querySelector('.member-in-game-uid')?.value || '').trim();
         }
 
         if (!name || !email || !mobile || !college || !gender || !enrollment || isNaN(semester)) {
-            errEl.textContent = 'Please fill all member details';
+            errEl.textContent = `Please fill all details for Member ${memberNum}`;
             errEl.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errEl.textContent = `Member ${memberNum} (${name}) has an invalid email address`;
+            errEl.style.display = 'block';
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
         if (!/^[0-9]{10}$/.test(mobile)) {
-            errEl.textContent = `Member "${name}" has an invalid mobile number`;
+            errEl.textContent = `Member ${memberNum} (${name}) has an invalid 10-digit mobile number`;
             errEl.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
         if (currentEvent.category === 'game') {
             if (!in_game_id || !in_game_uid) {
-                errEl.textContent = `Please fill In-Game ID and UID for member "${name}"`;
+                errEl.textContent = `Please fill In-Game ID and UID for Member ${memberNum} (${name})`;
                 errEl.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
         }
@@ -611,21 +787,22 @@ async function handleRegistration(e) {
         membersData.push({ name, email, mobile, gender, college, enrollment, semester, in_game_id, in_game_uid });
     }
 
-    // MINIMUM PARTICIPANTS FULFILLMENT CHECK (FOR GROUP EVENTS)
-    const isGroup = currentEvent.max_members > 1;
-    const minRequired = currentEvent.min_members || 1;
-    const totalTeamCount = 1 + membersData.length; // Team Leader + Team Members
+    // Minimum participants check
+    const minRequired = Math.max(1, currentEvent.min_members || 1);
+    const totalTeamCount = 1 + membersData.length;
     
     if (isGroup && totalTeamCount < minRequired) {
         const needed = minRequired - totalTeamCount;
-        errEl.textContent = `This event requires a minimum of ${minRequired} team members (including Leader). Currently you have ${totalTeamCount}. Please add ${needed} more team member(s) to proceed.`;
+        errEl.textContent = `This event requires a minimum of ${minRequired} participants (including Leader). Currently you have ${totalTeamCount}. Please fill the remaining ${needed} member(s).`;
         errEl.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
         return;
     }
 
-    // FINAL DUPLICATE CHECK (MOBILE)
+    // Duplicate check (Leader Mobile)
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking details...';
+    errEl.style.display = 'none';
+
     const evIdParam = currentEvent.is_combo ? currentEvent.combo_data.id : currentEvent.id;
     const { data: existing, error: dupError } = await checkRegistrationDuplicate(evIdParam, null, leaderMobile, currentEvent.is_combo);
     if (existing) {
@@ -636,29 +813,11 @@ async function handleRegistration(e) {
         return;
     }
 
-    // Disable submit
-    submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
-    errEl.style.display = 'none';
 
-    let leaderInGameId = null;
-    let leaderUid = null;
-    if (currentEvent.category === 'game') {
-        leaderInGameId = document.getElementById('leaderInGameId').value.trim();
-        leaderUid = document.getElementById('leaderUid').value.trim();
-
-        if (!leaderInGameId || !leaderUid) {
-            errEl.textContent = 'Please fill In-Game ID and UID for the Leader';
-            errEl.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Proceed to Payment';
-            return;
-        }
-    }
-
-    // Store data in session and go to payment
+    // Save registration session data
     const regData = {
-        event_id: currentEvent.id, // For combos, this is a placeholder 'COMBO_uuid' string
+        event_id: currentEvent.id,
         group_name: groupName,
         leader_name: leaderName,
         leader_email: leaderEmail,
@@ -669,15 +828,13 @@ async function handleRegistration(e) {
         semester: leaderSemester,
         leader_in_game_id: leaderInGameId,
         leader_in_game_uid: leaderUid,
-        payment_mode: 'pending', // will be set on payment page
+        payment_mode: 'pending',
         payment_status: 'pending'
     };
 
-    // Registration succeeded (moving to payment), so clear the temporary form state
     localStorage.removeItem('regFormState');
     localStorage.removeItem('emailForSignIn');
 
-    // Save to session storage for the payment page
     sessionStorage.setItem('pendingRegistration', JSON.stringify(regData));
     sessionStorage.setItem('pendingMembers', JSON.stringify(membersData));
     sessionStorage.setItem('pendingEventTitle', currentEvent.title);
