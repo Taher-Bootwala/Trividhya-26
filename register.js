@@ -98,6 +98,11 @@ function saveFormState() {
     const leaderCollege = document.getElementById('leaderCollege')?.value || '';
     const leaderOtherCollege = document.getElementById('leaderOtherCollege')?.value || '';
     
+    const leaderEnrollmentType = document.getElementById('leaderEnrollmentType')?.value || 'Enrollment';
+    const leaderEnrollment = leaderEnrollmentType === 'New Admission'
+        ? 'New Admission'
+        : (document.getElementById('leaderEnrollment')?.value || '');
+    
     const data = {
         groupName: document.getElementById('groupName')?.value || '',
         leaderName: document.getElementById('leaderName')?.value || '',
@@ -106,7 +111,8 @@ function saveFormState() {
         leaderCollege: leaderCollege,
         leaderOtherCollege: leaderOtherCollege,
         leaderGender: document.getElementById('leaderGender')?.value || '',
-        leaderEnrollment: document.getElementById('leaderEnrollment')?.value || '',
+        leaderEnrollmentType: leaderEnrollmentType,
+        leaderEnrollment: leaderEnrollment,
         leaderSemester: document.getElementById('leaderSemester')?.value || '',
         leaderInGameId: document.getElementById('leaderInGameId')?.value || '',
         leaderUid: document.getElementById('leaderUid')?.value || '',
@@ -118,6 +124,8 @@ function saveFormState() {
     if (grid) {
         const extraCards = grid.querySelectorAll('.member-card:not(#leaderMemberCard)');
         extraCards.forEach(card => {
+            const enrollType = card.querySelector('.member-enrollment-type')?.value || 'Enrollment';
+            const enrollVal = enrollType === 'New Admission' ? 'New Admission' : (card.querySelector('.member-enrollment')?.value || '');
             members.push({
                 name: card.querySelector('.member-name')?.value || '',
                 email: card.querySelector('.member-email')?.value || '',
@@ -125,7 +133,8 @@ function saveFormState() {
                 college: card.querySelector('.member-college')?.value || '',
                 otherCollege: card.querySelector('.member-other-college')?.value || '',
                 gender: card.querySelector('.member-gender')?.value || '',
-                enrollment: card.querySelector('.member-enrollment')?.value || '',
+                enrollment_type: enrollType,
+                enrollment: enrollVal,
                 semester: card.querySelector('.member-semester')?.value || '',
                 in_game_id: card.querySelector('.member-in-game-id')?.value || '',
                 in_game_uid: card.querySelector('.member-in-game-uid')?.value || ''
@@ -169,7 +178,14 @@ function loadFormState() {
         }
     }
     if (document.getElementById('leaderGender')) document.getElementById('leaderGender').value = data.leaderGender || '';
-    if (document.getElementById('leaderEnrollment')) document.getElementById('leaderEnrollment').value = data.leaderEnrollment || '';
+    if (document.getElementById('leaderEnrollmentType')) {
+        const enrollType = data.leaderEnrollmentType || (data.leaderEnrollment === 'New Admission' ? 'New Admission' : 'Enrollment');
+        document.getElementById('leaderEnrollmentType').value = enrollType;
+        handleLeaderEnrollmentTypeChange(document.getElementById('leaderEnrollmentType'));
+    }
+    if (document.getElementById('leaderEnrollment')) {
+        document.getElementById('leaderEnrollment').value = (data.leaderEnrollment === 'New Admission') ? '' : (data.leaderEnrollment || '');
+    }
     if (document.getElementById('leaderSemester')) document.getElementById('leaderSemester').value = data.leaderSemester || '';
     if (document.getElementById('leaderInGameId')) document.getElementById('leaderInGameId').value = data.leaderInGameId || '';
     if (document.getElementById('leaderUid')) document.getElementById('leaderUid').value = data.leaderUid || '';
@@ -249,6 +265,60 @@ function handleMemberCollegeChange(selectEl) {
     saveFormState();
 }
 
+function handleLeaderEnrollmentTypeChange(selectEl) {
+    const isNew = selectEl.value === 'New Admission';
+    const input = document.getElementById('leaderEnrollment');
+    const badge = document.getElementById('leaderNewAdmissionBadge');
+    const label = document.getElementById('leaderEnrollmentLabel');
+    if (!input || !badge) return;
+
+    if (isNew) {
+        input.style.display = 'none';
+        input.required = false;
+        input.value = 'New Admission';
+        badge.style.display = 'flex';
+        if (label) label.textContent = 'Enrollment Status';
+    } else {
+        input.style.display = 'block';
+        input.required = true;
+        if (input.value === 'New Admission') {
+            input.value = '';
+        }
+        badge.style.display = 'none';
+        if (label) label.innerHTML = 'Enrollment No. *';
+        input.focus();
+    }
+    saveFormState();
+}
+
+function handleMemberEnrollmentTypeChange(selectEl) {
+    const card = selectEl.closest('.member-card');
+    if (!card) return;
+    const isNew = selectEl.value === 'New Admission';
+    const input = card.querySelector('.member-enrollment');
+    const badge = card.querySelector('.member-new-admission-badge');
+    const label = card.querySelector('.member-enrollment-label');
+    if (!input || !badge) return;
+
+    if (isNew) {
+        input.style.display = 'none';
+        input.required = false;
+        input.value = 'New Admission';
+        badge.style.display = 'flex';
+        if (label) label.textContent = 'Enrollment Status';
+    } else {
+        input.style.display = 'block';
+        input.required = true;
+        if (input.value === 'New Admission') {
+            input.value = '';
+        }
+        badge.style.display = 'none';
+        if (label) label.innerHTML = 'Enrollment No. *';
+        input.focus();
+    }
+    saveFormState();
+}
+
 function renderLeaderCard(isGroup) {
     const isGame = currentEvent.category === 'game';
     return `
@@ -294,13 +364,23 @@ function renderLeaderCard(isGroup) {
                     </select>
                     <input type="text" class="form-input" id="leaderOtherCollege" placeholder="Enter college name" style="display:none; margin-top:0.4rem;" oninput="saveFormState()">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Enrollment No. *</label>
+                <div class="form-group col-span-2">
+                    <label class="form-label">Admission Type *</label>
+                    <select class="form-input" id="leaderEnrollmentType" onchange="handleLeaderEnrollmentTypeChange(this)">
+                        <option value="New Admission">New Admission</option>
+                        <option value="Enrollment" selected>Enrollment</option>
+                    </select>
+                </div>
+                <div class="form-group" id="leaderEnrollmentGroup">
+                    <label class="form-label" id="leaderEnrollmentLabel">Enrollment No. *</label>
                     <input type="text" class="form-input" id="leaderEnrollment" placeholder="Enrollment no." required oninput="saveFormState()">
+                    <div id="leaderNewAdmissionBadge" class="new-admission-badge" style="display:none;">
+                        <i class="fas fa-check-circle"></i> New Admission (No enrollment required)
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Semester *</label>
-                    <input type="number" class="form-input" id="leaderSemester" placeholder="e.g. 6" min="1" max="10" required oninput="saveFormState()">
+                    <input type="number" class="form-input" id="leaderSemester" placeholder="e.g. 1" min="1" max="10" required oninput="saveFormState()">
                 </div>
                 ${isGame ? `
                 <div class="form-group">
@@ -319,6 +399,7 @@ function renderLeaderCard(isGroup) {
 
 function createMemberCardElement(memberIndex, isRequired = false, data = null) {
     const isGame = currentEvent && currentEvent.category === 'game';
+    const isNewAdmission = (data?.enrollment_type === 'New Admission') || (data?.enrollment === 'New Admission');
     const card = document.createElement('div');
     card.className = 'member-card';
     card.id = `memberCard-${memberIndex}`;
@@ -369,13 +450,23 @@ function createMemberCardElement(memberIndex, isRequired = false, data = null) {
                 </select>
                 <input type="text" class="form-input member-other-college" placeholder="Enter college name" style="display:${data?.otherCollege || (data?.college && !['Government Engineering College, Dahod','Government Polytechnic, Dahod','Navjivan Science College, Dahod','Navjivan Arts and Commerce College, Dahod'].includes(data.college)) ? 'block' : 'none'}; margin-top:0.4rem;" oninput="saveFormState()" value="${data?.otherCollege ? data.otherCollege.replace(/"/g, '&quot;') : (data?.college && !['Government Engineering College, Dahod','Government Polytechnic, Dahod','Navjivan Science College, Dahod','Navjivan Arts and Commerce College, Dahod'].includes(data.college) ? data.college.replace(/"/g, '&quot;') : '')}">
             </div>
-            <div class="form-group">
-                <label class="form-label">Enrollment No. *</label>
-                <input type="text" class="form-input member-enrollment" placeholder="Enrollment no." required oninput="saveFormState()" value="${data?.enrollment ? data.enrollment.replace(/"/g, '&quot;') : ''}">
+            <div class="form-group col-span-2">
+                <label class="form-label">Admission Type *</label>
+                <select class="form-input member-enrollment-type" onchange="handleMemberEnrollmentTypeChange(this)">
+                    <option value="New Admission" ${isNewAdmission ? 'selected' : ''}>New Admission</option>
+                    <option value="Enrollment" ${!isNewAdmission ? 'selected' : ''}>Enrollment</option>
+                </select>
+            </div>
+            <div class="form-group member-enrollment-group">
+                <label class="form-label member-enrollment-label">${isNewAdmission ? 'Enrollment Status' : 'Enrollment No. *'}</label>
+                <input type="text" class="form-input member-enrollment" placeholder="Enrollment no." ${isNewAdmission ? '' : 'required'} oninput="saveFormState()" value="${data?.enrollment && data.enrollment !== 'New Admission' ? data.enrollment.replace(/"/g, '&quot;') : (isNewAdmission ? 'New Admission' : '')}" style="${isNewAdmission ? 'display:none;' : ''}">
+                <div class="new-admission-badge member-new-admission-badge" style="${isNewAdmission ? 'display:flex;' : 'display:none;'}">
+                    <i class="fas fa-check-circle"></i> New Admission (No enrollment required)
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Semester *</label>
-                <input type="number" class="form-input member-semester" placeholder="e.g. 6" min="1" max="10" required oninput="saveFormState()" value="${data?.semester || ''}">
+                <input type="number" class="form-input member-semester" placeholder="e.g. 1" min="1" max="10" required oninput="saveFormState()" value="${data?.semester || ''}">
             </div>
             ${isGame ? `
             <div class="form-group">
@@ -684,7 +775,11 @@ async function handleRegistration(e) {
     const leaderOtherCollege = (document.getElementById('leaderOtherCollege')?.value || '').trim();
     if (leaderCollege === 'Other') leaderCollege = leaderOtherCollege;
     const leaderGender = (document.getElementById('leaderGender')?.value || '').trim();
-    const leaderEnrollment = (document.getElementById('leaderEnrollment')?.value || '').trim();
+    const leaderEnrollmentType = document.getElementById('leaderEnrollmentType')?.value || 'Enrollment';
+    let leaderEnrollment = (document.getElementById('leaderEnrollment')?.value || '').trim();
+    if (leaderEnrollmentType === 'New Admission') {
+        leaderEnrollment = 'New Admission';
+    }
     const leaderSemester = parseInt(document.getElementById('leaderSemester')?.value, 10);
 
     if (!groupName && !isGroup) {
@@ -745,7 +840,11 @@ async function handleRegistration(e) {
         const otherCollege = (card.querySelector('.member-other-college')?.value || '').trim();
         if (college === 'Other') college = otherCollege;
         const gender = (card.querySelector('.member-gender')?.value || '').trim();
-        const enrollment = (card.querySelector('.member-enrollment')?.value || '').trim();
+        const memberEnrollType = card.querySelector('.member-enrollment-type')?.value || 'Enrollment';
+        let enrollment = (card.querySelector('.member-enrollment')?.value || '').trim();
+        if (memberEnrollType === 'New Admission') {
+            enrollment = 'New Admission';
+        }
         const semester = parseInt(card.querySelector('.member-semester')?.value, 10);
         let in_game_id = null;
         let in_game_uid = null;
