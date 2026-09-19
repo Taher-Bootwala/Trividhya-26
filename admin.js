@@ -865,20 +865,95 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
             <div style="margin-bottom:2rem;">
                 <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
                     ${event.logo_url ? `<img src="${event.logo_url}" style="width:45px;height:45px;object-fit:cover;border-radius:10px;">` : ''}
-                    <div>
+                    <div style="flex: 1;">
                         <h4 style="font-size:1.1rem; font-weight:700;">${event.title}</h4>
-                        <div style="display:flex; gap:1.5rem; font-size:0.78rem; color:var(--muted); margin-top:0.2rem;">
+                        <div style="display:flex; gap:1.5rem; font-size:0.78rem; color:var(--muted); margin-top:0.2rem; flex-wrap:wrap;">
                             <span><i class="fas fa-users" style="margin-right:0.3rem;color:var(--primary);"></i>${totalParticipants} Participants</span>
                             <span><i class="fas fa-trophy" style="margin-right:0.3rem;color:var(--gold);"></i>${regs.length} Teams</span>
                             <span style="color:#2ed573;"><i class="fas fa-check-circle" style="margin-right:0.3rem;"></i>${paidCount} Paid</span>
                             <span style="color:#ffa502;"><i class="fas fa-clock" style="margin-right:0.3rem;"></i>${pendingCount} Pending</span>
                         </div>
                     </div>
+                    <button class="action-btn" onclick="exportAdminEventCsv('${event.id}', '${(event.title || '').replace(/'/g, "\\'")}')" style="background:var(--accent); color:#fff; border:none; padding:0.4rem 0.9rem; border-radius:8px; cursor:pointer; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
                 </div>
                 ${teamsHtml}
             </div>
             <hr style="border:none; border-top:1px solid rgba(123,47,190,0.15); margin-bottom:2rem;">`;
     }).join('');
+}
+
+/* ── Helper for CSV Text Preservation (Prevents Excel Scientific Notation) ── */
+function formatCsvText(val) {
+    if (val === undefined || val === null) return '""';
+    const str = String(val).trim();
+    if (!str) return '""';
+    return `"=""${str.replace(/"/g, '""')}"""`;
+}
+
+async function exportAdminEventCsv(eventId, eventTitle) {
+    const regs = await getRegistrationsByEvent(eventId);
+    if (!regs || regs.length === 0) {
+        showToast('No registrations found for this event to export', 'info');
+        return;
+    }
+
+    let csv = "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,Payment Mode,Payment Status,Approved\n";
+
+    regs.forEach(r => {
+        const teamName = (r.group_name || r.team_name || 'Individual').trim();
+        const payMode = (r.payment_mode || '').toUpperCase();
+        const payStatus = (r.payment_status || '').toUpperCase();
+        const approved = r.is_approved ? 'Yes' : 'No';
+
+        // 1. Leader row
+        csv += [
+            `"${teamName.replace(/"/g, '""')}"`,
+            `"${(r.leader_name || '').replace(/"/g, '""')}"`,
+            `"Leader"`,
+            `"${(r.leader_gender || '').replace(/"/g, '""')}"`,
+            `"${(r.college || '').replace(/"/g, '""')}"`,
+            formatCsvText(r.enrollment),
+            `"${r.semester || ''}"`,
+            `"${(r.leader_email || '').replace(/"/g, '""')}"`,
+            formatCsvText(r.leader_mobile || r.leader_phone),
+            `"${payMode}"`,
+            `"${payStatus}"`,
+            `"${approved}"`
+        ].join(',') + "\n";
+
+        // 2. Member rows
+        if (r.members && r.members.length > 0) {
+            r.members.forEach(m => {
+                csv += [
+                    `"${teamName.replace(/"/g, '""')}"`,
+                    `"${(m.name || '').replace(/"/g, '""')}"`,
+                    `"Member"`,
+                    `"${(m.gender || '').replace(/"/g, '""')}"`,
+                    `"${(m.college || r.college || '').replace(/"/g, '""')}"`,
+                    formatCsvText(m.enrollment),
+                    `"${m.semester || ''}"`,
+                    `"${(m.email || '').replace(/"/g, '""')}"`,
+                    formatCsvText(m.mobile),
+                    `"${payMode}"`,
+                    `"${payStatus}"`,
+                    `"${approved}"`
+                ].join(',') + "\n";
+            });
+        }
+    });
+
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Trividhya26_${(eventTitle || 'Event').replace(/\s+/g, '_')}_Registrations.csv`;
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('CSV exported successfully!', 'success');
 }
 
 async function renderGameDetailsTab() {
@@ -2155,9 +2230,9 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
         const leaderName = `"${(reg.leader_name || '').replace(/"/g, '""')}"`;
         const leaderGender = `"${(reg.leader_gender || '').replace(/"/g, '""')}"`;
         const leaderCollege = `"${(reg.college || '').replace(/"/g, '""')}"`;
-        const leaderEnroll = `"${(reg.enrollment || '').replace(/"/g, '""')}"`;
+        const leaderEnroll = formatCsvText(reg.enrollment);
         const leaderSem = `"${(reg.semester || '').replace(/"/g, '""')}"`;
-        const leaderMobile = `"${(reg.leader_mobile || '').replace(/"/g, '""')}"`;
+        const leaderMobile = formatCsvText(reg.leader_mobile);
         const leaderEmail = `"${(reg.leader_email || '').replace(/"/g, '""')}"`;
         const payMode = `"${(reg.payment_mode || '').toUpperCase().replace(/"/g, '""')}"`;
         const payStatus = `"${(reg.payment_status || '').toUpperCase().replace(/"/g, '""')}"`;
@@ -2311,9 +2386,9 @@ function exportGroupedUsersCsv() {
     allGroupedUsers.forEach(u => {
         const name = `"${u.name.replace(/"/g, '""')}"`;
         const email = `"${u.email.replace(/"/g, '""')}"`;
-        const mobile = `"${u.mobile.replace(/"/g, '""')}"`;
+        const mobile = formatCsvText(u.mobile);
         const college = `"${u.college.replace(/"/g, '""')}"`;
-        const enroll = `"${u.enrollment.replace(/"/g, '""')}"`;
+        const enroll = formatCsvText(u.enrollment);
         const events = `"${u.events.join(", ").replace(/"/g, '""')}"`;
 
         csvContent += [name, email, mobile, college, enroll, events].join(",") + "\n";

@@ -862,37 +862,82 @@ async function saveEventInfo() {
     }, 2000);
 }
 
+/* ── Helper for CSV Text Preservation (Prevents Excel Scientific Notation) ── */
+function formatCsvText(val) {
+    if (val === undefined || val === null) return '""';
+    const str = String(val).trim();
+    if (!str) return '""';
+    return `"=""${str.replace(/"/g, '""')}"""`;
+}
+
 /* ── Export CSV ── */
 function exportCSV() {
     if (registrations.length === 0) { showToast('No data to export', 'info'); return; }
     
-    let csv = "Group Name,Leader Name,Leader Gender,Leader College,Leader Enrollment,Leader Semester,Leader Email,Leader Mobile,Payment Mode,Payment Status,Approved,Members\n";
+    // Pick list to export (respect current tab view if it has items, otherwise fallback to non-deleted or all)
+    let list = registrations;
+    if (currentTab === 'active') {
+        const activeList = registrations.filter(r => r.payment_status !== 'deleted' && r.payment_status !== 'cancelled');
+        if (activeList.length > 0) list = activeList;
+    } else if (currentTab === 'cancelled') {
+        const cancelList = registrations.filter(r => r.payment_status === 'cancelled');
+        if (cancelList.length > 0) list = cancelList;
+    } else if (currentTab === 'deleted') {
+        const delList = registrations.filter(r => r.payment_status === 'deleted');
+        if (delList.length > 0) list = delList;
+    }
+    if (list.length === 0) list = registrations;
+
+    let csv = "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,Payment Mode,Payment Status,Approved\n";
     
-    registrations.forEach(r => {
-        const mems = r.members && r.members.length > 0 
-            ? r.members.map(m => `${m.name} [${m.gender || 'N/A'}, ${m.college}, Enr: ${m.enrollment}, Sem: ${m.semester}] (${m.mobile})`).join(' | ') 
-            : 'None';
-        
+    list.forEach(r => {
+        const teamName = (r.group_name || r.team_name || 'Individual').trim();
+        const payMode = (r.payment_mode || '').toUpperCase();
+        const payStatus = (r.payment_status || '').toUpperCase();
+        const approved = r.is_approved ? 'Yes' : 'No';
+
+        // 1. Leader row
         csv += [
-            `"${(r.group_name || '').replace(/"/g, '""')}"`,
+            `"${teamName.replace(/"/g, '""')}"`,
             `"${(r.leader_name || '').replace(/"/g, '""')}"`,
+            `"Leader"`,
             `"${(r.leader_gender || '').replace(/"/g, '""')}"`,
             `"${(r.college || '').replace(/"/g, '""')}"`,
-            `"${(r.enrollment || '').replace(/"/g, '""')}"`,
+            formatCsvText(r.enrollment),
             `"${r.semester || ''}"`,
-            `"${r.leader_email}"`,
-            `"${r.leader_mobile}"`,
-            r.payment_mode,
-            r.payment_status,
-            r.is_approved ? 'Yes' : 'No',
-            `"${mems.replace(/"/g, '""')}"`
+            `"${(r.leader_email || '').replace(/"/g, '""')}"`,
+            formatCsvText(r.leader_mobile || r.leader_phone),
+            `"${payMode}"`,
+            `"${payStatus}"`,
+            `"${approved}"`
         ].join(',') + "\n";
+
+        // 2. Member rows
+        if (r.members && r.members.length > 0) {
+            r.members.forEach(m => {
+                csv += [
+                    `"${teamName.replace(/"/g, '""')}"`,
+                    `"${(m.name || '').replace(/"/g, '""')}"`,
+                    `"Member"`,
+                    `"${(m.gender || '').replace(/"/g, '""')}"`,
+                    `"${(m.college || r.college || '').replace(/"/g, '""')}"`,
+                    formatCsvText(m.enrollment),
+                    `"${m.semester || ''}"`,
+                    `"${(m.email || '').replace(/"/g, '""')}"`,
+                    formatCsvText(m.mobile),
+                    `"${payMode}"`,
+                    `"${payStatus}"`,
+                    `"${approved}"`
+                ].join(',') + "\n";
+            });
+        }
     });
     
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `Trividhya26_${currentEvent.title.replace(/\s+/g,'_')}_Registrations.csv`;
+    const eventTitle = (currentEvent && currentEvent.title) ? currentEvent.title : 'Event';
+    link.download = `Trividhya26_${eventTitle.replace(/\s+/g,'_')}_Registrations.csv`;
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
