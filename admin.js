@@ -65,24 +65,46 @@ function closeConfirm(result) {
 
 /* ── Init ── */
 async function initMainAdmin() {
+    // 1. Session Storage Gate
+    if (sessionStorage.getItem('mainAdmin') !== 'true') {
+        window.location.replace('superadmin.html');
+        return;
+    }
+
+    // 2. Active Supabase Auth Session Gate
     const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (!session) {
-        window.location.href = 'index.html';
+        sessionStorage.removeItem('mainAdmin');
+        window.location.replace('superadmin.html');
         return;
     }
 
+    // 3. MFA Check (if MFA factor is enrolled and verified on account)
     const { data: mfaLevel, error } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
 
-    if (error || !mfaLevel || mfaLevel.currentLevel !== 'aal2') {
-        // Not authenticated with 2FA, force re-login
+    if (error || !mfaLevel) {
         await supabaseClient.auth.signOut();
         sessionStorage.removeItem('mainAdmin');
-        window.location.href = 'index.html';
+        window.location.replace('superadmin.html');
         return;
     }
 
-    // Passed 2FA
+    if (mfaLevel.currentLevel !== 'aal2') {
+        const { data: factors } = await supabaseClient.auth.mfa.listFactors();
+        if (factors && factors.totp && factors.totp.length > 0 && factors.totp.some(f => f.status === 'verified')) {
+            await supabaseClient.auth.signOut();
+            sessionStorage.removeItem('mainAdmin');
+            window.location.replace('superadmin.html');
+            return;
+        }
+    }
+
+    // Passed Auth & 2FA - Reveal UI and load dashboard
+    const authGate = document.getElementById('adminAuthGate');
+    if (authGate) authGate.remove();
+    document.body.style.display = 'block';
+
     await loadDashboard();
 }
 
@@ -744,7 +766,7 @@ async function submitNewEvent() {
 async function logoutAdmin() {
     await supabaseClient.auth.signOut();
     sessionStorage.removeItem('mainAdmin');
-    window.location.href = 'index.html';
+    window.location.href = 'superadmin.html';
 }
 
 /* ══════════════════════════════════════
@@ -1917,7 +1939,11 @@ switchTab = function (tabId, btn) {
     }
 };
 
-initMainAdmin();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMainAdmin);
+} else {
+    initMainAdmin();
+}
 
 // ═══════════════════════════════════════════════════
 // COMBO REGISTRATIONS TAB LOGIC

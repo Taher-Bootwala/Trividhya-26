@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Admin | Trividhya'26</title>
+    <!-- Main Admin Authentication Guard: Prevent unauthenticated access and UI flash -->
+    <style id="adminAuthGate">
+        body { display: none !important; }
+    </style>
+    <script>
+        if (sessionStorage.getItem('mainAdmin') !== 'true') {
+            window.location.replace('superadmin.html');
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -910,7 +919,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="supabase-config.js?v=20260902d"></script>
-    <script src="admin.js?v=20260902d"></script>
+    <script src="supabase-config.js?v=20260920a"></script>
+    <script src="admin.js?v=20260920a"></script>
 </body>
 </html>
