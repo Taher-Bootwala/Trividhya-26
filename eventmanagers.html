@@ -462,15 +462,63 @@
                 populateEventSelect(allEventsData);
                 renderDirectory(allEventsData);
 
-                // Auto-select if event ID passed in URL
+                // Auto-select if event ID or title passed in URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const presetId = urlParams.get('id');
+                const presetEvent = urlParams.get('event');
+
+                let targetEvent = null;
                 if (presetId) {
+                    targetEvent = allEventsData.find(e => e.id === presetId);
+                }
+                if (!targetEvent && (presetEvent || presetId)) {
+                    const rawParam = (presetEvent || presetId);
+                    const cleanName = decodeURIComponent(rawParam).replace(/^combo:\s*/i, '').trim().toLowerCase();
+                    targetEvent = allEventsData.find(e => 
+                        e.id === rawParam ||
+                        e.title.toLowerCase().trim() === cleanName ||
+                        cleanName.includes(e.title.toLowerCase().trim()) ||
+                        e.title.toLowerCase().includes(cleanName)
+                    );
+                }
+
+                // Fallback: If not in active events list, fetch directly from Supabase
+                if (!targetEvent && (presetId || presetEvent)) {
+                    try {
+                        let query = supabaseClient.from('events').select('*');
+                        if (presetId) {
+                            query = query.eq('id', presetId);
+                        } else {
+                            const searchTitle = decodeURIComponent(presetEvent).replace(/^combo:\s*/i, '').trim();
+                            query = query.ilike('title', `%${searchTitle}%`);
+                        }
+                        const { data: dbEv } = await query.maybeSingle();
+                        if (dbEv) {
+                            if (!allEventsData.some(e => e.id === dbEv.id)) {
+                                allEventsData.push(dbEv);
+                                populateEventSelect(allEventsData);
+                            }
+                            targetEvent = dbEv;
+                        }
+                    } catch (err) {
+                        console.warn('Fallback direct event fetch error:', err);
+                    }
+                }
+
+                if (targetEvent) {
                     const sel = document.getElementById('mgrEventSelect');
                     if (sel) {
-                        sel.value = presetId;
-                        onEventSelected(presetId);
+                        sel.value = targetEvent.id;
+                        onEventSelected(targetEvent.id);
                     }
+                    const passInput = document.getElementById('mgrPassword');
+                    if (passInput) {
+                        setTimeout(() => {
+                            passInput.focus();
+                            passInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                    }
+                    showToast(`Selected event: "${targetEvent.title}". Enter password to proceed.`, 'info');
                 }
             } catch (err) {
                 console.error('Init error:', err);

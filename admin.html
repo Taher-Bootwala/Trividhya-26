@@ -263,6 +263,53 @@
             .chart-card { padding: 1rem; }
             .stat-card { padding: 1rem; gap: 1rem; flex-direction: column; text-align: center; justify-content: center; }
         }
+
+        /* Event Link Badges in User Registrations */
+        .admin-event-link-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #f4f0fa !important;
+            color: #621b9e !important;
+            border: 1.5px solid #621b9e !important;
+            padding: 0.28rem 0.65rem;
+            border-radius: 8px;
+            margin: 2px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none !important;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+        .admin-event-link-pill:hover {
+            background: #621b9e !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(98, 27, 158, 0.28);
+        }
+        .admin-event-link-pill i {
+            font-size: 0.68rem;
+            opacity: 0.85;
+        }
+        .admin-combo-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(217, 119, 6, 0.08) !important;
+            color: #b45309 !important;
+            border: 1.5px solid rgba(217, 119, 6, 0.35) !important;
+            padding: 0.28rem 0.65rem;
+            border-radius: 8px;
+            margin: 2px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .admin-combo-tag i {
+            font-size: 0.72rem;
+            color: #d97706;
+        }
     </style>
 </head>
 <body>
@@ -923,6 +970,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="supabase-config.js?v=20260920a"></script>
-    <script src="admin.js?v=20260920a"></script>
+    <script src="admin.js?v=20260921b"></script>
 </body>
 </html>

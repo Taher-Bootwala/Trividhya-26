@@ -2300,12 +2300,22 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
 let allGroupedUsers = [];
 
 async function fetchGroupedUserRegistrations() {
+    if (!allEvents || allEvents.length === 0) {
+        try {
+            allEvents = await getAllEventsAdmin();
+        } catch (e) {
+            console.warn('Failed loading events for user registrations grouping:', e);
+        }
+    }
+    const eventMap = {};
+    (allEvents || []).forEach(e => { eventMap[e.id] = e; });
+
     const { data, error } = await supabaseClient
         .from('registrations')
         .select(`
             *,
-            events(title),
-            combos(name),
+            events(id, title),
+            combos(id, name, events_data),
             members(*)
         `)
         .order('created_at', { ascending: true });
@@ -2332,20 +2342,45 @@ async function fetchGroupedUserRegistrations() {
                 college: reg.college || 'N/A',
                 enrollment: reg.enrollment || 'N/A',
                 events: [],
+                eventItems: [],
                 registrations: []
             };
         }
 
         let eventName = 'Unknown Event';
+        let eventId = null;
+        const isCombo = !!reg.is_combo;
+        let subEvents = [];
+
         if (reg.is_combo && reg.combos) {
             eventName = `Combo: ${reg.combos.name}`;
-        } else if (!reg.is_combo && reg.events) {
-            eventName = reg.events.title;
+            eventId = reg.combo_id || reg.combos.id;
+            const edList = reg.combos.events_data || [];
+            subEvents = edList.map(ed => {
+                const matched = eventMap[ed.event_id] || (allEvents && allEvents.find(e => e.id === ed.event_id));
+                return {
+                    id: ed.event_id,
+                    title: matched ? matched.title : (ed.title || 'Event')
+                };
+            });
+        } else if (!reg.is_combo) {
+            eventId = reg.event_id || (reg.events && reg.events.id);
+            if (reg.events && reg.events.title) {
+                eventName = reg.events.title;
+            } else if (eventId && eventMap[eventId]) {
+                eventName = eventMap[eventId].title;
+            }
         }
 
         // Prevent duplicate games (if they accidentally registered twice)
         if (!usersMap[key].events.includes(eventName)) {
             usersMap[key].events.push(eventName);
+            usersMap[key].eventItems.push({
+                id: eventId,
+                title: eventName,
+                isCombo: isCombo,
+                subEvents: subEvents
+            });
             usersMap[key].registrations.push({
                 eventName: eventName,
                 is_approved: !!reg.is_approved,
@@ -2366,6 +2401,9 @@ async function fetchGroupedUserRegistrations() {
     // Sort events alphabetically within each user
     users.forEach(u => {
         u.events.sort((a, b) => a.localeCompare(b));
+        if (u.eventItems) {
+            u.eventItems.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        }
         if (u.registrations) {
             u.registrations.sort((a, b) => a.eventName.localeCompare(b.eventName));
         }
@@ -2397,7 +2435,10 @@ async function renderUserRegistrationsTab() {
         filteredUsers = allGroupedUsers.filter(u =>
             u.name.toLowerCase().includes(searchVal) ||
             u.email.toLowerCase().includes(searchVal) ||
-            u.mobile.toLowerCase().includes(searchVal)
+            u.mobile.toLowerCase().includes(searchVal) ||
+            (u.college && u.college.toLowerCase().includes(searchVal)) ||
+            (u.enrollment && u.enrollment.toLowerCase().includes(searchVal)) ||
+            (u.events && u.events.some(ev => ev.toLowerCase().includes(searchVal)))
         );
     }
 
@@ -2407,7 +2448,59 @@ async function renderUserRegistrationsTab() {
     }
 
     tbody.innerHTML = filteredUsers.map(u => {
-        const eventsHtml = (u.events || []).map(e => `<span style="display:inline-block; background:rgba(0,0,0,0.04); border:1px solid rgba(0,0,0,0.12); padding:0.25rem 0.6rem; border-radius:6px; margin:2px; font-size:0.8rem; font-weight:500;">${e}</span>`).join('');
+        const eventsHtml = (u.eventItems && u.eventItems.length > 0)
+            ? u.eventItems.map(item => {
+                if (item.isCombo) {
+                    return `
+                        <span class="admin-combo-tag" title="${item.title}">
+                            <i class="fas fa-layer-group"></i>
+                            <span>${item.title}</span>
+                        </span>
+                    `;
+                } else if (item.id) {
+                    return `
+                        <a href="eventmanagers.html?id=${encodeURIComponent(item.id)}&event=${encodeURIComponent(item.title)}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="admin-event-link-pill" 
+                           title="Click to open manager portal for ${item.title}">
+                            <span>${item.title}</span>
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    `;
+                } else {
+                    return `
+                        <a href="eventmanagers.html?event=${encodeURIComponent(item.title)}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="admin-event-link-pill" 
+                           title="Click to open manager portal for ${item.title}">
+                            <span>${item.title}</span>
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    `;
+                }
+            }).join('')
+            : (u.events || []).map(e => {
+                if (typeof e === 'string' && e.toLowerCase().startsWith('combo:')) {
+                    return `
+                        <span class="admin-combo-tag" title="${e}">
+                            <i class="fas fa-layer-group"></i>
+                            <span>${e}</span>
+                        </span>
+                    `;
+                }
+                return `
+                    <a href="eventmanagers.html?event=${encodeURIComponent(e)}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="admin-event-link-pill" 
+                       title="Click to open manager portal for ${e}">
+                        <span>${e}</span>
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                `;
+            }).join('');
         
         const statusHtml = (u.registrations || []).map(r => {
             const isApproved = r.is_approved;
