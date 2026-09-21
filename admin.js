@@ -399,6 +399,7 @@ function renderEventsTable() {
                 <td>
                     <button class="action-btn edit" onclick="openEditEventModal('${ev.id}')" title="Edit Event & Staff"><i class="fas fa-edit"></i></button>
                     <button class="action-btn pass" onclick="changePassword('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Change Event Password"><i class="fas fa-key"></i></button>
+                    <button class="action-btn csv" onclick="exportAdminEventCsv('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Export Participation CSV"><i class="fas fa-file-csv"></i></button>
                     <button class="action-btn edit" onclick="toggleVisibility('${ev.id}', ${ev.is_active})" title="${ev.is_active ? 'Hide Event' : 'Show Event'}"><i class="fas ${ev.is_active ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
                     <button class="action-btn delete" onclick="deleteEv('${ev.id}', '${ev.title.replace(/'/g, "\\'")}')" title="Delete Event"><i class="fas fa-trash-alt"></i></button>
                 </td>
@@ -796,9 +797,10 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                 const membersMatch = r.members && r.members.some(m => (m.name || '').toLowerCase().includes(term));
                 return teamMatch || leaderMatch || membersMatch;
             });
-        }
-
-        if (regs.length > 0) {
+            if (regs.length > 0 || (ev.title || '').toLowerCase().includes(term)) {
+                eventData.push({ event: ev, regs });
+            }
+        } else {
             eventData.push({ event: ev, regs });
         }
     }
@@ -807,7 +809,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
         container.innerHTML = `
             <div style="text-align:center; padding:3rem; color:var(--muted);">
                 <i class="fas fa-info-circle" style="font-size:3rem; margin-bottom:1rem; display:block; opacity:0.3;"></i>
-                <p>No registrations found.</p>
+                <p>No registrations or events found.</p>
             </div>`;
         return;
     }
@@ -817,7 +819,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
         const paidCount = regs.filter(r => r.payment_status === 'paid').length;
         const pendingCount = regs.filter(r => r.payment_status === 'pending').length;
 
-        const teamsHtml = regs.map((r) => {
+        const teamsHtml = regs.length > 0 ? regs.map((r) => {
             const membersArr = r.members || [];
             const membersHtml = membersArr.length > 0
                 ? membersArr.map(m => `
@@ -881,7 +883,7 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                         </div>
                     </div>
                 </div>`;
-        }).join('');
+        }).join('') : '<p style="color:var(--muted); font-size:0.85rem; padding:0.8rem 0; font-style:italic;"><i class="fas fa-inbox" style="margin-right:0.4rem;"></i>No registrations yet for this event.</p>';
 
         return `
             <div style="margin-bottom:2rem;">
@@ -1936,6 +1938,10 @@ switchTab = function (tabId, btn) {
         loadPaymentQrsTab();
     } else if (tabId === 'combo-regs') {
         renderComboRegistrationsTab();
+    } else if (tabId === 'user-registrations') {
+        renderUserRegistrationsTab();
+    } else if (tabId === 'events') {
+        renderEventsTable();
     }
 };
 
@@ -2325,7 +2331,8 @@ async function fetchGroupedUserRegistrations() {
                 mobile: mobile,
                 college: reg.college || 'N/A',
                 enrollment: reg.enrollment || 'N/A',
-                events: []
+                events: [],
+                registrations: []
             };
         }
 
@@ -2339,6 +2346,17 @@ async function fetchGroupedUserRegistrations() {
         // Prevent duplicate games (if they accidentally registered twice)
         if (!usersMap[key].events.includes(eventName)) {
             usersMap[key].events.push(eventName);
+            usersMap[key].registrations.push({
+                eventName: eventName,
+                is_approved: !!reg.is_approved,
+                payment_status: reg.payment_status || 'pending'
+            });
+        } else {
+            const existing = usersMap[key].registrations.find(r => r.eventName === eventName);
+            if (existing && reg.is_approved) {
+                existing.is_approved = true;
+                existing.payment_status = reg.payment_status || existing.payment_status;
+            }
         }
     });
 
@@ -2346,7 +2364,12 @@ async function fetchGroupedUserRegistrations() {
     let users = Object.values(usersMap);
 
     // Sort events alphabetically within each user
-    users.forEach(u => u.events.sort((a, b) => a.localeCompare(b)));
+    users.forEach(u => {
+        u.events.sort((a, b) => a.localeCompare(b));
+        if (u.registrations) {
+            u.registrations.sort((a, b) => a.eventName.localeCompare(b.eventName));
+        }
+    });
 
     // Sort users alphabetically by name
     users.sort((a, b) => a.name.localeCompare(b.name));
@@ -2360,12 +2383,12 @@ async function renderUserRegistrationsTab() {
     const searchVal = (document.getElementById('userRegSearchInput').value || '').toLowerCase().trim();
 
     if (allGroupedUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading user data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading user data...</td></tr>';
         await fetchGroupedUserRegistrations();
     }
 
     if (allGroupedUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding: 2rem;">No users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding: 2rem;">No users found.</td></tr>';
         return;
     }
 
@@ -2379,12 +2402,30 @@ async function renderUserRegistrationsTab() {
     }
 
     if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding: 2rem;">No matching users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding: 2rem;">No matching users found.</td></tr>';
         return;
     }
 
     tbody.innerHTML = filteredUsers.map(u => {
-        const eventsHtml = u.events.map(e => `<span style="display:inline-block; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:0.2rem 0.5rem; border-radius:4px; margin:2px; font-size:0.8rem;">${e}</span>`).join('');
+        const eventsHtml = (u.events || []).map(e => `<span style="display:inline-block; background:rgba(0,0,0,0.04); border:1px solid rgba(0,0,0,0.12); padding:0.25rem 0.6rem; border-radius:6px; margin:2px; font-size:0.8rem; font-weight:500;">${e}</span>`).join('');
+        
+        const statusHtml = (u.registrations || []).map(r => {
+            const isApproved = r.is_approved;
+            const badge = isApproved
+                ? `<span style="background:rgba(46,213,115,0.15); color:#2ed573; border:1px solid rgba(46,213,115,0.3); font-size:0.72rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:50px; display:inline-flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Approved</span>`
+                : `<span style="background:rgba(255,165,2,0.15); color:#e67e22; border:1px solid rgba(255,165,2,0.3); font-size:0.72rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:50px; display:inline-flex; align-items:center; gap:0.3rem;"><i class="fas fa-clock"></i> Pending</span>`;
+
+            if ((u.registrations || []).length > 1) {
+                return `
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-bottom:4px; background:rgba(0,0,0,0.02); padding:3px 6px; border-radius:6px; border:1px solid rgba(0,0,0,0.05);">
+                        <span style="font-size:0.75rem; color:#444; font-weight:600;">${r.eventName}:</span>
+                        ${badge}
+                    </div>`;
+            } else {
+                return badge;
+            }
+        }).join('');
+
         return `
             <tr>
                 <td style="font-weight:600; color:var(--accent);">${u.name}</td>
@@ -2395,6 +2436,7 @@ async function renderUserRegistrationsTab() {
                 <td>${u.college}</td>
                 <td>${u.enrollment}</td>
                 <td>${eventsHtml}</td>
+                <td>${statusHtml}</td>
             </tr>
         `;
     }).join('');
