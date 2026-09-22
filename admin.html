@@ -310,6 +310,32 @@
             font-size: 0.72rem;
             color: #d97706;
         }
+        /* Transaction ID Pill in User Registrations */
+        .admin-txn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #f8fafc;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 0.22rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: all;
+        }
+        .admin-txn-pill:hover {
+            background: #ede9fe;
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(98, 27, 158, 0.15);
+        }
+        .admin-txn-pill i.fa-receipt {
+            color: var(--accent);
+            font-size: 0.72rem;
+        }
     </style>
 </head>
 <body>
@@ -599,7 +625,7 @@
                 <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
                     <h3 style="font-size: 1.2rem; margin:0;"><i class="fas fa-users" style="color:var(--accent);margin-right:0.5rem;"></i>User Registration Details</h3>
                     <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
-                        <input type="text" id="userRegSearchInput" class="form-input" style="max-width:300px; padding:0.5rem 1rem;" placeholder="Search user by name or email..." onkeyup="renderUserRegistrationsTab()">
+                        <input type="text" id="userRegSearchInput" class="form-input" style="max-width:300px; padding:0.5rem 1rem;" placeholder="Search user by name, email, or transaction ID..." onkeyup="renderUserRegistrationsTab()">
                         <button class="action-btn" onclick="exportGroupedUsersCsv()" style="background:var(--accent); color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer;"><i class="fas fa-file-csv"></i> Export CSV</button>
                         <button class="action-btn" onclick="exportGroupedUsersPdf()" style="background:#e74c3c; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer;"><i class="fas fa-file-pdf"></i> Export PDF</button>
                     </div>
@@ -613,11 +639,12 @@
                                 <th>College</th>
                                 <th>Enrollment</th>
                                 <th>Events Registered</th>
+                                <th>Transaction ID</th>
                                 <th>Approval Status</th>
                             </tr>
                         </thead>
                         <tbody id="userRegistrationsTableBody">
-                            <tr><td colspan="6" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Click 'User Details' to load data...</td></tr>
+                            <tr><td colspan="7" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Click 'User Details' to load data...</td></tr>
                         </tbody>
                     </table>
                 </div>

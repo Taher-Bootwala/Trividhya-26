@@ -2384,13 +2384,23 @@ async function fetchGroupedUserRegistrations() {
             usersMap[key].registrations.push({
                 eventName: eventName,
                 is_approved: !!reg.is_approved,
-                payment_status: reg.payment_status || 'pending'
+                payment_status: reg.payment_status || 'pending',
+                transaction_id: reg.transaction_id ? String(reg.transaction_id).trim() : null,
+                payment_mode: reg.payment_mode || null
             });
         } else {
             const existing = usersMap[key].registrations.find(r => r.eventName === eventName);
-            if (existing && reg.is_approved) {
-                existing.is_approved = true;
+            if (existing) {
+                if (reg.is_approved) {
+                    existing.is_approved = true;
+                }
                 existing.payment_status = reg.payment_status || existing.payment_status;
+                const newTxn = reg.transaction_id ? String(reg.transaction_id).trim() : null;
+                if (!existing.transaction_id && newTxn) {
+                    existing.transaction_id = newTxn;
+                } else if (existing.transaction_id && newTxn && !existing.transaction_id.includes(newTxn)) {
+                    existing.transaction_id = `${existing.transaction_id}, ${newTxn}`;
+                }
             }
         }
     });
@@ -2421,12 +2431,12 @@ async function renderUserRegistrationsTab() {
     const searchVal = (document.getElementById('userRegSearchInput').value || '').toLowerCase().trim();
 
     if (allGroupedUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading user data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="admin-loading"><i class="fas fa-spinner fa-spin"></i> Loading user data...</td></tr>';
         await fetchGroupedUserRegistrations();
     }
 
     if (allGroupedUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding: 2rem;">No users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding: 2rem;">No users found.</td></tr>';
         return;
     }
 
@@ -2438,12 +2448,13 @@ async function renderUserRegistrationsTab() {
             u.mobile.toLowerCase().includes(searchVal) ||
             (u.college && u.college.toLowerCase().includes(searchVal)) ||
             (u.enrollment && u.enrollment.toLowerCase().includes(searchVal)) ||
-            (u.events && u.events.some(ev => ev.toLowerCase().includes(searchVal)))
+            (u.events && u.events.some(ev => ev.toLowerCase().includes(searchVal))) ||
+            (u.registrations && u.registrations.some(r => r.transaction_id && r.transaction_id.toLowerCase().includes(searchVal)))
         );
     }
 
     if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding: 2rem;">No matching users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding: 2rem;">No matching users found.</td></tr>';
         return;
     }
 
@@ -2502,6 +2513,34 @@ async function renderUserRegistrationsTab() {
                 `;
             }).join('');
         
+        const txnHtml = (u.registrations || []).map(r => {
+            let badge;
+            if (r.transaction_id) {
+                badge = `
+                    <span class="admin-txn-pill" 
+                          onclick="copyToClipboard('${r.transaction_id}')" 
+                          title="Click to copy Transaction ID">
+                        <i class="fas fa-receipt"></i>
+                        <span style="font-family:monospace; font-weight:600; font-size:0.78rem; letter-spacing:0.5px;">${r.transaction_id}</span>
+                        <i class="far fa-copy" style="font-size:0.68rem; opacity:0.65; margin-left:2px;"></i>
+                    </span>`;
+            } else if (r.payment_mode === 'cash') {
+                badge = `<span style="background:rgba(230,126,34,0.12); color:#d35400; border:1px solid rgba(230,126,34,0.3); font-size:0.72rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:50px; display:inline-flex; align-items:center; gap:0.3rem;"><i class="fas fa-money-bill-wave"></i> Cash</span>`;
+            } else {
+                badge = `<span style="color:var(--muted); font-size:0.75rem; font-style:italic;">N/A</span>`;
+            }
+
+            if ((u.registrations || []).length > 1) {
+                return `
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-bottom:4px; background:rgba(0,0,0,0.02); padding:3px 6px; border-radius:6px; border:1px solid rgba(0,0,0,0.05);">
+                        <span style="font-size:0.75rem; color:#444; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px;" title="${r.eventName}">${r.eventName}:</span>
+                        ${badge}
+                    </div>`;
+            } else {
+                return badge;
+            }
+        }).join('') || '<span style="color:var(--muted); font-size:0.75rem; font-style:italic;">N/A</span>';
+
         const statusHtml = (u.registrations || []).map(r => {
             const isApproved = r.is_approved;
             const badge = isApproved
@@ -2529,6 +2568,7 @@ async function renderUserRegistrationsTab() {
                 <td>${u.college}</td>
                 <td>${u.enrollment}</td>
                 <td>${eventsHtml}</td>
+                <td>${txnHtml}</td>
                 <td>${statusHtml}</td>
             </tr>
         `;
@@ -2542,7 +2582,7 @@ function exportGroupedUsersCsv() {
     }
 
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Email,Mobile,College,Enrollment,Events Registered\n";
+    csvContent += "Name,Email,Mobile,College,Enrollment,Events Registered,Transaction ID(s)\n";
 
     allGroupedUsers.forEach(u => {
         const name = `"${u.name.replace(/"/g, '""')}"`;
@@ -2551,8 +2591,13 @@ function exportGroupedUsersCsv() {
         const college = `"${u.college.replace(/"/g, '""')}"`;
         const enroll = formatCsvText(u.enrollment);
         const events = `"${u.events.join(", ").replace(/"/g, '""')}"`;
+        const txnList = (u.registrations || []).map(r => {
+            const txn = r.transaction_id || (r.payment_mode === 'cash' ? 'Cash' : 'N/A');
+            return (u.registrations.length > 1) ? `${r.eventName}: ${txn}` : txn;
+        });
+        const txns = `"${txnList.join("; ").replace(/"/g, '""')}"`;
 
-        csvContent += [name, email, mobile, college, enroll, events].join(",") + "\n";
+        csvContent += [name, email, mobile, college, enroll, events, txns].join(",") + "\n";
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -2576,13 +2621,17 @@ function exportGroupedUsersPdf() {
 
     doc.text("Trividhya'26 - User Registration Details", 14, 15);
 
-    const tableColumn = ["Name", "Contact (Email/Mobile)", "College", "Enrollment", "Events Registered"];
+    const tableColumn = ["Name", "Contact (Email/Mobile)", "College", "Enrollment", "Events Registered", "Transaction ID(s)"];
     const tableRows = [];
 
     allGroupedUsers.forEach(u => {
         const contact = `${u.email}\n${u.mobile}`;
         const events = u.events.join("\n");
-        tableRows.push([u.name, contact, u.college, u.enrollment, events]);
+        const txns = (u.registrations || []).map(r => {
+            const txn = r.transaction_id || (r.payment_mode === 'cash' ? 'Cash' : 'N/A');
+            return (u.registrations.length > 1) ? `${r.eventName}: ${txn}` : txn;
+        }).join("\n");
+        tableRows.push([u.name, contact, u.college, u.enrollment, events, txns]);
     });
 
     doc.autoTable({
@@ -2591,9 +2640,41 @@ function exportGroupedUsersPdf() {
         startY: 20,
         styles: { fontSize: 8 },
         columnStyles: {
-            4: { cellWidth: 100 } // Give events column more space
+            4: { cellWidth: 70 },
+            5: { cellWidth: 60 }
         }
     });
 
     doc.save("User_Registrations_Details.pdf");
 }
+
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Transaction ID copied: ' + text, 'success');
+        }).catch(() => {
+            fallbackCopyText(text);
+        });
+    } else {
+        fallbackCopyText(text);
+    }
+}
+
+function fallbackCopyText(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('Transaction ID copied: ' + text, 'success');
+    } catch (err) {
+        showToast('Failed to copy ID', 'error');
+    }
+    document.body.removeChild(textArea);
+}
+
