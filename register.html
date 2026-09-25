@@ -29,25 +29,97 @@
             z-index: -1;
         }
 
-        .reg-back {
+        /* ── Registration Top Navbar ── */
+        .reg-top-navbar {
             position: fixed;
-            top: 1.2rem;
-            left: 1.5rem;
-            color: #000000 !important;
-            text-decoration: none;
-            font-size: 0.9rem;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid #000000 !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .reg-navbar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .reg-nav-back {
+            color: #000000 !important;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
             gap: 0.5rem;
-            z-index: 100;
-            transition: all 0.3s ease;
             background: #ffffff !important;
-            padding: 0.6rem 1.2rem;
+            padding: 0.5rem 1.1rem;
             border-radius: 50px;
             border: 2px solid #000000 !important;
             font-family: var(--font-body);
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        .reg-back:hover { color: #ffffff !important; background: #000000 !important; transform: translateY(-2px); }
+        .reg-nav-back:hover {
+            color: #ffffff !important;
+            background: #000000 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .reg-nav-contact {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            color: #000000;
+            background: #f8f9fa;
+            border: 1.5px solid #000000;
+            padding: 0.45rem 1.1rem;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .reg-nav-contact-icon {
+            color: #000000;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .reg-nav-contact-text {
+            color: #111111;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .reg-nav-email-link {
+            color: #000000 !important;
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-left: 0.25rem;
+            transition: color 0.2s ease;
+        }
+
+        .reg-nav-email-link:hover {
+            color: #666666 !important;
+        }
 
         .reg-container {
             position: relative;
@@ -453,6 +525,30 @@
         }
 
         @media (max-width: 768px) {
+            .reg-top-navbar {
+                padding: 0.55rem 0.9rem;
+            }
+            .reg-navbar-inner {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.45rem;
+            }
+            .reg-nav-back {
+                align-self: flex-start;
+                font-size: 0.8rem;
+                padding: 0.35rem 0.8rem;
+            }
+            .reg-nav-contact {
+                font-size: 0.76rem;
+                padding: 0.4rem 0.75rem;
+                border-radius: 12px;
+                text-align: center;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .reg-page {
+                padding-top: 6.8rem !important;
+            }
             .reg-container { max-width: 100%; }
             .members-grid {
                 grid-template-columns: 1fr;
@@ -461,7 +557,11 @@
             .reg-form-card, .reg-event-header { padding: 1.25rem; }
         }
         @media (max-width: 480px) {
-            .reg-page { padding: 4.5rem 0.75rem 2rem; }
+            .reg-page { padding: 7.8rem 0.75rem 2rem !important; }
+            .reg-nav-contact {
+                font-size: 0.72rem;
+                gap: 0.35rem;
+            }
             .card-fields-grid {
                 grid-template-columns: 1fr;
                 gap: 0.4rem;
@@ -474,7 +574,25 @@
 </head>
 <body>
     <div class="cyber-grid"></div>
-    <a href="index.html" class="reg-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <!-- ═══════════ REGISTRATION TOP NAVBAR ═══════════ -->
+    <nav class="reg-top-navbar" id="regNavbar">
+        <div class="reg-navbar-inner">
+            <a href="index.html" class="reg-nav-back">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Home</span>
+            </a>
+            <div class="reg-nav-contact">
+                <i class="fas fa-question-circle reg-nav-contact-icon"></i>
+                <span class="reg-nav-contact-text">
+                    For any question regarding registration please contact here: 
+                    <a href="mailto:bootwalataher2@gmail.com" class="reg-nav-email-link">
+                        <i class="fas fa-envelope"></i> bootwalataher2@gmail.com
+                    </a>
+                </span>
+            </div>
+        </div>
+    </nav>
 
     <div class="reg-page">
         <div class="reg-container" id="regContainer">

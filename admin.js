@@ -823,11 +823,12 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
             const membersArr = r.members || [];
             const membersHtml = membersArr.length > 0
                 ? membersArr.map(m => `
-                    <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03); flex-wrap:wrap;">
                         <i class="fas fa-user" style="color:var(--muted); font-size:0.7rem;"></i>
                         <span style="font-size:0.82rem;">${m.name}</span>
                         <span style="color:var(--muted); font-size:0.75rem;">${m.gender || 'N/A'}</span>
                         <span style="color:var(--muted); font-size:0.75rem;">${m.mobile || ''}</span>
+                        ${(m.in_game_id || m.in_game_uid) ? `<span style="color:#2ed573; font-size:0.75rem; background:rgba(46,213,115,0.1); padding:2px 8px; border-radius:4px; border:1px solid rgba(46,213,115,0.2);"><b>IGN:</b> ${m.in_game_id || '-'} | <b>UID:</b> ${m.in_game_uid || '-'}</span>` : ''}
                     </div>`).join('')
                 : '<p style="color:var(--muted); font-size:0.8rem; padding:0.5rem 0;">No additional members</p>';
 
@@ -865,12 +866,13 @@ async function renderRegDetails(categories, containerId, searchTerm = '') {
                     <div style="padding-left:0.5rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
                             <div>
-                                <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                <div style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.03); flex-wrap:wrap;">
                                     <i class="fas fa-crown" style="color:var(--gold); font-size:0.7rem;"></i>
                                     <span style="font-size:0.82rem; font-weight:600;">${r.leader_name}</span>
                                     <span style="color:var(--muted); font-size:0.75rem;">${r.leader_gender || 'N/A'}</span>
                                     <span style="color:var(--muted); font-size:0.75rem;">${r.leader_phone || r.leader_mobile}</span>
                                     <span style="color:var(--muted); font-size:0.75rem;">${r.leader_email || ''}</span>
+                                    ${(r.leader_in_game_id || r.leader_in_game_uid) ? `<span style="color:#2ed573; font-size:0.75rem; background:rgba(46,213,115,0.1); padding:2px 8px; border-radius:4px; border:1px solid rgba(46,213,115,0.2);"><b>IGN:</b> ${r.leader_in_game_id || '-'} | <b>UID:</b> ${r.leader_in_game_uid || '-'}</span>` : ''}
                                     <span style="color:var(--gold); font-size:0.68rem; font-weight:600;">LEADER</span>
                                 </div>
                                 ${membersHtml}
@@ -923,7 +925,12 @@ async function exportAdminEventCsv(eventId, eventTitle) {
         return;
     }
 
-    let csv = "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,Payment Mode,Payment Status,Approved\n";
+    const ev = (typeof allEvents !== 'undefined' && Array.isArray(allEvents)) ? allEvents.find(e => e.id === eventId) : null;
+    const isGame = (ev && (ev.category === 'game' || ev.category === 'gaming')) || regs.some(r => r.leader_in_game_id || r.leader_in_game_uid || (r.members && r.members.some(m => m.in_game_id || m.in_game_uid)));
+
+    let csv = isGame
+        ? "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,In-Game ID,In-Game UID,Payment Mode,Payment Status,Approved\n"
+        : "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,Payment Mode,Payment Status,Approved\n";
 
     regs.forEach(r => {
         const teamName = (r.group_name || r.team_name || 'Individual').trim();
@@ -932,7 +939,7 @@ async function exportAdminEventCsv(eventId, eventTitle) {
         const approved = r.is_approved ? 'Yes' : 'No';
 
         // 1. Leader row
-        csv += [
+        const leaderRow = [
             `"${teamName.replace(/"/g, '""')}"`,
             `"${(r.leader_name || '').replace(/"/g, '""')}"`,
             `"Leader"`,
@@ -941,16 +948,28 @@ async function exportAdminEventCsv(eventId, eventTitle) {
             formatCsvText(r.enrollment),
             `"${r.semester || ''}"`,
             `"${(r.leader_email || '').replace(/"/g, '""')}"`,
-            formatCsvText(r.leader_mobile || r.leader_phone),
+            formatCsvText(r.leader_mobile || r.leader_phone)
+        ];
+
+        if (isGame) {
+            leaderRow.push(
+                formatCsvText(r.leader_in_game_id || r.in_game_id || ''),
+                formatCsvText(r.leader_in_game_uid || r.in_game_uid || '')
+            );
+        }
+
+        leaderRow.push(
             `"${payMode}"`,
             `"${payStatus}"`,
             `"${approved}"`
-        ].join(',') + "\n";
+        );
+
+        csv += leaderRow.join(',') + "\n";
 
         // 2. Member rows
         if (r.members && r.members.length > 0) {
             r.members.forEach(m => {
-                csv += [
+                const memberRow = [
                     `"${teamName.replace(/"/g, '""')}"`,
                     `"${(m.name || '').replace(/"/g, '""')}"`,
                     `"Member"`,
@@ -959,11 +978,23 @@ async function exportAdminEventCsv(eventId, eventTitle) {
                     formatCsvText(m.enrollment),
                     `"${m.semester || ''}"`,
                     `"${(m.email || '').replace(/"/g, '""')}"`,
-                    formatCsvText(m.mobile),
+                    formatCsvText(m.mobile)
+                ];
+
+                if (isGame) {
+                    memberRow.push(
+                        formatCsvText(m.in_game_id || ''),
+                        formatCsvText(m.in_game_uid || '')
+                    );
+                }
+
+                memberRow.push(
                     `"${payMode}"`,
                     `"${payStatus}"`,
                     `"${approved}"`
-                ].join(',') + "\n";
+                );
+
+                csv += memberRow.join(',') + "\n";
             });
         }
     });
@@ -2277,9 +2308,10 @@ async function exportComboRegistrationsToCsv(comboIds, filename) {
 
         let membersStr = '';
         if (reg.members && reg.members.length > 0) {
-            membersStr = reg.members.map(m =>
-                `${m.name} [${m.gender || 'N/A'}, ${m.college || 'N/A'}, ${m.enrollment || 'N/A'}, ${m.mobile || 'N/A'}]`
-            ).join(' | ');
+            membersStr = reg.members.map(m => {
+                const gameInfo = (m.in_game_id || m.in_game_uid) ? `, IGN: ${m.in_game_id || 'N/A'}, UID: ${m.in_game_uid || 'N/A'}` : '';
+                return `${m.name} [${m.gender || 'N/A'}, ${m.college || 'N/A'}, ${m.enrollment || 'N/A'}, ${m.mobile || 'N/A'}${gameInfo}]`;
+            }).join(' | ');
         }
         const membersFormatted = `"${membersStr.replace(/"/g, '""')}"`;
 

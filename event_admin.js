@@ -317,9 +317,16 @@ function renderTable() {
             
         let priceText = r.amount !== undefined && r.amount !== null ? `₹${r.amount}` : `₹${currentEvent.fee}`;
 
+        let leaderGameInfo = (r.leader_in_game_id || r.leader_in_game_uid)
+            ? `<div style="font-size:0.72rem;color:#2980b9;margin-top:2px;"><b>IGN:</b> ${r.leader_in_game_id || '-'} | <b>UID:</b> ${r.leader_in_game_uid || '-'}</div>`
+            : '';
+
         let membersHtml = '';
         if (r.members && r.members.length > 0) {
-            membersHtml = r.members.map(m => `<div>• ${m.name}</div>`).join('');
+            membersHtml = r.members.map(m => {
+                const gameTag = (m.in_game_id || m.in_game_uid) ? ` <span style="font-size:0.7rem; color:#2980b9;">[IGN: ${m.in_game_id || '-'}, UID: ${m.in_game_uid || '-'}]</span>` : '';
+                return `<div>• ${m.name}${gameTag}</div>`;
+            }).join('');
             membersHtml = `<div class="member-list">${membersHtml}</div>`;
         } else {
             membersHtml = '<div class="member-list" style="color:rgba(0,0,0,0.3);">— Solo —</div>';
@@ -367,6 +374,7 @@ function renderTable() {
                     <div style="font-weight:600;color:#000000;">${r.leader_name} <i class="fas fa-crown" style="color:#000;font-size:0.65rem;margin-left:3px;"></i></div>
                     <div style="font-size:0.72rem;color:#555;margin-top:2px;">${r.leader_gender || 'N/A'} | ${r.leader_email}</div>
                     <div style="font-size:0.72rem;color:#555;">${r.leader_mobile}</div>
+                    ${leaderGameInfo}
                 </td>
                 <td>${membersHtml}</td>
                 <td>
@@ -888,7 +896,11 @@ function exportCSV() {
     }
     if (list.length === 0) list = registrations;
 
-    let csv = "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,Payment Mode,Payment Status,Approved\n";
+    const isGame = (currentEvent && (currentEvent.category === 'game' || currentEvent.category === 'gaming')) || list.some(r => r.leader_in_game_id || r.leader_in_game_uid || (r.members && r.members.some(m => m.in_game_id || m.in_game_uid)));
+
+    let csv = isGame
+        ? "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,In-Game ID,In-Game UID,Payment Mode,Payment Status,Approved\n"
+        : "Team Name,Participant Name,Role,Gender,College,Enrollment,Semester,Email,Mobile,Payment Mode,Payment Status,Approved\n";
     
     list.forEach(r => {
         const teamName = (r.group_name || r.team_name || 'Individual').trim();
@@ -897,7 +909,7 @@ function exportCSV() {
         const approved = r.is_approved ? 'Yes' : 'No';
 
         // 1. Leader row
-        csv += [
+        const leaderRow = [
             `"${teamName.replace(/"/g, '""')}"`,
             `"${(r.leader_name || '').replace(/"/g, '""')}"`,
             `"Leader"`,
@@ -906,16 +918,28 @@ function exportCSV() {
             formatCsvText(r.enrollment),
             `"${r.semester || ''}"`,
             `"${(r.leader_email || '').replace(/"/g, '""')}"`,
-            formatCsvText(r.leader_mobile || r.leader_phone),
+            formatCsvText(r.leader_mobile || r.leader_phone)
+        ];
+
+        if (isGame) {
+            leaderRow.push(
+                formatCsvText(r.leader_in_game_id || r.in_game_id || ''),
+                formatCsvText(r.leader_in_game_uid || r.in_game_uid || '')
+            );
+        }
+
+        leaderRow.push(
             `"${payMode}"`,
             `"${payStatus}"`,
             `"${approved}"`
-        ].join(',') + "\n";
+        );
+
+        csv += leaderRow.join(',') + "\n";
 
         // 2. Member rows
         if (r.members && r.members.length > 0) {
             r.members.forEach(m => {
-                csv += [
+                const memberRow = [
                     `"${teamName.replace(/"/g, '""')}"`,
                     `"${(m.name || '').replace(/"/g, '""')}"`,
                     `"Member"`,
@@ -924,11 +948,23 @@ function exportCSV() {
                     formatCsvText(m.enrollment),
                     `"${m.semester || ''}"`,
                     `"${(m.email || '').replace(/"/g, '""')}"`,
-                    formatCsvText(m.mobile),
+                    formatCsvText(m.mobile)
+                ];
+
+                if (isGame) {
+                    memberRow.push(
+                        formatCsvText(m.in_game_id || ''),
+                        formatCsvText(m.in_game_uid || '')
+                    );
+                }
+
+                memberRow.push(
                     `"${payMode}"`,
                     `"${payStatus}"`,
                     `"${approved}"`
-                ].join(',') + "\n";
+                );
+
+                csv += memberRow.join(',') + "\n";
             });
         }
     });
