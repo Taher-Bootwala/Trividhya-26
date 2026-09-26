@@ -88,17 +88,13 @@ async function initRegisterPage() {
     if (regStatus.isClosed) {
         document.title = `Registrations Closed — ${currentEvent.title} | Trividhya'26`;
         container.innerHTML = `
-            <div class="reg-event-header" style="max-width:680px; margin: 3rem auto; text-align:center; padding: 3rem 2rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:24px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
-                <div style="font-size: 3.5rem; margin-bottom: 1.2rem; color: #ff4757;">
-                    <i class="fas fa-ban"></i>
-                </div>
-                <h2 style="font-family: var(--font-heading); font-size: 1.7rem; font-weight:800; color: #000; margin-bottom: 1.2rem;">Registrations Closed</h2>
-                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="reg-event-header" style="max-width:650px; margin: 3rem auto; text-align:center; padding: 2.2rem 2rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:20px; box-shadow:0 8px 30px rgba(0,0,0,0.08);">
+                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 14px; padding: 1.4rem; margin-bottom: 1.4rem;">
                     <p style="font-size: 1.15rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.6;">
                         ${regStatus.message || 'Registrations for this category are currently closed.'}
                     </p>
                 </div>
-                <a href="index.html" class="btn-primary" style="display:inline-flex; align-items:center; gap:0.5rem; justify-content:center; border-radius:50px; padding:0.85rem 2rem; background:#000; color:#fff; text-decoration:none; font-weight:700; margin-top:1rem;">
+                <a href="index.html" class="btn-primary" style="display:inline-flex; align-items:center; gap:0.5rem; justify-content:center; border-radius:50px; padding:0.8rem 2rem; background:#000; color:#fff; text-decoration:none; font-weight:700;">
                     <i class="fas fa-arrow-left"></i> Return to Homepage
                 </a>
             </div>`;

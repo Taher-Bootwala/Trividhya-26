@@ -224,6 +224,8 @@ function getFilteredEvents() {
 /* ── Render Events Section ── */
 async function renderEventsSection() {
     const evSec = document.getElementById('events');
+    const evSecTag = document.getElementById('evSecTag');
+    const evSecTitle = document.getElementById('evSecTitle');
     const filters = evSec?.querySelector('.filters');
     const subFilters = document.getElementById('subFilters');
     const searchWrap = evSec?.querySelector('.event-search-wrap');
@@ -237,7 +239,12 @@ async function renderEventsSection() {
     let existingNotice = document.getElementById('evClosedNoticeBox');
 
     if (evStatus.isClosed) {
-        // Events registrations are closed -> Hide filters, search, event cards grid, and pagination
+        // Only keep heading "Tech | Non Tech Events" — hide all other headings, taglines, filters, and cards
+        if (evSecTag) evSecTag.style.display = 'none';
+        if (evSecTitle) {
+            evSecTitle.innerHTML = 'Tech | Non Tech Events';
+            evSecTitle.style.display = 'block';
+        }
         if (filters) filters.style.display = 'none';
         if (subFilters) subFilters.style.display = 'none';
         if (searchWrap) searchWrap.style.display = 'none';
@@ -247,27 +254,23 @@ async function renderEventsSection() {
         if (!existingNotice && evSec) {
             existingNotice = document.createElement('div');
             existingNotice.id = 'evClosedNoticeBox';
-            existingNotice.style.cssText = 'max-width:680px; margin: 2.5rem auto; text-align:center; padding: 2.5rem 1.8rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:24px; box-shadow:0 8px 30px rgba(0,0,0,0.1);';
+            existingNotice.style.cssText = 'max-width:680px; margin: 1.5rem auto 2.5rem; text-align:center; padding: 1.4rem 2rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:20px; box-shadow:0 6px 20px rgba(0,0,0,0.06);';
             evSec.appendChild(existingNotice);
         }
         if (existingNotice) {
             existingNotice.style.display = 'block';
             existingNotice.innerHTML = `
-                <div style="font-size: 3rem; margin-bottom: 0.8rem; color: #ff4757;">
-                    <i class="fas fa-ban"></i>
-                </div>
-                <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight:800; color: #000; margin-bottom: 0.8rem;">Registrations Closed</h3>
-                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 16px; padding: 1.3rem; margin: 1rem 0;">
-                    <p style="font-size: 1.1rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.5;">
-                        ${evStatus.message || 'Events registrations are closed.'}
-                    </p>
-                </div>
+                <p style="font-size: 1.15rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.6;">
+                    ${evStatus.message || 'Events registrations are closed.'}
+                </p>
             `;
         }
         return;
     } else {
         // Events are OPEN -> Show controls, grid, pagination, and remove closed notice
         if (existingNotice) existingNotice.remove();
+        if (evSecTag) evSecTag.style.display = 'none';
+        if (evSecTitle) evSecTitle.innerHTML = 'Tech | Non Tech Events';
         if (filters) filters.style.display = 'flex';
         if (subFilters) subFilters.style.display = currentCat !== 'all' ? 'flex' : 'none';
         if (searchWrap) searchWrap.style.display = 'block';
@@ -295,12 +298,15 @@ async function renderEventsSection() {
 /* ── Render Games Section ── */
 async function renderGamesSection() {
     const gmSec = document.getElementById('games');
+    const gmSecTag = document.getElementById('gmSecTag');
+    const gmSecTitle = document.getElementById('gmSecTitle');
+    const gmSecDesc = document.getElementById('gmSecDesc');
     const gmGrid = document.getElementById('gmGrid');
     const gmPagination = document.getElementById('gmPagination');
 
     const regSettings = await getRegistrationSettings();
 
-    // Check games closure status (BGMI Tournament is explicitly exempted and always open)
+    // Check games closure status
     const activeGames = ALL_GAMES.filter(gm => {
         const gmStatus = isRegistrationCategoryClosed(regSettings, 'game', false, gm.title);
         return !gmStatus.isClosed;
@@ -309,7 +315,13 @@ async function renderGamesSection() {
     let existingGmNotice = document.getElementById('gmClosedNoticeBox');
 
     if (activeGames.length === 0) {
-        // All games are closed
+        // Only keep heading "Games" — hide all subheadings, taglines, descriptions, and cards
+        if (gmSecTag) gmSecTag.style.display = 'none';
+        if (gmSecTitle) {
+            gmSecTitle.innerHTML = 'Games';
+            gmSecTitle.style.display = 'block';
+        }
+        if (gmSecDesc) gmSecDesc.style.display = 'none';
         if (gmGrid) gmGrid.style.display = 'none';
         if (gmPagination) gmPagination.style.display = 'none';
 
@@ -317,26 +329,24 @@ async function renderGamesSection() {
         if (!existingGmNotice && gmSec) {
             existingGmNotice = document.createElement('div');
             existingGmNotice.id = 'gmClosedNoticeBox';
-            existingGmNotice.style.cssText = 'max-width:680px; margin: 2.5rem auto; text-align:center; padding: 2.5rem 1.8rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:24px; box-shadow:0 8px 30px rgba(0,0,0,0.1);';
+            existingGmNotice.style.cssText = 'max-width:680px; margin: 1.5rem auto 2.5rem; text-align:center; padding: 1.4rem 2rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:20px; box-shadow:0 6px 20px rgba(0,0,0,0.06);';
             gmSec.appendChild(existingGmNotice);
         }
         if (existingGmNotice) {
             existingGmNotice.style.display = 'block';
             existingGmNotice.innerHTML = `
-                <div style="font-size: 3rem; margin-bottom: 0.8rem; color: #ff4757;">
-                    <i class="fas fa-ban"></i>
-                </div>
-                <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight:800; color: #000; margin-bottom: 0.8rem;">Registrations Closed</h3>
-                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 16px; padding: 1.3rem; margin: 1rem 0;">
-                    <p style="font-size: 1.1rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.5;">
-                        ${gmStatus.message || 'Games registrations are closed.'}
-                    </p>
-                </div>
+                <p style="font-size: 1.15rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.6;">
+                    ${gmStatus.message || 'Games registrations are closed.'}
+                </p>
             `;
         }
         return;
     } else {
+        // Games are OPEN -> Clean title and cards grid
         if (existingGmNotice) existingGmNotice.remove();
+        if (gmSecTag) gmSecTag.style.display = 'none';
+        if (gmSecTitle) gmSecTitle.innerHTML = 'Games';
+        if (gmSecDesc) gmSecDesc.style.display = 'none';
         if (gmGrid) gmGrid.style.display = 'grid';
         if (gmPagination) gmPagination.style.display = 'flex';
     }
@@ -559,6 +569,9 @@ function startHeroCycleTimer() {
 
 async function renderCombosSection() {
     const section = document.getElementById('combosSection');
+    const combosSecTag = document.getElementById('combosSecTag');
+    const combosSecTitle = document.getElementById('combosSecTitle');
+    const combosSecDesc = document.getElementById('combosSecDesc');
     const grid = document.getElementById('combosGrid');
     
     const heroExploreCombosBtn = document.getElementById('heroExploreCombosBtn');
@@ -567,8 +580,48 @@ async function renderCombosSection() {
     const regSettings = await getRegistrationSettings();
     const comboStatus = isRegistrationCategoryClosed(regSettings, 'combo', true);
 
-    // 1. Manage Combos Section visibility (hide if closed or empty)
-    if (comboStatus.isClosed || ALL_COMBOS.length === 0) {
+    let existingNotice = document.getElementById('combosClosedNoticeBox');
+
+    // 1. Manage Combos Section closure
+    if (comboStatus.isClosed) {
+        // Keep ONLY heading "Combos" — hide all other headings, taglines, descriptions, and combo cards
+        if (section) section.style.display = 'block';
+        if (combosSecTag) combosSecTag.style.display = 'none';
+        if (combosSecTitle) {
+            combosSecTitle.innerHTML = 'Combos';
+            combosSecTitle.style.display = 'block';
+        }
+        if (combosSecDesc) combosSecDesc.style.display = 'none';
+        if (grid) grid.style.display = 'none';
+        if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'none';
+        if (navCombosLink) navCombosLink.style.display = 'none';
+        setupHeroCycle([]);
+
+        if (!existingNotice && section) {
+            const innerContainer = section.querySelector('.combos-inner-container') || section;
+            existingNotice = document.createElement('div');
+            existingNotice.id = 'combosClosedNoticeBox';
+            existingNotice.style.cssText = 'max-width:680px; margin: 1.5rem auto 2.5rem; text-align:center; padding: 1.4rem 2rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:20px; box-shadow:0 6px 20px rgba(0,0,0,0.06);';
+            innerContainer.appendChild(existingNotice);
+        }
+        if (existingNotice) {
+            existingNotice.style.display = 'block';
+            existingNotice.innerHTML = `
+                <p style="font-size: 1.15rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.6;">
+                    ${comboStatus.message || 'Combos registrations are closed.'}
+                </p>
+            `;
+        }
+        return;
+    } else {
+        if (existingNotice) existingNotice.remove();
+        if (combosSecTag) combosSecTag.style.display = 'none';
+        if (combosSecTitle) combosSecTitle.innerHTML = 'Combos';
+        if (combosSecDesc) combosSecDesc.style.display = 'none';
+        if (grid) grid.style.display = '';
+    }
+
+    if (ALL_COMBOS.length === 0) {
         if (section) section.style.display = 'none';
         if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'none';
         if (navCombosLink) navCombosLink.style.display = 'none';

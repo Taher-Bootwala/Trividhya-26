@@ -187,10 +187,8 @@
     <!-- ═══════════ COMBOS ═══════════ -->
     <section id="combosSection" style="display: none;">
         <div class="combos-inner-container">
-            <div class="sec-header" data-aos="fade-up" style="margin-bottom: 2.5rem;">
-                <div class="sec-tag">Mega Value Packages</div>
-                <h2 class="sec-title">Event <span>Combos</span></h2>
-                <p class="sec-desc">Register for exclusive multi-event packages and unlock massive savings across all competitions.</p>
+            <div class="sec-header" id="combosSecHeader" data-aos="fade-up" style="margin-bottom: 2rem;">
+                <h2 class="sec-title" id="combosSecTitle">Combos</h2>
             </div>
             <div class="combos-banners-wrapper" id="combosGrid" data-aos="fade-up" data-aos-delay="100">
                 <!-- Combos full-size banners injected via JS -->
@@ -200,11 +198,10 @@
 
     <!-- ═══════════ EVENTS ═══════════ -->
     <section id="events">
-        <div class="sec-header" data-aos="fade-up">
-            <div class="sec-tag">Tech Events | Non Tech Events</div>
-            <h2 class="sec-title">Showcase Your <span>Talent</span></h2>
+        <div class="sec-header" id="evSecHeader" data-aos="fade-up">
+            <h2 class="sec-title" id="evSecTitle">Tech | Non Tech Events</h2>
         </div>
-        <div class="filters" data-aos="fade-up" data-aos-delay="100">
+        <div class="filters" id="evFilters" data-aos="fade-up" data-aos-delay="100">
             <button class="filter-btn active" onclick="filterEvent('all',this)">All</button>
             <button class="filter-btn" onclick="filterEvent('tech',this)">Tech</button>
             <button class="filter-btn" onclick="filterEvent('nontech',this)">Non - Tech</button>
@@ -214,7 +211,7 @@
             <button class="sub-filter-btn" onclick="filterSubType('individual',this)">Individual</button>
             <button class="sub-filter-btn" onclick="filterSubType('group',this)">Group</button>
         </div>
-        <div class="event-search-wrap" data-aos="fade-up" data-aos-delay="150">
+        <div class="event-search-wrap" id="evSearchWrap" data-aos="fade-up" data-aos-delay="150">
             <div class="event-search-box">
                 <i class="fas fa-search"></i>
                 <input type="text" id="eventSearchInput" placeholder="Search events..." oninput="applyFilters()">
@@ -227,10 +224,8 @@
 
     <!-- ═══════════ GAMES ═══════════ -->
     <section id="games">
-        <div class="sec-header" data-aos="fade-up">
-            <div class="sec-tag">Games</div>
-            <h2 class="sec-title">Play Hard, <span>Win Big</span></h2>
-            <p class="sec-desc">Compete in thrilling games and sports tournaments. Glory and prizes await the brave.</p>
+        <div class="sec-header" id="gmSecHeader" data-aos="fade-up">
+            <h2 class="sec-title" id="gmSecTitle">Games</h2>
         </div>
         <div class="cards-grid" id="gmGrid"></div>
         <div class="pagination-container" id="gmPagination"></div>
@@ -437,8 +432,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="supabase-config.js"></script>
-    <script src="script.js?v=11"></script>
+    <script src="supabase-config.js?v=15"></script>
+    <script src="script.js?v=15"></script>
 </body>
 
 </html>
