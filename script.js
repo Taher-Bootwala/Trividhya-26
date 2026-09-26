@@ -222,7 +222,59 @@ function getFilteredEvents() {
 }
 
 /* ── Render Events Section ── */
-function renderEventsSection() {
+async function renderEventsSection() {
+    const evSec = document.getElementById('events');
+    const filters = evSec?.querySelector('.filters');
+    const subFilters = document.getElementById('subFilters');
+    const searchWrap = evSec?.querySelector('.event-search-wrap');
+    const evGrid = document.getElementById('evGrid');
+    const evPagination = document.getElementById('evPagination');
+
+    // Check registration control status for events
+    const regSettings = await getRegistrationSettings();
+    const evStatus = isRegistrationCategoryClosed(regSettings, 'events', false);
+
+    let existingNotice = document.getElementById('evClosedNoticeBox');
+
+    if (evStatus.isClosed) {
+        // Events registrations are closed -> Hide filters, search, event cards grid, and pagination
+        if (filters) filters.style.display = 'none';
+        if (subFilters) subFilters.style.display = 'none';
+        if (searchWrap) searchWrap.style.display = 'none';
+        if (evGrid) evGrid.style.display = 'none';
+        if (evPagination) evPagination.style.display = 'none';
+
+        if (!existingNotice && evSec) {
+            existingNotice = document.createElement('div');
+            existingNotice.id = 'evClosedNoticeBox';
+            existingNotice.style.cssText = 'max-width:680px; margin: 2.5rem auto; text-align:center; padding: 2.5rem 1.8rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:24px; box-shadow:0 8px 30px rgba(0,0,0,0.1);';
+            evSec.appendChild(existingNotice);
+        }
+        if (existingNotice) {
+            existingNotice.style.display = 'block';
+            existingNotice.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 0.8rem; color: #ff4757;">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight:800; color: #000; margin-bottom: 0.8rem;">Registrations Closed</h3>
+                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 16px; padding: 1.3rem; margin: 1rem 0;">
+                    <p style="font-size: 1.1rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.5;">
+                        ${evStatus.message || 'Events registrations are closed.'}
+                    </p>
+                </div>
+            `;
+        }
+        return;
+    } else {
+        // Events are OPEN -> Show controls, grid, pagination, and remove closed notice
+        if (existingNotice) existingNotice.remove();
+        if (filters) filters.style.display = 'flex';
+        if (subFilters) subFilters.style.display = currentCat !== 'all' ? 'flex' : 'none';
+        if (searchWrap) searchWrap.style.display = 'block';
+        if (evGrid) evGrid.style.display = 'grid';
+        if (evPagination) evPagination.style.display = 'flex';
+    }
+
     const filtered = getFilteredEvents();
     const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
     if (evPage > totalPages) evPage = 1;
@@ -241,13 +293,60 @@ function renderEventsSection() {
 }
 
 /* ── Render Games Section ── */
-function renderGamesSection() {
-    const totalPages = Math.ceil(ALL_GAMES.length / PER_PAGE) || 1;
+async function renderGamesSection() {
+    const gmSec = document.getElementById('games');
+    const gmGrid = document.getElementById('gmGrid');
+    const gmPagination = document.getElementById('gmPagination');
+
+    const regSettings = await getRegistrationSettings();
+
+    // Check games closure status (BGMI Tournament is explicitly exempted and always open)
+    const activeGames = ALL_GAMES.filter(gm => {
+        const gmStatus = isRegistrationCategoryClosed(regSettings, 'game', false, gm.title);
+        return !gmStatus.isClosed;
+    });
+
+    let existingGmNotice = document.getElementById('gmClosedNoticeBox');
+
+    if (activeGames.length === 0) {
+        // All games are closed
+        if (gmGrid) gmGrid.style.display = 'none';
+        if (gmPagination) gmPagination.style.display = 'none';
+
+        const gmStatus = isRegistrationCategoryClosed(regSettings, 'game', false, 'Games');
+        if (!existingGmNotice && gmSec) {
+            existingGmNotice = document.createElement('div');
+            existingGmNotice.id = 'gmClosedNoticeBox';
+            existingGmNotice.style.cssText = 'max-width:680px; margin: 2.5rem auto; text-align:center; padding: 2.5rem 1.8rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:24px; box-shadow:0 8px 30px rgba(0,0,0,0.1);';
+            gmSec.appendChild(existingGmNotice);
+        }
+        if (existingGmNotice) {
+            existingGmNotice.style.display = 'block';
+            existingGmNotice.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 0.8rem; color: #ff4757;">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight:800; color: #000; margin-bottom: 0.8rem;">Registrations Closed</h3>
+                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 16px; padding: 1.3rem; margin: 1rem 0;">
+                    <p style="font-size: 1.1rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.5;">
+                        ${gmStatus.message || 'Games registrations are closed.'}
+                    </p>
+                </div>
+            `;
+        }
+        return;
+    } else {
+        if (existingGmNotice) existingGmNotice.remove();
+        if (gmGrid) gmGrid.style.display = 'grid';
+        if (gmPagination) gmPagination.style.display = 'flex';
+    }
+
+    const totalPages = Math.ceil(activeGames.length / PER_PAGE) || 1;
     if (gmPage > totalPages) gmPage = 1;
     if (gmPage < 1) gmPage = 1;
 
     const startIdx = (gmPage - 1) * PER_PAGE;
-    const pageData = ALL_GAMES.slice(startIdx, startIdx + PER_PAGE);
+    const pageData = activeGames.slice(startIdx, startIdx + PER_PAGE);
 
     renderCards(pageData, 'gmGrid');
     renderPaginationUI('gmPagination', totalPages, gmPage, (newPage) => {
@@ -458,23 +557,26 @@ function startHeroCycleTimer() {
     }
 }
 
-function renderCombosSection() {
+async function renderCombosSection() {
     const section = document.getElementById('combosSection');
     const grid = document.getElementById('combosGrid');
     
     const heroExploreCombosBtn = document.getElementById('heroExploreCombosBtn');
     const navCombosLink = document.getElementById('navCombosLink');
     
-    // 1. Manage Combos Section visibility
-    if (ALL_COMBOS.length === 0) {
-        section.style.display = 'none';
+    const regSettings = await getRegistrationSettings();
+    const comboStatus = isRegistrationCategoryClosed(regSettings, 'combo', true);
+
+    // 1. Manage Combos Section visibility (hide if closed or empty)
+    if (comboStatus.isClosed || ALL_COMBOS.length === 0) {
+        if (section) section.style.display = 'none';
         if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'none';
         if (navCombosLink) navCombosLink.style.display = 'none';
         setupHeroCycle([]);
         return;
     }
     
-    section.style.display = 'block';
+    if (section) section.style.display = 'block';
     if (heroExploreCombosBtn) heroExploreCombosBtn.style.display = 'inline-flex';
     if (navCombosLink) navCombosLink.style.display = 'block';
 
@@ -551,7 +653,7 @@ function applyFilters() {
 }
 
 /* ── Modal ── */
-function openModal(id) {
+async function openModal(id) {
     const ev = ALL.find(e => e.id === id);
     if (!ev) return;
     document.getElementById('mEmoji').innerHTML  = buildLogoHtml(ev);
@@ -563,8 +665,28 @@ function openModal(id) {
     const volunEl = document.getElementById('mVolunteers');
     if (coordEl) coordEl.textContent = ev.coordinators || 'TBA';
     if (volunEl) volunEl.textContent = ev.volunteers || 'TBA';
-    document.getElementById('mLink').href          = `register.html?id=${ev.id}`;
-    document.getElementById('mLink').removeAttribute('target');
+    
+    const mLink = document.getElementById('mLink');
+    if (mLink) {
+        mLink.href = `register.html?id=${ev.id}`;
+        mLink.removeAttribute('target');
+
+        // Check if category is closed
+        const regSettings = await getRegistrationSettings();
+        const regStatus = isRegistrationCategoryClosed(regSettings, ev.category, false, ev.title);
+        if (regStatus.isClosed) {
+            mLink.innerHTML = `<i class="fas fa-ban"></i> Registrations Closed`;
+            mLink.style.background = '#ff4757';
+            mLink.style.borderColor = '#ff4757';
+            mLink.href = `register.html?id=${ev.id}`;
+        } else {
+            mLink.innerHTML = `<i class="fas fa-bolt"></i> Register Now <i class="fas fa-arrow-right"></i>`;
+            mLink.style.background = '';
+            mLink.style.borderColor = '';
+            mLink.href = `register.html?id=${ev.id}`;
+        }
+    }
+
     document.getElementById('modalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }

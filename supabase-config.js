@@ -503,7 +503,7 @@ async function updateEventPassword(eventId, newPassword) {
 }
 
 // ═══════════════════════════════════════════════════
-//  SITE SETTINGS HELPERS
+//  SITE SETTINGS & REGISTRATION CONTROL HELPERS
 // ═══════════════════════════════════════════════════
 
 async function getSiteSettings() {
@@ -523,6 +523,159 @@ async function updateSiteSettingsDB(updates) {
         .eq('id', 1);
     if (error) { console.error('Error updating site settings:', error); return { error }; }
     return { success: true };
+}
+
+/**
+ * Fetch registration control status & settings
+ */
+async function getRegistrationSettings() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('admin_config')
+            .select('*')
+            .eq('id', 1)
+            .single();
+
+        let settings = {
+            closed_games: false,
+            closed_events: false,
+            closed_combos: false,
+            close_time: null,
+            message: ''
+        };
+
+        if (data) {
+            if (data.reg_closed_games !== undefined) settings.closed_games = !!data.reg_closed_games;
+            if (data.reg_closed_events !== undefined) settings.closed_events = !!data.reg_closed_events;
+            if (data.reg_closed_combos !== undefined) settings.closed_combos = !!data.reg_closed_combos;
+            if (data.reg_close_time) settings.close_time = data.reg_close_time;
+            if (data.reg_message) settings.message = data.reg_message;
+
+            if (data.reg_settings && typeof data.reg_settings === 'object') {
+                settings = { ...settings, ...data.reg_settings };
+            }
+        }
+
+        if (error) {
+            console.warn('Could not load registration settings from Supabase, checking local cache:', error);
+            const local = localStorage.getItem('reg_control_settings');
+            if (local) {
+                try { return JSON.parse(local); } catch (e) {}
+            }
+        } else {
+            // Cache to local storage for quick offline / fallback reads
+            try { localStorage.setItem('reg_control_settings', JSON.stringify(settings)); } catch (e) {}
+        }
+
+        return settings;
+    } catch (err) {
+        console.error('getRegistrationSettings error:', err);
+        const local = localStorage.getItem('reg_control_settings');
+        if (local) {
+            try { return JSON.parse(local); } catch (e) {}
+        }
+        return {
+            closed_games: false,
+            closed_events: false,
+            closed_combos: false,
+            close_time: null,
+            message: ''
+        };
+    }
+}
+
+/**
+ * Save registration control settings to Supabase DB
+ */
+async function updateRegistrationSettingsDB(settings) {
+    const payload = {
+        reg_closed_games: !!settings.closed_games,
+        reg_closed_events: !!settings.closed_events,
+        reg_closed_combos: !!settings.closed_combos,
+        reg_close_time: settings.close_time || null,
+        reg_message: settings.message || '',
+        reg_settings: settings
+    };
+
+    let { error } = await supabaseClient
+        .from('admin_config')
+        .update(payload)
+        .eq('id', 1);
+
+    // If specific columns missing from table yet, retry with reg_settings JSON or fallback
+    if (error && error.message && (error.message.includes('column') || error.message.includes('schema cache'))) {
+        console.warn('Individual columns not found on admin_config. Trying with reg_settings JSON...');
+        const retryRes = await supabaseClient
+            .from('admin_config')
+            .update({ reg_settings: settings })
+            .eq('id', 1);
+        if (!retryRes.error) {
+            error = null;
+        }
+    }
+
+    // Update local storage backup
+    try { localStorage.setItem('reg_control_settings', JSON.stringify(settings)); } catch (e) {}
+
+    if (error) {
+        console.error('updateRegistrationSettingsDB error:', error);
+        return { error };
+    }
+    return { success: true };
+}
+
+/**
+ * Check if a particular category (events, combos, games) is currently closed.
+ */
+function isRegistrationCategoryClosed(settings, category, isCombo, eventTitle) {
+    if (!settings) return { isClosed: false };
+
+    let isTargetCategory = false;
+    let categoryName = 'events';
+
+    if (isCombo || category === 'combo') {
+        isTargetCategory = !!settings.closed_combos;
+        categoryName = 'combos';
+    } else if (category === 'game') {
+        isTargetCategory = !!settings.closed_games;
+        categoryName = 'games';
+    } else if (category === 'tech' || category === 'nontech' || category === 'cultural' || category === 'events' || (!isCombo && category !== 'game')) {
+        // Tech, Nontech, general events
+        isTargetCategory = !!settings.closed_events;
+        categoryName = 'events';
+    }
+
+    if (!isTargetCategory) {
+        return { isClosed: false, isScheduled: false };
+    }
+
+    // Target category is selected for closure. Now check time
+    if (settings.close_time) {
+        const closeDate = new Date(settings.close_time);
+        const now = new Date();
+        if (now < closeDate) {
+            // Scheduled for future
+            return {
+                isClosed: false,
+                isScheduled: true,
+                closeTime: settings.close_time,
+                message: settings.message || ''
+            };
+        }
+    }
+
+    // Time is immediate, in past, or reached
+    let defaultMsg = 'Registrations are closed.';
+    if (categoryName === 'combos') defaultMsg = 'Combos registrations are closed.';
+    else if (categoryName === 'events') defaultMsg = 'Events registrations are closed.';
+    else if (categoryName === 'games') defaultMsg = 'Games registrations are closed.';
+
+    return {
+        isClosed: true,
+        isScheduled: false,
+        message: settings.message || defaultMsg,
+        closeTime: settings.close_time
+    };
 }
 
 // ═══════════════════════════════════════════════════

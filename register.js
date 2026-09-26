@@ -82,6 +82,29 @@ async function initRegisterPage() {
         return;
     }
 
+    // Check if registrations are turned off / closed for this category
+    const regSettings = await getRegistrationSettings();
+    const regStatus = isRegistrationCategoryClosed(regSettings, currentEvent.category, currentEvent.is_combo, currentEvent.title);
+    if (regStatus.isClosed) {
+        document.title = `Registrations Closed — ${currentEvent.title} | Trividhya'26`;
+        container.innerHTML = `
+            <div class="reg-event-header" style="max-width:680px; margin: 3rem auto; text-align:center; padding: 3rem 2rem; background:rgba(255,255,255,0.95); border:2px solid #000; border-radius:24px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
+                <div style="font-size: 3.5rem; margin-bottom: 1.2rem; color: #ff4757;">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <h2 style="font-family: var(--font-heading); font-size: 1.7rem; font-weight:800; color: #000; margin-bottom: 1.2rem;">Registrations Closed</h2>
+                <div style="background: rgba(255, 71, 87, 0.08); border: 2px solid #ff4757; border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0;">
+                    <p style="font-size: 1.15rem; font-weight: 700; color: #d63031; margin: 0; line-height: 1.6;">
+                        ${regStatus.message || 'Registrations for this category are currently closed.'}
+                    </p>
+                </div>
+                <a href="index.html" class="btn-primary" style="display:inline-flex; align-items:center; gap:0.5rem; justify-content:center; border-radius:50px; padding:0.85rem 2rem; background:#000; color:#fff; text-decoration:none; font-weight:700; margin-top:1rem;">
+                    <i class="fas fa-arrow-left"></i> Return to Homepage
+                </a>
+            </div>`;
+        return;
+    }
+
     document.title = `Register — ${currentEvent.title} | Trividhya'26`;
     renderRegistrationForm(currentEvent);
 
@@ -759,6 +782,15 @@ async function handleRegistration(e) {
     const errEl = document.getElementById('formError');
     const submitBtn = document.getElementById('submitBtn');
 
+    // Live registration closure guard
+    const regSettings = await getRegistrationSettings();
+    const regStatus = isRegistrationCategoryClosed(regSettings, currentEvent.category, currentEvent.is_combo, currentEvent.title);
+    if (regStatus.isClosed) {
+        errEl.textContent = regStatus.message || 'Registrations for this category are currently closed.';
+        errEl.style.display = 'block';
+        return;
+    }
+
     // Email verification check
     if (!leaderEmailVerified) {
         errEl.textContent = 'Please verify your email address first';
@@ -956,6 +988,16 @@ async function sendOtp() {
     const otpSection = document.getElementById('otpSection');
     const otpMsg = document.getElementById('otpMsg');
     const otpVerifySection = document.getElementById('otpVerifySection');
+
+    // Live registration closure guard
+    const regSettings = await getRegistrationSettings();
+    const regStatus = isRegistrationCategoryClosed(regSettings, currentEvent.category, currentEvent.is_combo, currentEvent.title);
+    if (regStatus.isClosed) {
+        otpSection.style.display = 'block';
+        otpMsg.textContent = regStatus.message || 'Registrations for this category are currently closed.';
+        otpMsg.style.color = '#ff4757';
+        return;
+    }
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         otpSection.style.display = 'block';

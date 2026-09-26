@@ -144,6 +144,7 @@ async function loadDashboard() {
 
     await updateGlobalStats();
     renderCharts();
+    await loadRegistrationControlDashboard();
 }
 
 async function updateGlobalStats() {
@@ -2709,4 +2710,424 @@ function fallbackCopyText(text) {
     }
     document.body.removeChild(textArea);
 }
+
+/* ══════════════════════════════════════
+   REGISTRATION CONTROL & CLOSURE LOGIC
+   ══════════════════════════════════════ */
+
+let currentRegSettings = {
+    closed_games: false,
+    closed_events: false,
+    closed_combos: false,
+    close_time: null,
+    message: ''
+};
+
+/**
+ * Loads registration status and updates dashboard cards & notice banner
+ */
+async function loadRegistrationControlDashboard() {
+    try {
+        currentRegSettings = await getRegistrationSettings() || {
+            closed_games: false,
+            closed_events: false,
+            closed_combos: false,
+            close_time: null,
+            message: ''
+        };
+
+        const now = new Date();
+        const isScheduledFuture = currentRegSettings.close_time && (new Date(currentRegSettings.close_time) > now);
+        const formattedCloseTime = currentRegSettings.close_time ? formatDateTimeDisplay(currentRegSettings.close_time) : '';
+
+        // 1. Events Status
+        updateCategoryStatusCard(
+            'Events',
+            currentRegSettings.closed_events,
+            isScheduledFuture,
+            formattedCloseTime
+        );
+
+        // 2. Combos Status
+        updateCategoryStatusCard(
+            'Combos',
+            currentRegSettings.closed_combos,
+            isScheduledFuture,
+            formattedCloseTime
+        );
+
+        // 3. Games Status (Includes BGMI, Free Fire, etc.)
+        updateCategoryStatusCard(
+            'Games',
+            currentRegSettings.closed_games,
+            isScheduledFuture,
+            formattedCloseTime
+        );
+
+        // 4. Notice Banner on Dashboard
+        const hasClosedOrScheduled = currentRegSettings.closed_events || currentRegSettings.closed_combos || currentRegSettings.closed_games;
+        const bannerEl = document.getElementById('dashRegNoticeBanner');
+        const msgEl = document.getElementById('dashRegNoticeMessage');
+        const timeEl = document.getElementById('dashRegNoticeTime');
+
+        if (bannerEl && msgEl && timeEl) {
+            if (hasClosedOrScheduled) {
+                bannerEl.style.display = 'block';
+                msgEl.textContent = `"${currentRegSettings.message || getAutoRegClosedMessage(currentRegSettings.closed_events, currentRegSettings.closed_combos, currentRegSettings.closed_games)}"`;
+                
+                if (isScheduledFuture) {
+                    timeEl.innerHTML = `<i class="fas fa-clock" style="color:#f39c12;"></i> <strong>Scheduled to close on:</strong> ${formattedCloseTime}`;
+                } else if (currentRegSettings.close_time) {
+                    timeEl.innerHTML = `<i class="fas fa-lock" style="color:#ff4757;"></i> <strong>Closed on:</strong> ${formattedCloseTime}`;
+                } else {
+                    timeEl.innerHTML = `<i class="fas fa-lock" style="color:#ff4757;"></i> <strong>Closed Immediately (Active)</strong>`;
+                }
+            } else {
+                bannerEl.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Error loading registration control dashboard:', e);
+    }
+}
+
+function updateCategoryStatusCard(categoryKey, isClosedFlag, isScheduledFuture, formattedCloseTime) {
+    const badgeEl = document.getElementById(`badge${categoryKey}Status`);
+    const cardEl = document.getElementById(`statusCard${categoryKey}`);
+    if (!badgeEl || !cardEl) return;
+
+    if (isClosedFlag) {
+        if (isScheduledFuture) {
+            badgeEl.textContent = 'CLOSES SOON';
+            badgeEl.style.background = 'rgba(243, 156, 18, 0.15)';
+            badgeEl.style.color = '#f39c12';
+            badgeEl.style.borderColor = '#f39c12';
+            cardEl.style.borderColor = '#f39c12';
+        } else {
+            badgeEl.textContent = 'CLOSED';
+            badgeEl.style.background = 'rgba(255, 71, 87, 0.15)';
+            badgeEl.style.color = '#ff4757';
+            badgeEl.style.borderColor = '#ff4757';
+            cardEl.style.borderColor = '#ff4757';
+        }
+    } else {
+        badgeEl.textContent = 'OPEN';
+        badgeEl.style.background = 'rgba(46, 213, 115, 0.15)';
+        badgeEl.style.color = '#2ed573';
+        badgeEl.style.borderColor = '#2ed573';
+        cardEl.style.borderColor = '#000000';
+    }
+}
+
+/**
+ * Open the Close Entries Modal
+ */
+function openRegControlModal() {
+    const modal = document.getElementById('regControlModal');
+    if (!modal) return;
+
+    const cbEvents = document.getElementById('regToggleEvents');
+    const cbCombos = document.getElementById('regToggleCombos');
+    const cbGames = document.getElementById('regToggleGames');
+    const msgInput = document.getElementById('regClosedMessage');
+    const radioImm = document.getElementById('regCloseImmediate');
+    const radioSched = document.getElementById('regCloseScheduled');
+    const dtInput = document.getElementById('regCloseDateTime');
+    const errEl = document.getElementById('regControlError');
+
+    if (errEl) errEl.style.display = 'none';
+
+    // Set checkboxes based on current settings (or default to true if none closed)
+    const hasAnyClosed = currentRegSettings.closed_events || currentRegSettings.closed_combos || currentRegSettings.closed_games;
+    if (cbEvents) cbEvents.checked = hasAnyClosed ? !!currentRegSettings.closed_events : true;
+    if (cbCombos) cbCombos.checked = hasAnyClosed ? !!currentRegSettings.closed_combos : true;
+    if (cbGames) cbGames.checked = hasAnyClosed ? !!currentRegSettings.closed_games : false;
+
+    // Set close time mode
+    const now = new Date();
+    if (currentRegSettings.close_time && new Date(currentRegSettings.close_time) > now) {
+        if (radioSched) radioSched.checked = true;
+        if (dtInput) {
+            const d = new Date(currentRegSettings.close_time);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            dtInput.value = d.toISOString().slice(0, 16);
+        }
+    } else {
+        if (radioImm) radioImm.checked = true;
+        if (dtInput) {
+            const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            tomorrow.setMinutes(tomorrow.getMinutes() - tomorrow.getTimezoneOffset());
+            dtInput.value = tomorrow.toISOString().slice(0, 16);
+        }
+    }
+
+    toggleRegCloseTimeInput();
+
+    // Set message
+    if (msgInput) {
+        if (currentRegSettings.message) {
+            msgInput.value = currentRegSettings.message;
+        } else {
+            msgInput.value = getAutoRegClosedMessage(cbEvents?.checked, cbCombos?.checked, cbGames?.checked);
+        }
+    }
+
+    updateRegSelectionLabels();
+    modal.classList.add('open');
+}
+
+function closeRegControlModal() {
+    const modal = document.getElementById('regControlModal');
+    if (modal) modal.classList.remove('open');
+}
+
+/**
+ * Handles Quick Preset buttons
+ */
+function setRegPreset(preset) {
+    const cbEvents = document.getElementById('regToggleEvents');
+    const cbCombos = document.getElementById('regToggleCombos');
+    const cbGames = document.getElementById('regToggleGames');
+
+    if (!cbEvents || !cbCombos) return;
+
+    if (preset === 'events') {
+        cbEvents.checked = true;
+        cbCombos.checked = false;
+        if (cbGames) cbGames.checked = false;
+    } else if (preset === 'combos') {
+        cbEvents.checked = false;
+        cbCombos.checked = true;
+        if (cbGames) cbGames.checked = false;
+    } else if (preset === 'games') {
+        cbEvents.checked = false;
+        cbCombos.checked = false;
+        if (cbGames) cbGames.checked = true;
+    } else if (preset === 'events_combos') {
+        cbEvents.checked = true;
+        cbCombos.checked = true;
+        if (cbGames) cbGames.checked = false;
+    } else if (preset === 'all') {
+        cbEvents.checked = true;
+        cbCombos.checked = true;
+        if (cbGames) cbGames.checked = true;
+    }
+
+    onRegSelectionChanged(true);
+}
+
+/**
+ * Called when category checkboxes change
+ */
+function onRegSelectionChanged(isAutoMessage = true) {
+    const cbEvents = document.getElementById('regToggleEvents');
+    const cbCombos = document.getElementById('regToggleCombos');
+    const cbGames = document.getElementById('regToggleGames');
+    const msgInput = document.getElementById('regClosedMessage');
+
+    updateRegSelectionLabels();
+
+    if (isAutoMessage && msgInput) {
+        msgInput.value = getAutoRegClosedMessage(cbEvents?.checked, cbCombos?.checked, cbGames?.checked);
+    }
+}
+
+function updateRegSelectionLabels() {
+    const cbEvents = document.getElementById('regToggleEvents');
+    const cbCombos = document.getElementById('regToggleCombos');
+    const cbGames = document.getElementById('regToggleGames');
+
+    const lblEvents = document.getElementById('lblToggleEvents');
+    const lblCombos = document.getElementById('lblToggleCombos');
+    const lblGames = document.getElementById('lblToggleGames');
+
+    if (lblEvents && cbEvents) lblEvents.textContent = cbEvents.checked ? 'Close' : 'Open';
+    if (lblCombos && cbCombos) lblCombos.textContent = cbCombos.checked ? 'Close' : 'Open';
+    if (lblGames && cbGames) lblGames.textContent = cbGames.checked ? 'Close' : 'Open';
+}
+
+/**
+ * Generate auto-message based on selection
+ */
+function getAutoRegClosedMessage(events, combos, games) {
+    if (events && combos && games) {
+        return 'Registrations are closed.';
+    }
+    if (events && combos) {
+        return 'Events and combos registrations are closed.';
+    }
+    if (events && games) {
+        return 'Events and games registrations are closed.';
+    }
+    if (combos && games) {
+        return 'Combos and games registrations are closed.';
+    }
+    if (events) {
+        return 'Events registrations are closed.';
+    }
+    if (combos) {
+        return 'Combos registrations are closed.';
+    }
+    if (games) {
+        return 'Games registrations are closed.';
+    }
+    return 'Registrations are currently closed.';
+}
+
+/**
+ * Toggle scheduled date & time input display
+ */
+function toggleRegCloseTimeInput() {
+    const radioSched = document.getElementById('regCloseScheduled');
+    const wrapper = document.getElementById('regScheduleTimeWrapper');
+    if (wrapper && radioSched) {
+        wrapper.style.display = radioSched.checked ? 'block' : 'none';
+    }
+}
+
+/**
+ * Submits and saves registration closure settings to Supabase
+ */
+async function submitRegistrationClosure() {
+    const btn = document.getElementById('saveRegControlBtn');
+    const errEl = document.getElementById('regControlError');
+    const cbEvents = document.getElementById('regToggleEvents');
+    const cbCombos = document.getElementById('regToggleCombos');
+    const cbGames = document.getElementById('regToggleGames');
+    const msgInput = document.getElementById('regClosedMessage');
+    const radioSched = document.getElementById('regCloseScheduled');
+    const dtInput = document.getElementById('regCloseDateTime');
+
+    if (errEl) errEl.style.display = 'none';
+
+    const closedEvents = !!cbEvents?.checked;
+    const closedCombos = !!cbCombos?.checked;
+    const closedGames = !!cbGames?.checked;
+
+    if (!closedEvents && !closedCombos && !closedGames) {
+        if (errEl) {
+            errEl.textContent = 'Please select what to close (Events, Combos, or Games).';
+            errEl.style.display = 'block';
+        }
+        return;
+    }
+
+    const message = msgInput?.value.trim() || getAutoRegClosedMessage(closedEvents, closedCombos, closedGames);
+    let closeTime = null;
+
+    if (radioSched?.checked) {
+        const selectedVal = dtInput?.value;
+        if (!selectedVal) {
+            if (errEl) {
+                errEl.textContent = 'Please select a scheduled closing date and time.';
+                errEl.style.display = 'block';
+            }
+            return;
+        }
+        const selectedDate = new Date(selectedVal);
+        if (isNaN(selectedDate.getTime())) {
+            if (errEl) {
+                errEl.textContent = 'Invalid date and time selected.';
+                errEl.style.display = 'block';
+            }
+            return;
+        }
+        closeTime = selectedDate.toISOString();
+    } else {
+        // Immediate close
+        closeTime = new Date().toISOString();
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    const settings = {
+        closed_games: closedGames,
+        closed_events: closedEvents,
+        closed_combos: closedCombos,
+        close_time: closeTime,
+        message: message
+    };
+
+    const res = await updateRegistrationSettingsDB(settings);
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-lock"></i> Close Entries';
+
+    if (res.error) {
+        if (errEl) {
+            errEl.textContent = 'Error saving settings: ' + (res.error.message || 'Please check connection.');
+            errEl.style.display = 'block';
+        }
+        showToast('Failed to close entries', 'error');
+    } else {
+        closeRegControlModal();
+        showToast('Entries closed successfully! 🎉', 'success');
+        await loadRegistrationControlDashboard();
+    }
+}
+
+/**
+ * Turns ON / Opens all entries immediately
+ */
+async function turnOnAllRegistrations() {
+    const confirmed = await showConfirmDialog({
+        title: 'Open All Entries?',
+        desc: 'This will immediately re-open registrations for all Events, Combos, and Games.',
+        icon: 'check',
+        okText: 'Yes, Open Entries',
+        danger: false
+    });
+
+    if (!confirmed) return;
+
+    const btn = document.getElementById('dashTurnOnRegBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening...';
+    }
+
+    const settings = {
+        closed_games: false,
+        closed_events: false,
+        closed_combos: false,
+        close_time: null,
+        message: ''
+    };
+
+    const res = await updateRegistrationSettingsDB(settings);
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-lock-open"></i> Open Entries';
+    }
+
+    if (res.error) {
+        showToast('Failed to open entries: ' + res.error.message, 'error');
+    } else {
+        showToast('All entries are now OPEN! 🎉', 'success');
+        await loadRegistrationControlDashboard();
+    }
+}
+
+/**
+ * Format ISO datetime for human-readable display
+ */
+function formatDateTimeDisplay(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const d = new Date(dateStr);
+        return d.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    } catch (e) {
+        return dateStr;
+    }
+}
+
 

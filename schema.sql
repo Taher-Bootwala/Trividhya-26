@@ -81,7 +81,13 @@ CREATE TABLE IF NOT EXISTS admin_config (
   navbar_title TEXT DEFAULT 'TRIVIDHYA''26',
   event_dates TEXT DEFAULT 'March 23 & 25, 2026',
   event_venue TEXT DEFAULT 'GEC Dahod',
-  qr_url TEXT
+  qr_url TEXT,
+  reg_closed_games BOOLEAN DEFAULT FALSE,
+  reg_closed_events BOOLEAN DEFAULT FALSE,
+  reg_closed_combos BOOLEAN DEFAULT FALSE,
+  reg_close_time TIMESTAMPTZ,
+  reg_message TEXT,
+  reg_settings JSONB
 );
 
 INSERT INTO admin_config (id, main_admin_password)

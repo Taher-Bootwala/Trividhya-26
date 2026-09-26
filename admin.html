@@ -336,6 +336,76 @@
             color: var(--accent);
             font-size: 0.72rem;
         }
+        /* Registration Control Styles */
+        .preset-pill-btn {
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            border-radius: 50px;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-body);
+            color: #000000;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .preset-pill-btn:hover {
+            background: #000000;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        .preset-pill-btn.active {
+            background: #ff4757;
+            border-color: #ff4757;
+            color: #ffffff;
+        }
+        .reg-category-checkbox-card {
+            cursor: pointer;
+            user-select: none;
+            display: block;
+        }
+        .reg-category-checkbox-card .card-inner {
+            border: 2px solid #000000;
+            border-radius: 14px;
+            padding: 1rem 0.6rem;
+            text-align: center;
+            background: #ffffff;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            position: relative;
+        }
+        .reg-category-checkbox-card .card-inner .icon {
+            font-size: 1.5rem;
+        }
+        .reg-category-checkbox-card .card-inner .title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #000000;
+        }
+        .reg-category-checkbox-card .card-inner .state-lbl {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #666666;
+            text-transform: uppercase;
+        }
+        .reg-category-checkbox-card input[type="checkbox"]:checked + .card-inner {
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.08);
+            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2);
+        }
+        .reg-category-checkbox-card input[type="checkbox"]:checked + .card-inner .title {
+            color: #ff4757;
+        }
+        .reg-category-checkbox-card input[type="checkbox"]:checked + .card-inner .state-lbl {
+            color: #ff4757;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -354,6 +424,108 @@
                 <button class="confirm-cancel" id="confirmCancel" onclick="closeConfirm(false)">Cancel</button>
                 <button class="confirm-ok" id="confirmOk" onclick="closeConfirm(true)">Confirm</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Registration Control Modal -->
+    <div class="modal-overlay" id="regControlModal" onclick="if(event.target===this)closeRegControlModal()">
+        <div class="admin-panel-card" style="max-width: 650px; width: 100%; margin: 2rem auto; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button class="action-btn" onclick="closeRegControlModal()" style="position:absolute; top:1.2rem; right:1.2rem; border:none; font-size:1.2rem;"><i class="fas fa-times"></i></button>
+            <h3 style="margin-bottom: 0.4rem; color: #000; display:flex; align-items:center; gap:0.6rem;">
+                <i class="fas fa-lock" style="color:#ff4757;"></i> Close Entries / Schedule Closure
+            </h3>
+            <p style="color:#555555; font-size:0.85rem; margin-bottom:1.2rem; line-height:1.5;">
+                Select what to close (Events, Combos, or Games), write the custom message to display on the page, and select closing date/time.
+            </p>
+            
+            <!-- Quick Selection Presets -->
+            <div class="form-group" style="margin-bottom:1.3rem;">
+                <label class="form-label" style="margin-bottom:0.6rem;">Quick Selection Presets</label>
+                <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                    <button type="button" class="preset-pill-btn" onclick="setRegPreset('events')">🎯 Events Only</button>
+                    <button type="button" class="preset-pill-btn" onclick="setRegPreset('combos')">📦 Combos Only</button>
+                    <button type="button" class="preset-pill-btn" onclick="setRegPreset('games')">🎮 Games Only</button>
+                    <button type="button" class="preset-pill-btn" onclick="setRegPreset('events_combos')">🎯+📦 Events & Combos</button>
+                    <button type="button" class="preset-pill-btn" onclick="setRegPreset('all')">🔥 All Registrations</button>
+                </div>
+            </div>
+
+            <!-- Select What to Turn OFF -->
+            <div class="form-group" style="margin-bottom:1.4rem;">
+                <label class="form-label">Select What to Close *</label>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:0.8rem; margin-top:0.4rem;">
+                    <label class="reg-category-checkbox-card" id="cardToggleEvents">
+                        <input type="checkbox" id="regToggleEvents" onchange="onRegSelectionChanged()" style="display:none;">
+                        <div class="card-inner">
+                            <span class="icon">🎯</span>
+                            <span class="title">Events</span>
+                            <span class="state-lbl" id="lblToggleEvents">Open</span>
+                        </div>
+                    </label>
+                    <label class="reg-category-checkbox-card" id="cardToggleCombos">
+                        <input type="checkbox" id="regToggleCombos" onchange="onRegSelectionChanged()" style="display:none;">
+                        <div class="card-inner">
+                            <span class="icon">📦</span>
+                            <span class="title">Combos</span>
+                            <span class="state-lbl" id="lblToggleCombos">Open</span>
+                        </div>
+                    </label>
+                    <label class="reg-category-checkbox-card" id="cardToggleGames">
+                        <input type="checkbox" id="regToggleGames" onchange="onRegSelectionChanged()" style="display:none;">
+                        <div class="card-inner">
+                            <span class="icon">🎮</span>
+                            <span class="title">Games</span>
+                            <span class="state-lbl" id="lblToggleGames">Open</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Message (imp) -->
+            <div class="form-group" style="margin-bottom:1.4rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                    <label class="form-label" style="margin-bottom:0;">Message (Important — Displayed to Users) *</label>
+                    <span style="font-size:0.75rem; color:#f39c12; font-weight:700; background:rgba(243,156,18,0.12); padding:0.25rem 0.6rem; border-radius:6px; border:1px solid rgba(243,156,18,0.3);">
+                        <i class="fas fa-bullhorn"></i> Public Banner Notice
+                    </span>
+                </div>
+                <textarea id="regClosedMessage" class="form-input" rows="3" placeholder="e.g. Events registration are closed" style="resize:vertical;"></textarea>
+                <div style="font-size:0.75rem; color:#666666; margin-top:4px;">
+                    When entries are closed, the form container will not be displayed and this message will be displayed to users.
+                </div>
+            </div>
+
+            <!-- Select Time to Close Date & Time -->
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label class="form-label">Select Time to Close (Date & Time) *</label>
+                
+                <div style="display:flex; gap:1.5rem; margin-top:0.4rem; margin-bottom:0.8rem; flex-wrap:wrap;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; font-weight:600; cursor:pointer; color:#000;">
+                        <input type="radio" name="regCloseType" id="regCloseImmediate" value="immediate" checked onchange="toggleRegCloseTimeInput()">
+                        <span>Close Immediately</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; font-weight:600; cursor:pointer; color:#000;">
+                        <input type="radio" name="regCloseType" id="regCloseScheduled" value="scheduled" onchange="toggleRegCloseTimeInput()">
+                        <span>Schedule Date & Time</span>
+                    </label>
+                </div>
+
+                <div id="regScheduleTimeWrapper" style="display:none; margin-top:0.6rem;">
+                    <input type="datetime-local" id="regCloseDateTime" class="form-input" style="font-size:0.95rem;">
+                    <div style="font-size:0.75rem; color:#666666; margin-top:4px;">
+                        Entries will stay open until this specified date & time, then automatically close and display this message.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="margin-top: 1.8rem; display: flex; gap: 1rem; flex-wrap:wrap;">
+                <button class="btn-outline" onclick="closeRegControlModal()" style="flex: 1; justify-content: center;">Cancel</button>
+                <button class="btn-primary" id="saveRegControlBtn" style="flex: 2; justify-content: center; background:#ff4757; border-color:#ff4757;" onclick="submitRegistrationClosure()">
+                    <i class="fas fa-lock"></i> Close Entries
+                </button>
+            </div>
+            <p id="regControlError" style="color:#ff4757; display:none; text-align:center; margin-top:1rem; font-size:0.85rem; font-weight:600;"></p>
         </div>
     </div>
 
@@ -614,6 +786,82 @@
                     <div class="chart-title"><i class="fas fa-chart-line"></i> Registration Trends (Last 7 Days)</div>
                     <div style="position: relative; height: 180px; width: 100%;">
                         <canvas id="chartTrends"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REGISTRATION MANAGEMENT & CONTROL (DASHBOARD LAST) -->
+            <div class="admin-panel-card" style="margin-top: 1.5rem; border: 2px solid #000000; box-shadow: 0 8px 25px rgba(0,0,0,0.08);">
+                <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="font-size: 1.25rem; margin:0; display:flex; align-items:center; gap:0.6rem; color:#000000;">
+                            <i class="fas fa-lock" style="color: #f39c12;"></i> Entry Control & Registration Closure
+                        </h3>
+                        <p style="margin: 0.3rem 0 0; font-size: 0.85rem; color: #555555;">
+                            Close entries or schedule closure for Events and Combos with custom notices, or open them back up.
+                        </p>
+                    </div>
+                    <div style="display:flex; gap: 0.8rem; flex-wrap:wrap; align-items:center;">
+                        <button class="action-btn" id="dashTurnOnRegBtn" onclick="turnOnAllRegistrations()" style="background:#2ed573; color:#ffffff; border:2px solid #2ed573; font-weight:700; padding:0.65rem 1.25rem; border-radius:12px; font-size:0.9rem; display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; transition:all 0.3s;">
+                            <i class="fas fa-lock-open"></i> Open Entries
+                        </button>
+                        <button class="action-btn" id="dashTurnOffRegBtn" onclick="openRegControlModal()" style="background:#ff4757; color:#ffffff; border:2px solid #ff4757; font-weight:700; padding:0.65rem 1.25rem; border-radius:12px; font-size:0.9rem; display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; transition:all 0.3s;">
+                            <i class="fas fa-lock"></i> Close Entries
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Registration Status Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem;">
+                    <!-- Events Status Card -->
+                    <div id="statusCardEvents" style="background:#ffffff; border:2px solid #000000; border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.3s;">
+                        <div style="display:flex; align-items:center; gap:0.9rem;">
+                            <div style="width:45px; height:45px; border-radius:12px; background:#f0f0f0; border:2px solid #000; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🎯</div>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem; color:#000;">Events</div>
+                                <div style="font-size:0.75rem; color:#666;">Tech & Non-Tech</div>
+                            </div>
+                        </div>
+                        <span id="badgeEventsStatus" style="font-size:0.8rem; font-weight:700; padding:0.35rem 0.8rem; border-radius:50px; background:rgba(46,213,115,0.15); color:#2ed573; border:1.5px solid #2ed573;">OPEN</span>
+                    </div>
+
+                    <!-- Combos Status Card -->
+                    <div id="statusCardCombos" style="background:#ffffff; border:2px solid #000000; border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.3s;">
+                        <div style="display:flex; align-items:center; gap:0.9rem;">
+                            <div style="width:45px; height:45px; border-radius:12px; background:#f0f0f0; border:2px solid #000; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📦</div>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem; color:#000;">Combos</div>
+                                <div style="font-size:0.75rem; color:#666;">Combo Packages</div>
+                            </div>
+                        </div>
+                        <span id="badgeCombosStatus" style="font-size:0.8rem; font-weight:700; padding:0.35rem 0.8rem; border-radius:50px; background:rgba(46,213,115,0.15); color:#2ed573; border:1.5px solid #2ed573;">OPEN</span>
+                    </div>
+
+                    <!-- Games Status Card -->
+                    <div id="statusCardGames" style="background:#ffffff; border:2px solid #000000; border-radius:16px; padding:1.2rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.3s;">
+                        <div style="display:flex; align-items:center; gap:0.9rem;">
+                            <div style="width:45px; height:45px; border-radius:12px; background:#f0f0f0; border:2px solid #000; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🕹️</div>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem; color:#000;">Games</div>
+                                <div style="font-size:0.75rem; color:#666;">ESports (BGMI, etc.) & Sports</div>
+                            </div>
+                        </div>
+                        <span id="badgeGamesStatus" style="font-size:0.8rem; font-weight:700; padding:0.35rem 0.8rem; border-radius:50px; background:rgba(46,213,115,0.15); color:#2ed573; border:1.5px solid #2ed573;">OPEN</span>
+                    </div>
+                </div>
+
+                <!-- Active Notice & Closure Details Banner (shown when closed or scheduled) -->
+                <div id="dashRegNoticeBanner" style="display:none; background:#fff8e7; border:2px dashed #f39c12; border-radius:16px; padding:1.2rem;">
+                    <div style="display:flex; align-items:flex-start; gap:0.8rem; flex-wrap:wrap;">
+                        <i class="fas fa-info-circle" style="color:#f39c12; font-size:1.3rem; margin-top:2px;"></i>
+                        <div style="flex:1; min-width:200px;">
+                            <div style="font-weight:700; font-size:0.9rem; color:#333; margin-bottom:0.3rem;">Active Closure Notice:</div>
+                            <div id="dashRegNoticeMessage" style="font-size:0.95rem; font-weight:700; color:#d35400; margin-bottom:0.4rem;">"Events registrations are closed."</div>
+                            <div id="dashRegNoticeTime" style="font-size:0.8rem; color:#666;"><i class="fas fa-clock"></i> Closes on: --</div>
+                        </div>
+                        <button class="action-btn" onclick="openRegControlModal()" style="border:1.5px solid #f39c12; color:#d35400; font-size:0.82rem; padding:0.4rem 0.9rem; border-radius:8px; background:#fff; font-weight:600;">
+                            <i class="fas fa-edit"></i> Edit Closure
+                        </button>
                     </div>
                 </div>
             </div>
@@ -996,7 +1244,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="supabase-config.js?v=20260920a"></script>
-    <script src="admin.js?v=20260921b"></script>
+    <script src="supabase-config.js?v=20260926reg"></script>
+    <script src="admin.js?v=20260926reg"></script>
 </body>
 </html>
